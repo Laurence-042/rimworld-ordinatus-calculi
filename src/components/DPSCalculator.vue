@@ -12,6 +12,10 @@ import {
   type WeaponDetailParams,
 } from '@/utils/weaponCalculations'
 import DPSChart from './DPSChart.vue'
+import DPSSurface3D from './DPSSurface3D.vue'
+
+// 图表模式：2D曲线 或 3D曲面
+const chartMode = ref<'2d' | '3d'>('2d')
 
 // 命中率参数
 const accuracyParams = ref({
@@ -315,16 +319,34 @@ const allDistributions = computed(() => {
       <div class="right-panel">
         <el-card class="results-section">
           <template #header>
-            <h3>DPS曲线图</h3>
-            <p style="font-size: 0.9em; color: #909399; margin-top: 5px">
-              悬停在曲线上查看该护甲值的详细DPS分布
-            </p>
+            <div style="display: flex; justify-content: space-between; align-items: center">
+              <div>
+                <h3>DPS图表</h3>
+                <p style="font-size: 0.9em; color: #909399; margin-top: 5px">
+                  <template v-if="chartMode === '2d'">
+                    悬停在曲线上查看该护甲值的详细DPS分布
+                  </template>
+                  <template v-else> 交互式3D曲面：护甲值 × 目标距离 → DPS </template>
+                </p>
+              </div>
+              <el-radio-group v-model="chartMode" size="default">
+                <el-radio-button value="2d">2D曲线</el-radio-button>
+                <el-radio-button value="3d">3D曲面</el-radio-button>
+              </el-radio-group>
+            </div>
           </template>
 
           <DPSChart
+            v-if="chartMode === '2d'"
             :armor-values="dpsCurve.armorValues"
             :dps-values="dpsCurve.dpsValues"
             :distributions="allDistributions"
+          />
+          <DPSSurface3D
+            v-else
+            :weapon-params="weaponParams"
+            :accuracy-params="accuracyParams"
+            :armor-penetration="armorPenetration"
           />
         </el-card>
       </div>
