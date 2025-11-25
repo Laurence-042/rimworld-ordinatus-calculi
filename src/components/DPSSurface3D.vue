@@ -40,25 +40,26 @@ function generateSurfaceData() {
   }
 
   // 计算每个点的DPS和详细信息
+  // zData[i][j] 对应 armorValues[i], distances[j]
   const zData: number[][] = []
   const hoverTexts: string[][] = []
 
-  for (let i = 0; i < distances.length; i++) {
+  for (let i = 0; i < armorValues.length; i++) {
     const row: number[] = []
     const hoverRow: string[] = []
-    const distance = distances[i]
+    const armor = armorValues[i] / 100
 
-    // 计算该距离下的命中率
-    const detailParams: WeaponDetailParams = {
-      ...props.accuracyParams,
-      ...props.weaponParams,
-      armorPenetration: props.armorPenetration,
-    }
-    const hitChance = calculateHitChance(detailParams, distance)
-    const maxDPS = calculateMaxDPS(detailParams)
+    for (let j = 0; j < distances.length; j++) {
+      const distance = distances[j]
 
-    for (let j = 0; j < armorValues.length; j++) {
-      const armor = armorValues[j] / 100
+      // 计算该距离下的命中率
+      const detailParams: WeaponDetailParams = {
+        ...props.accuracyParams,
+        ...props.weaponParams,
+        armorPenetration: props.armorPenetration,
+      }
+      const hitChance = calculateHitChance(detailParams, distance)
+      const maxDPS = calculateMaxDPS(detailParams)
 
       const weaponParams: WeaponParams = {
         hitChance,
@@ -74,7 +75,7 @@ function generateSurfaceData() {
       // 构建悬停文本
       const hoverText = [
         `<b>目标距离:</b> ${distance} 格`,
-        `<b>护甲值:</b> ${armorValues[j]}%`,
+        `<b>护甲值:</b> ${armorValues[i]}%`,
         `<b>命中率:</b> ${(hitChance * 100).toFixed(2)}%`,
         `<b>最大DPS:</b> ${maxDPS.toFixed(2)}`,
         `━━━━━━━━━━━━━━━━`,
@@ -104,8 +105,8 @@ function plotSurface() {
   const data: Plotly.Data[] = [
     {
       type: 'surface',
-      x: armorValues, // 护甲值
-      y: distances, // 目标距离
+      x: distances, // 目标距离
+      y: armorValues, // 护甲值
       z: zData, // DPS
       text: hoverTexts, // 悬停文本
       hovertemplate: '%{text}<extra></extra>',
@@ -139,7 +140,7 @@ function plotSurface() {
     scene: {
       xaxis: {
         title: {
-          text: '护甲值 (%)',
+          text: '目标距离 (格)',
           font: { size: 14 },
         },
         gridcolor: 'rgb(200, 200, 200)',
@@ -148,7 +149,7 @@ function plotSurface() {
       },
       yaxis: {
         title: {
-          text: '目标距离 (格)',
+          text: '护甲值 (%)',
           font: { size: 14 },
         },
         gridcolor: 'rgb(200, 200, 200)',
