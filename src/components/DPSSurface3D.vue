@@ -89,8 +89,13 @@ function plotSurface() {
       z: zData, // DPS
       colorscale: 'Viridis',
       colorbar: {
-        title: 'DPS',
-        titleside: 'right',
+        title: {
+          text: '期望DPS',
+          side: 'right',
+          font: { size: 14 },
+        },
+        thickness: 20,
+        len: 0.7,
       },
       contours: {
         z: {
@@ -104,12 +109,39 @@ function plotSurface() {
   ]
 
   const layout: Partial<Plotly.Layout> = {
-    title: 'DPS 三维曲面图',
+    title: {
+      text: 'DPS 三维曲面图',
+      font: { size: 18 },
+    },
     autosize: true,
     scene: {
-      xaxis: { title: '护甲值 (%)' },
-      yaxis: { title: '目标距离 (格)' },
-      zaxis: { title: 'DPS' },
+      xaxis: {
+        title: {
+          text: '护甲值 (%)',
+          font: { size: 14 },
+        },
+        gridcolor: 'rgb(200, 200, 200)',
+        showbackground: true,
+        backgroundcolor: 'rgb(240, 240, 240)',
+      },
+      yaxis: {
+        title: {
+          text: '目标距离 (格)',
+          font: { size: 14 },
+        },
+        gridcolor: 'rgb(200, 200, 200)',
+        showbackground: true,
+        backgroundcolor: 'rgb(240, 240, 240)',
+      },
+      zaxis: {
+        title: {
+          text: '期望DPS',
+          font: { size: 14 },
+        },
+        gridcolor: 'rgb(200, 200, 200)',
+        showbackground: true,
+        backgroundcolor: 'rgb(240, 240, 240)',
+      },
       camera: {
         eye: { x: 1.5, y: 1.5, z: 1.3 },
       },
@@ -118,7 +150,7 @@ function plotSurface() {
       l: 0,
       r: 0,
       b: 0,
-      t: 40,
+      t: 50,
     },
   }
 
