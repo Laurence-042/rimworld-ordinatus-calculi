@@ -3,7 +3,7 @@
  */
 export interface WeaponCSVData {
   名称: string
-  伤害: string
+  弹药伤害: string
   护甲穿透: string
   抑止能力: string
   预热时间: string
@@ -55,28 +55,26 @@ export function convertCSVToWeaponParams(csvData: WeaponCSVData): {
     shortAccuracy: number
     mediumAccuracy: number
     longAccuracy: number
-    warmupTime: number
-    burstShotCount: number
-    ticksBetweenBurstShots: number
-    cooldownTime: number
-    damagePerShot: number
+    damage: number
     armorPenetration: number
+    warmUp: number
+    cooldown: number
+    burstCount: number
+    burstTicks: number
   }>
 } {
-  const warmupTime = parseTime(csvData.预热时间)
-  const cooldownTime = parseTime(csvData.冷却时间)
-  const burstShotCount = parseNumber(csvData.连发数量) || 1
-  const ticksBetweenBurstShots = parseNumber(csvData['连发间隔(ticks)']) || 0
-  const damagePerShot = parseNumber(csvData.伤害)
+  const warmupTimeSeconds = parseTime(csvData.瞄准时间)
+  const cooldownTimeSeconds = parseTime(csvData.冷却时间)
+  const burstCount = parseNumber(csvData.连发数量) || 1
+  const burstTicks = parseNumber(csvData['连发间隔(ticks)']) || 0
+  const damage = parseNumber(csvData.弹药伤害)
   const armorPenetration = parsePercentage(csvData.护甲穿透)
 
   // 精度数据：近、中、远
+  const touchAccuracy = parsePercentage(csvData['精度（贴近）'])
   const shortAccuracy = parsePercentage(csvData['精度（近）'])
   const mediumAccuracy = parsePercentage(csvData['精度（中）'])
   const longAccuracy = parsePercentage(csvData['精度（远）'])
-
-  // 贴近精度通常比近距离精度高一些，如果没有数据则估算
-  const touchAccuracy = shortAccuracy > 0 ? Math.min(1, shortAccuracy * 1.05) : 0
 
   return {
     name: csvData.名称,
@@ -85,25 +83,34 @@ export function convertCSVToWeaponParams(csvData: WeaponCSVData): {
       shortAccuracy: shortAccuracy * 100,
       mediumAccuracy: mediumAccuracy * 100,
       longAccuracy: longAccuracy * 100,
-      warmupTime,
-      burstShotCount,
-      ticksBetweenBurstShots,
-      cooldownTime,
-      damagePerShot,
+      damage,
       armorPenetration: armorPenetration * 100,
+      warmUp: warmupTimeSeconds, // 保持秒
+      cooldown: cooldownTimeSeconds, // 保持秒
+      burstCount,
+      burstTicks,
     },
   }
 }
 
 /**
  * 过滤有效的武器数据
- * 排除没有伤害数据、没有时间数据的武器（如手榴弹等）
+ * 排除：
+ * 1. 没有伤害数据、没有时间数据的武器（如手榴弹等）
+ * 2. 名称包含"发射器"或"手榴弹"的武器（特殊投掷武器）
+ * 3. 以"特化"开头的武器（重复副本）
  */
 export function isValidWeapon(csvData: WeaponCSVData): boolean {
-  const damage = parseNumber(csvData.伤害)
-  const cooldown = parseTime(csvData.冷却时间)
+  const name = csvData.名称
+  const damage = parseNumber(csvData.弹药伤害)
+  const cooldownSeconds = parseTime(csvData.冷却时间)
   const hasAccuracy = csvData['精度（近）'] || csvData['精度（中）'] || csvData['精度（远）']
 
+  // 排除特殊武器类型
+  if (name.startsWith('特化')) {
+    return false
+  }
+
   // 必须有伤害值、有冷却时间、有精度数据
-  return damage > 0 && cooldown > 0 && !!hasAccuracy
+  return damage > 0 && cooldownSeconds > 0 && !!hasAccuracy
 }

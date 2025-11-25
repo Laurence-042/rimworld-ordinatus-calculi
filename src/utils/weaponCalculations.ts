@@ -7,17 +7,18 @@ import weaponCSV from './weapon_info.csv?raw'
  */
 export interface WeaponDetailParams {
   // 命中率相关 - 四个距离档位的命中率
-  touchAccuracy: number // 贴近命中率 (≤3格) (0-100)
-  shortAccuracy: number // 近距离命中率 (≤12格) (0-100)
-  mediumAccuracy: number // 中距离命中率 (≤25格) (0-100)
-  longAccuracy: number // 远距离命中率 (≤40格) (0-100)
+  touchAccuracy: number // Touch 命中率 (≤3格) (0-100)
+  shortAccuracy: number // Short 命中率 (≤12格) (0-100)
+  mediumAccuracy: number // Medium 命中率 (≤25格) (0-100)
+  longAccuracy: number // Long 命中率 (≤40格) (0-100)
 
-  // DPS相关
-  warmupTime: number // 瞄准时间（秒）
-  burstShotCount: number // 连射次数
-  ticksBetweenBurstShots: number // 连射间隔（ticks，60 ticks = 1秒）
-  cooldownTime: number // 冷却时间（秒）
-  damagePerShot: number // 单发伤害
+  // 武器属性
+  damage: number // 伤害值
+  armorPenetration: number // 护甲穿透 (0-100)
+  warmUp: number // 预热时间 (秒)
+  cooldown: number // 冷却时间 (秒)
+  burstCount: number // 连发数量
+  burstTicks: number // 连发间隔 (ticks)
 }
 
 /**
@@ -46,19 +47,23 @@ export function calculateHitChance(params: WeaponDetailParams, targetDistance: n
  * 计算最大DPS（无护甲、100%命中）
  */
 export function calculateMaxDPS(params: WeaponDetailParams): number {
-  const { warmupTime, burstShotCount, ticksBetweenBurstShots, cooldownTime, damagePerShot } = params
+  const { warmUp, burstCount, burstTicks, cooldown, damage } = params
 
-  // 连射阶段时间（秒）
-  const burstDuration = ((burstShotCount - 1) * ticksBetweenBurstShots) / 60
+  // 将秒转换为 ticks (60 ticks = 1 second)
+  const warmUpTicks = warmUp * 60
+  const cooldownTicks = cooldown * 60
 
-  // 总周期时间（秒）
-  const cycleDuration = warmupTime + burstDuration + cooldownTime
+  // 连射阶段时间（ticks）
+  const burstDuration = (burstCount - 1) * burstTicks
+
+  // 总周期时间（ticks）
+  const cycleDuration = warmUpTicks + burstDuration + cooldownTicks
 
   // 总伤害
-  const totalDamage = burstShotCount * damagePerShot
+  const totalDamage = burstCount * damage
 
-  // DPS = 总伤害 / 周期时间
-  return totalDamage / cycleDuration
+  // DPS = 总伤害 / 周期时间（秒） = 总伤害 / (周期ticks / 60)
+  return (totalDamage * 60) / cycleDuration
 }
 
 /**
@@ -89,8 +94,8 @@ function loadWeaponPresetsFromCSV(): WeaponPreset[] {
 
     // 确保所有必需的参数都存在
     if (
-      converted.params.damagePerShot &&
-      converted.params.cooldownTime &&
+      converted.params.damage &&
+      converted.params.cooldown &&
       (converted.params.shortAccuracy ||
         converted.params.mediumAccuracy ||
         converted.params.longAccuracy)
@@ -102,11 +107,12 @@ function loadWeaponPresetsFromCSV(): WeaponPreset[] {
           shortAccuracy: converted.params.shortAccuracy || 0,
           mediumAccuracy: converted.params.mediumAccuracy || 0,
           longAccuracy: converted.params.longAccuracy || 0,
-          warmupTime: converted.params.warmupTime || 0,
-          burstShotCount: converted.params.burstShotCount || 1,
-          ticksBetweenBurstShots: converted.params.ticksBetweenBurstShots || 0,
-          cooldownTime: converted.params.cooldownTime || 0,
-          damagePerShot: converted.params.damagePerShot || 0,
+          damage: converted.params.damage || 0,
+          armorPenetration: converted.params.armorPenetration || 0,
+          warmUp: converted.params.warmUp || 0,
+          cooldown: converted.params.cooldown || 0,
+          burstCount: converted.params.burstCount || 1,
+          burstTicks: converted.params.burstTicks || 0,
         },
       })
     }
