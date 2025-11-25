@@ -102,338 +102,357 @@ const dpsDistribution = computed(() => {
       </template>
     </el-card>
 
-    <el-card class="input-section">
-      <template #header>
-        <div style="display: flex; justify-content: space-between; align-items: center">
-          <h3>武器参数</h3>
-          <el-radio-group v-model="inputMode" size="small">
-            <el-radio-button value="simple">简单模式</el-radio-button>
-            <el-radio-button value="detailed">详细模式</el-radio-button>
-          </el-radio-group>
-        </div>
-      </template>
+    <div class="main-layout">
+      <!-- 左侧：参数输入 -->
+      <div class="left-panel">
+        <el-card class="input-section">
+          <template #header>
+            <div style="display: flex; justify-content: space-between; align-items: center">
+              <h3>武器参数</h3>
+              <el-radio-group v-model="inputMode" size="small">
+                <el-radio-button value="simple">简单模式</el-radio-button>
+                <el-radio-button value="detailed">详细模式</el-radio-button>
+              </el-radio-group>
+            </div>
+          </template>
 
-      <!-- 简单模式 -->
-      <el-form v-if="inputMode === 'simple'" label-width="120px">
-        <el-form-item label="命中率">
-          <div class="slider-input-group">
-            <el-slider v-model="hitChance" :min="0" :max="100" :step="1" />
-            <el-input-number
-              v-model="hitChance"
-              :min="0"
-              :max="100"
-              :step="1"
-              controls-position="right"
-              class="input-number-fixed"
-            />
-            <span class="unit">%</span>
+          <!-- 简单模式 -->
+          <el-form v-if="inputMode === 'simple'" label-width="8em">
+            <el-form-item label="命中率">
+              <div class="slider-input-group">
+                <el-slider v-model="hitChance" :min="0" :max="100" :step="1" />
+                <el-input-number
+                  v-model="hitChance"
+                  :min="0"
+                  :max="100"
+                  :step="1"
+                  controls-position="right"
+                  class="input-number-fixed"
+                />
+                <span class="unit">%</span>
+              </div>
+            </el-form-item>
+
+            <el-form-item label="最大DPS">
+              <div class="slider-input-group">
+                <el-slider v-model="maxDPS" :min="0" :max="50" :step="0.1" />
+                <el-input-number
+                  v-model="maxDPS"
+                  :min="0"
+                  :max="1000"
+                  :step="0.1"
+                  :precision="1"
+                  controls-position="right"
+                  class="input-number-fixed"
+                />
+                <span class="unit-placeholder"></span>
+              </div>
+            </el-form-item>
+
+            <el-form-item label="护甲穿透">
+              <div class="slider-input-group">
+                <el-slider v-model="simpleArmorPenetration" :min="0" :max="100" :step="1" />
+                <el-input-number
+                  v-model="simpleArmorPenetration"
+                  :min="0"
+                  :max="100"
+                  :step="1"
+                  controls-position="right"
+                  class="input-number-fixed"
+                />
+                <span class="unit">%</span>
+              </div>
+            </el-form-item>
+
+            <el-form-item label="目标护甲值">
+              <div class="slider-input-group">
+                <el-slider v-model="targetArmor" :min="0" :max="200" :step="1" />
+                <el-input-number
+                  v-model="targetArmor"
+                  :min="0"
+                  :max="200"
+                  :step="1"
+                  controls-position="right"
+                  class="input-number-fixed"
+                />
+                <span class="unit">%</span>
+              </div>
+            </el-form-item>
+          </el-form>
+
+          <!-- 详细模式 -->
+          <div v-else>
+            <el-form label-width="13em">
+              <el-divider content-position="left">武器预设</el-divider>
+              <el-form-item label="选择预设">
+                <el-select placeholder="选择武器预设" @change="applyPreset" style="width: 300px">
+                  <el-option
+                    v-for="(preset, index) in weaponPresets"
+                    :key="index"
+                    :label="preset.name"
+                    :value="index"
+                  />
+                </el-select>
+              </el-form-item>
+
+              <el-divider content-position="left">命中率参数</el-divider>
+              <el-form-item label="贴近 (≤3格)">
+                <div class="slider-input-group">
+                  <el-slider v-model="detailParams.touchAccuracy" :min="0" :max="100" :step="1" />
+                  <el-input-number
+                    v-model="detailParams.touchAccuracy"
+                    :min="0"
+                    :max="100"
+                    :step="1"
+                    controls-position="right"
+                    class="input-number-fixed"
+                  />
+                  <span class="unit">%</span>
+                </div>
+              </el-form-item>
+
+              <el-form-item label="近 (≤12格)">
+                <div class="slider-input-group">
+                  <el-slider v-model="detailParams.shortAccuracy" :min="0" :max="100" :step="1" />
+                  <el-input-number
+                    v-model="detailParams.shortAccuracy"
+                    :min="0"
+                    :max="100"
+                    :step="1"
+                    controls-position="right"
+                    class="input-number-fixed"
+                  />
+                  <span class="unit">%</span>
+                </div>
+              </el-form-item>
+
+              <el-form-item label="中 (≤25格)">
+                <div class="slider-input-group">
+                  <el-slider v-model="detailParams.mediumAccuracy" :min="0" :max="100" :step="1" />
+                  <el-input-number
+                    v-model="detailParams.mediumAccuracy"
+                    :min="0"
+                    :max="100"
+                    :step="1"
+                    controls-position="right"
+                    class="input-number-fixed"
+                  />
+                  <span class="unit">%</span>
+                </div>
+              </el-form-item>
+
+              <el-form-item label="远 (≤40格)">
+                <div class="slider-input-group">
+                  <el-slider v-model="detailParams.longAccuracy" :min="0" :max="100" :step="1" />
+                  <el-input-number
+                    v-model="detailParams.longAccuracy"
+                    :min="0"
+                    :max="100"
+                    :step="1"
+                    controls-position="right"
+                    class="input-number-fixed"
+                  />
+                  <span class="unit">%</span>
+                </div>
+              </el-form-item>
+
+              <el-form-item label="目标距离">
+                <div class="slider-input-group">
+                  <el-slider v-model="targetDistance" :min="0" :max="50" :step="1" />
+                  <el-input-number
+                    v-model="targetDistance"
+                    :min="0"
+                    :max="100"
+                    :step="1"
+                    controls-position="right"
+                    class="input-number-fixed"
+                  />
+                  <span class="unit">格</span>
+                </div>
+              </el-form-item>
+
+              <el-divider content-position="left">武器属性</el-divider>
+
+              <el-form-item label="伤害">
+                <div class="slider-input-group">
+                  <el-slider v-model="detailParams.damage" :min="1" :max="50" :step="1" />
+                  <el-input-number
+                    v-model="detailParams.damage"
+                    :min="1"
+                    :max="200"
+                    :step="1"
+                    controls-position="right"
+                    class="input-number-fixed"
+                  />
+                  <span class="unit-placeholder"></span>
+                </div>
+              </el-form-item>
+
+              <el-form-item label="护甲穿透 (AP)">
+                <div class="slider-input-group">
+                  <el-slider
+                    v-model="detailParams.armorPenetration"
+                    :min="0"
+                    :max="100"
+                    :step="1"
+                  />
+                  <el-input-number
+                    v-model="detailParams.armorPenetration"
+                    :min="0"
+                    :max="100"
+                    :step="1"
+                    controls-position="right"
+                    class="input-number-fixed"
+                  />
+                  <span class="unit">%</span>
+                </div>
+              </el-form-item>
+
+              <el-form-item label="预热时间 (Warm-Up)">
+                <div class="slider-input-group">
+                  <el-slider v-model="detailParams.warmUp" :min="0" :max="5" :step="0.1" />
+                  <el-input-number
+                    v-model="detailParams.warmUp"
+                    :min="0"
+                    :max="10"
+                    :step="0.1"
+                    :precision="2"
+                    controls-position="right"
+                    class="input-number-fixed"
+                  />
+                  <span class="unit">秒</span>
+                </div>
+              </el-form-item>
+
+              <el-form-item label="冷却时间 (Cooldown)">
+                <div class="slider-input-group">
+                  <el-slider v-model="detailParams.cooldown" :min="0" :max="5" :step="0.1" />
+                  <el-input-number
+                    v-model="detailParams.cooldown"
+                    :min="0"
+                    :max="10"
+                    :step="0.1"
+                    :precision="2"
+                    controls-position="right"
+                    class="input-number-fixed"
+                  />
+                  <span class="unit">秒</span>
+                </div>
+              </el-form-item>
+
+              <el-form-item label="连发数量 (Burst Count)">
+                <div class="slider-input-group">
+                  <el-slider v-model="detailParams.burstCount" :min="1" :max="10" :step="1" />
+                  <el-input-number
+                    v-model="detailParams.burstCount"
+                    :min="1"
+                    :max="20"
+                    :step="1"
+                    controls-position="right"
+                    class="input-number-fixed"
+                  />
+                  <span class="unit-placeholder"></span>
+                </div>
+              </el-form-item>
+
+              <el-form-item label="连发间隔 (Burst Ticks)">
+                <div class="slider-input-group">
+                  <el-slider v-model="detailParams.burstTicks" :min="0" :max="30" :step="1" />
+                  <el-input-number
+                    v-model="detailParams.burstTicks"
+                    :min="0"
+                    :max="60"
+                    :step="1"
+                    controls-position="right"
+                    class="input-number-fixed"
+                  />
+                  <span class="unit">ticks</span>
+                </div>
+              </el-form-item>
+
+              <el-divider content-position="left">目标参数</el-divider>
+
+              <el-form-item label="目标护甲值">
+                <div class="slider-input-group">
+                  <el-slider v-model="targetArmor" :min="0" :max="200" :step="1" />
+                  <el-input-number
+                    v-model="targetArmor"
+                    :min="0"
+                    :max="200"
+                    :step="1"
+                    controls-position="right"
+                    class="input-number-fixed"
+                  />
+                  <span class="unit">%</span>
+                </div>
+              </el-form-item>
+
+              <el-alert
+                title="计算结果"
+                type="success"
+                :closable="false"
+                :description="`命中率: ${(actualHitChance * 100).toFixed(2)}% | 最大DPS: ${actualMaxDPS.toFixed(2)} | 护甲穿透: ${(actualArmorPenetration * 100).toFixed(0)}%`"
+              />
+            </el-form>
           </div>
-        </el-form-item>
-
-        <el-form-item label="最大DPS">
-          <div class="slider-input-group">
-            <el-slider v-model="maxDPS" :min="0" :max="50" :step="0.1" />
-            <el-input-number
-              v-model="maxDPS"
-              :min="0"
-              :max="1000"
-              :step="0.1"
-              :precision="1"
-              controls-position="right"
-              class="input-number-fixed"
-            />
-            <span class="unit-placeholder"></span>
-          </div>
-        </el-form-item>
-
-        <el-form-item label="护甲穿透">
-          <div class="slider-input-group">
-            <el-slider v-model="simpleArmorPenetration" :min="0" :max="100" :step="1" />
-            <el-input-number
-              v-model="simpleArmorPenetration"
-              :min="0"
-              :max="100"
-              :step="1"
-              controls-position="right"
-              class="input-number-fixed"
-            />
-            <span class="unit">%</span>
-          </div>
-        </el-form-item>
-
-        <el-form-item label="目标护甲值">
-          <div class="slider-input-group">
-            <el-slider v-model="targetArmor" :min="0" :max="200" :step="1" />
-            <el-input-number
-              v-model="targetArmor"
-              :min="0"
-              :max="200"
-              :step="1"
-              controls-position="right"
-              class="input-number-fixed"
-            />
-            <span class="unit">%</span>
-          </div>
-        </el-form-item>
-      </el-form>
-
-      <!-- 详细模式 -->
-      <div v-else>
-        <el-form label-width="140px">
-          <el-divider content-position="left">武器预设</el-divider>
-          <el-form-item label="选择预设">
-            <el-select placeholder="选择武器预设" @change="applyPreset" style="width: 300px">
-              <el-option
-                v-for="(preset, index) in weaponPresets"
-                :key="index"
-                :label="preset.name"
-                :value="index"
-              />
-            </el-select>
-          </el-form-item>
-
-          <el-divider content-position="left">命中率参数</el-divider>
-          <el-form-item label="贴近 (≤3格)">
-            <div class="slider-input-group">
-              <el-slider v-model="detailParams.touchAccuracy" :min="0" :max="100" :step="1" />
-              <el-input-number
-                v-model="detailParams.touchAccuracy"
-                :min="0"
-                :max="100"
-                :step="1"
-                controls-position="right"
-                class="input-number-fixed"
-              />
-              <span class="unit">%</span>
-            </div>
-          </el-form-item>
-
-          <el-form-item label="近 (≤12格)">
-            <div class="slider-input-group">
-              <el-slider v-model="detailParams.shortAccuracy" :min="0" :max="100" :step="1" />
-              <el-input-number
-                v-model="detailParams.shortAccuracy"
-                :min="0"
-                :max="100"
-                :step="1"
-                controls-position="right"
-                class="input-number-fixed"
-              />
-              <span class="unit">%</span>
-            </div>
-          </el-form-item>
-
-          <el-form-item label="中 (≤25格)">
-            <div class="slider-input-group">
-              <el-slider v-model="detailParams.mediumAccuracy" :min="0" :max="100" :step="1" />
-              <el-input-number
-                v-model="detailParams.mediumAccuracy"
-                :min="0"
-                :max="100"
-                :step="1"
-                controls-position="right"
-                class="input-number-fixed"
-              />
-              <span class="unit">%</span>
-            </div>
-          </el-form-item>
-
-          <el-form-item label="远 (≤40格)">
-            <div class="slider-input-group">
-              <el-slider v-model="detailParams.longAccuracy" :min="0" :max="100" :step="1" />
-              <el-input-number
-                v-model="detailParams.longAccuracy"
-                :min="0"
-                :max="100"
-                :step="1"
-                controls-position="right"
-                class="input-number-fixed"
-              />
-              <span class="unit">%</span>
-            </div>
-          </el-form-item>
-
-          <el-form-item label="目标距离">
-            <div class="slider-input-group">
-              <el-slider v-model="targetDistance" :min="0" :max="50" :step="1" />
-              <el-input-number
-                v-model="targetDistance"
-                :min="0"
-                :max="100"
-                :step="1"
-                controls-position="right"
-                class="input-number-fixed"
-              />
-              <span class="unit">格</span>
-            </div>
-          </el-form-item>
-
-          <el-divider content-position="left">武器属性</el-divider>
-
-          <el-form-item label="伤害">
-            <div class="slider-input-group">
-              <el-slider v-model="detailParams.damage" :min="1" :max="50" :step="1" />
-              <el-input-number
-                v-model="detailParams.damage"
-                :min="1"
-                :max="200"
-                :step="1"
-                controls-position="right"
-                class="input-number-fixed"
-              />
-              <span class="unit-placeholder"></span>
-            </div>
-          </el-form-item>
-
-          <el-form-item label="护甲穿透 (AP)">
-            <div class="slider-input-group">
-              <el-slider v-model="detailParams.armorPenetration" :min="0" :max="100" :step="1" />
-              <el-input-number
-                v-model="detailParams.armorPenetration"
-                :min="0"
-                :max="100"
-                :step="1"
-                controls-position="right"
-                class="input-number-fixed"
-              />
-              <span class="unit">%</span>
-            </div>
-          </el-form-item>
-
-          <el-form-item label="预热时间 (Warm-Up)">
-            <div class="slider-input-group">
-              <el-slider v-model="detailParams.warmUp" :min="0" :max="5" :step="0.1" />
-              <el-input-number
-                v-model="detailParams.warmUp"
-                :min="0"
-                :max="10"
-                :step="0.1"
-                :precision="2"
-                controls-position="right"
-                class="input-number-fixed"
-              />
-              <span class="unit">秒</span>
-            </div>
-          </el-form-item>
-
-          <el-form-item label="冷却时间 (Cooldown)">
-            <div class="slider-input-group">
-              <el-slider v-model="detailParams.cooldown" :min="0" :max="5" :step="0.1" />
-              <el-input-number
-                v-model="detailParams.cooldown"
-                :min="0"
-                :max="10"
-                :step="0.1"
-                :precision="2"
-                controls-position="right"
-                class="input-number-fixed"
-              />
-              <span class="unit">秒</span>
-            </div>
-          </el-form-item>
-
-          <el-form-item label="连发数量 (Burst Count)">
-            <div class="slider-input-group">
-              <el-slider v-model="detailParams.burstCount" :min="1" :max="10" :step="1" />
-              <el-input-number
-                v-model="detailParams.burstCount"
-                :min="1"
-                :max="20"
-                :step="1"
-                controls-position="right"
-                class="input-number-fixed"
-              />
-              <span class="unit-placeholder"></span>
-            </div>
-          </el-form-item>
-
-          <el-form-item label="连发间隔 (Burst Ticks)">
-            <div class="slider-input-group">
-              <el-slider v-model="detailParams.burstTicks" :min="0" :max="30" :step="1" />
-              <el-input-number
-                v-model="detailParams.burstTicks"
-                :min="0"
-                :max="60"
-                :step="1"
-                controls-position="right"
-                class="input-number-fixed"
-              />
-              <span class="unit">ticks</span>
-            </div>
-          </el-form-item>
-
-          <el-divider content-position="left">目标参数</el-divider>
-
-          <el-form-item label="目标护甲值">
-            <div class="slider-input-group">
-              <el-slider v-model="targetArmor" :min="0" :max="200" :step="1" />
-              <el-input-number
-                v-model="targetArmor"
-                :min="0"
-                :max="200"
-                :step="1"
-                controls-position="right"
-                class="input-number-fixed"
-              />
-              <span class="unit">%</span>
-            </div>
-          </el-form-item>
-
-          <el-alert
-            title="计算结果"
-            type="success"
-            :closable="false"
-            :description="`命中率: ${(actualHitChance * 100).toFixed(2)}% | 最大DPS: ${actualMaxDPS.toFixed(2)} | 护甲穿透: ${(actualArmorPenetration * 100).toFixed(0)}%`"
-          />
-        </el-form>
+        </el-card>
       </div>
-    </el-card>
 
-    <el-card class="results-section">
-      <template #header>
-        <h3>DPS曲线图</h3>
-      </template>
+      <!-- 右侧：结果显示 -->
+      <div class="right-panel">
+        <el-card class="results-section">
+          <template #header>
+            <h3>DPS曲线图</h3>
+          </template>
 
-      <DPSChart
-        :armor-values="dpsCurve.armorValues"
-        :dps-values="dpsCurve.dpsValues"
-        :target-armor="targetArmor"
-      />
-    </el-card>
+          <DPSChart
+            :armor-values="dpsCurve.armorValues"
+            :dps-values="dpsCurve.dpsValues"
+            :target-armor="targetArmor"
+          />
+        </el-card>
 
-    <el-card class="distribution-section">
-      <template #header>
-        <h3>DPS分布概率（护甲值 {{ targetArmor }}%）</h3>
-      </template>
+        <el-card class="distribution-section">
+          <template #header>
+            <h3>DPS分布概率（护甲值 {{ targetArmor }}%）</h3>
+          </template>
 
-      <el-descriptions :column="1" border>
-        <el-descriptions-item label="未命中">
-          <el-tag type="info">{{ (dpsDistribution.missProb * 100).toFixed(2) }}%</el-tag>
-          <span class="dps-value">DPS: 0</span>
-        </el-descriptions-item>
+          <el-descriptions :column="1" border>
+            <el-descriptions-item label="未命中">
+              <el-tag type="info">{{ (dpsDistribution.missProb * 100).toFixed(2) }}%</el-tag>
+              <span class="dps-value">DPS: 0</span>
+            </el-descriptions-item>
 
-        <el-descriptions-item label="完全偏转（0伤害）">
-          <el-tag type="danger">{{ (dpsDistribution.zeroDamageProb * 100).toFixed(2) }}%</el-tag>
-          <span class="dps-value">DPS: 0</span>
-        </el-descriptions-item>
+            <el-descriptions-item label="完全偏转（0伤害）">
+              <el-tag type="danger"
+                >{{ (dpsDistribution.zeroDamageProb * 100).toFixed(2) }}%</el-tag
+              >
+              <span class="dps-value">DPS: 0</span>
+            </el-descriptions-item>
 
-        <el-descriptions-item label="部分偏转（50%伤害）">
-          <el-tag type="warning">{{ (dpsDistribution.halfDamageProb * 100).toFixed(2) }}%</el-tag>
-          <span class="dps-value">DPS: {{ dpsDistribution.halfDPS.toFixed(2) }}</span>
-        </el-descriptions-item>
+            <el-descriptions-item label="部分偏转（50%伤害）">
+              <el-tag type="warning"
+                >{{ (dpsDistribution.halfDamageProb * 100).toFixed(2) }}%</el-tag
+              >
+              <span class="dps-value">DPS: {{ dpsDistribution.halfDPS.toFixed(2) }}</span>
+            </el-descriptions-item>
 
-        <el-descriptions-item label="穿透（100%伤害）">
-          <el-tag type="success">{{ (dpsDistribution.fullDamageProb * 100).toFixed(2) }}%</el-tag>
-          <span class="dps-value">DPS: {{ dpsDistribution.fullDPS.toFixed(2) }}</span>
-        </el-descriptions-item>
+            <el-descriptions-item label="穿透（100%伤害）">
+              <el-tag type="success"
+                >{{ (dpsDistribution.fullDamageProb * 100).toFixed(2) }}%</el-tag
+              >
+              <span class="dps-value">DPS: {{ dpsDistribution.fullDPS.toFixed(2) }}</span>
+            </el-descriptions-item>
 
-        <el-descriptions-item label="期望DPS">
-          <el-tag type="primary" effect="dark">
-            {{ dpsDistribution.expectedDPS.toFixed(3) }}
-          </el-tag>
-        </el-descriptions-item>
-      </el-descriptions>
-    </el-card>
+            <el-descriptions-item label="期望DPS">
+              <el-tag type="primary" effect="dark">
+                {{ dpsDistribution.expectedDPS.toFixed(3) }}
+              </el-tag>
+            </el-descriptions-item>
+          </el-descriptions>
+        </el-card>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -444,6 +463,38 @@ const dpsDistribution = computed(() => {
 
 .header-card {
   margin-bottom: 20px;
+}
+
+/* 主布局：响应式左右分栏 */
+.main-layout {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+/* 在小屏幕上垂直堆叠 */
+@media (max-width: 1200px) {
+  .main-layout {
+    flex-direction: column;
+  }
+
+  .left-panel,
+  .right-panel {
+    width: 100%;
+  }
+}
+
+/* 在大屏幕上左右分栏 */
+@media (min-width: 1201px) {
+  .left-panel {
+    flex: 0 0 500px;
+    min-width: 500px;
+  }
+
+  .right-panel {
+    flex: 1;
+    min-width: 600px;
+  }
 }
 
 .input-section,
