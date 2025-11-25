@@ -36,7 +36,6 @@ const detailParams = ref<WeaponDetailParams>({
 })
 
 // 通用参数
-const targetArmor = ref(50) // 0-200
 const targetDistance = ref(25) // 目标距离（格）
 
 // 根据模式计算实际的护甲穿透
@@ -83,14 +82,14 @@ const dpsCurve = computed(() => {
   return calculateDPSCurve(params)
 })
 
-// 计算特定护甲值的DPS分布
-const dpsDistribution = computed(() => {
+// 为每个护甲值计算分布（用于图表悬浮显示）
+const allDistributions = computed(() => {
   const params: WeaponParams = {
     hitChance: actualHitChance.value,
     maxDPS: actualMaxDPS.value,
     armorPenetration: actualArmorPenetration.value,
   }
-  return calculateDPSDistribution(params, targetArmor.value / 100)
+  return dpsCurve.value.armorValues.map((armor) => calculateDPSDistribution(params, armor / 100))
 })
 </script>
 
@@ -156,21 +155,6 @@ const dpsDistribution = computed(() => {
                   v-model="simpleArmorPenetration"
                   :min="0"
                   :max="100"
-                  :step="1"
-                  controls-position="right"
-                  class="input-number-fixed"
-                />
-                <span class="unit">%</span>
-              </div>
-            </el-form-item>
-
-            <el-form-item label="目标护甲值">
-              <div class="slider-input-group">
-                <el-slider v-model="targetArmor" :min="0" :max="200" :step="1" />
-                <el-input-number
-                  v-model="targetArmor"
-                  :min="0"
-                  :max="200"
                   :step="1"
                   controls-position="right"
                   class="input-number-fixed"
@@ -370,23 +354,6 @@ const dpsDistribution = computed(() => {
                 </div>
               </el-form-item>
 
-              <el-divider content-position="left">目标参数</el-divider>
-
-              <el-form-item label="目标护甲值">
-                <div class="slider-input-group">
-                  <el-slider v-model="targetArmor" :min="0" :max="200" :step="1" />
-                  <el-input-number
-                    v-model="targetArmor"
-                    :min="0"
-                    :max="200"
-                    :step="1"
-                    controls-position="right"
-                    class="input-number-fixed"
-                  />
-                  <span class="unit">%</span>
-                </div>
-              </el-form-item>
-
               <el-alert
                 title="计算结果"
                 type="success"
@@ -403,53 +370,16 @@ const dpsDistribution = computed(() => {
         <el-card class="results-section">
           <template #header>
             <h3>DPS曲线图</h3>
+            <p style="font-size: 0.9em; color: #909399; margin-top: 5px">
+              悬停在曲线上查看该护甲值的详细DPS分布
+            </p>
           </template>
 
           <DPSChart
             :armor-values="dpsCurve.armorValues"
             :dps-values="dpsCurve.dpsValues"
-            :target-armor="targetArmor"
+            :distributions="allDistributions"
           />
-        </el-card>
-
-        <el-card class="distribution-section">
-          <template #header>
-            <h3>DPS分布概率（护甲值 {{ targetArmor }}%）</h3>
-          </template>
-
-          <el-descriptions :column="1" border>
-            <el-descriptions-item label="未命中">
-              <el-tag type="info">{{ (dpsDistribution.missProb * 100).toFixed(2) }}%</el-tag>
-              <span class="dps-value">DPS: 0</span>
-            </el-descriptions-item>
-
-            <el-descriptions-item label="完全偏转（0伤害）">
-              <el-tag type="danger"
-                >{{ (dpsDistribution.zeroDamageProb * 100).toFixed(2) }}%</el-tag
-              >
-              <span class="dps-value">DPS: 0</span>
-            </el-descriptions-item>
-
-            <el-descriptions-item label="部分偏转（50%伤害）">
-              <el-tag type="warning"
-                >{{ (dpsDistribution.halfDamageProb * 100).toFixed(2) }}%</el-tag
-              >
-              <span class="dps-value">DPS: {{ dpsDistribution.halfDPS.toFixed(2) }}</span>
-            </el-descriptions-item>
-
-            <el-descriptions-item label="穿透（100%伤害）">
-              <el-tag type="success"
-                >{{ (dpsDistribution.fullDamageProb * 100).toFixed(2) }}%</el-tag
-              >
-              <span class="dps-value">DPS: {{ dpsDistribution.fullDPS.toFixed(2) }}</span>
-            </el-descriptions-item>
-
-            <el-descriptions-item label="期望DPS">
-              <el-tag type="primary" effect="dark">
-                {{ dpsDistribution.expectedDPS.toFixed(3) }}
-              </el-tag>
-            </el-descriptions-item>
-          </el-descriptions>
         </el-card>
       </div>
     </div>

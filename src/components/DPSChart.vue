@@ -25,10 +25,20 @@ ChartJS.register(
   Filler,
 )
 
+interface DPSDistribution {
+  missProb: number
+  zeroDamageProb: number
+  halfDamageProb: number
+  fullDamageProb: number
+  halfDPS: number
+  fullDPS: number
+  expectedDPS: number
+}
+
 interface Props {
   armorValues: number[]
   dpsValues: number[]
-  targetArmor?: number
+  distributions: DPSDistribution[]
 }
 
 const props = defineProps<Props>()
@@ -62,8 +72,21 @@ const chartOptions = computed(() => ({
       mode: 'index' as const,
       intersect: false,
       callbacks: {
-        label: (context: { parsed: { y: number } }) => {
-          return `DPS: ${context.parsed.y.toFixed(3)}`
+        label: (context: { parsed: { y: number }; dataIndex: number }) => {
+          return `期望DPS: ${context.parsed.y.toFixed(3)}`
+        },
+        afterLabel: (context: { dataIndex: number }) => {
+          const index = context.dataIndex
+          const dist = props.distributions[index]
+          if (!dist) return []
+
+          return [
+            '',
+            `未命中: ${(dist.missProb * 100).toFixed(2)}%`,
+            `完全偏转(0伤害): ${(dist.zeroDamageProb * 100).toFixed(2)}%`,
+            `部分偏转(50%伤害): ${(dist.halfDamageProb * 100).toFixed(2)}% → DPS ${dist.halfDPS.toFixed(2)}`,
+            `穿透(100%伤害): ${(dist.fullDamageProb * 100).toFixed(2)}% → DPS ${dist.fullDPS.toFixed(2)}`,
+          ]
         },
       },
     },
