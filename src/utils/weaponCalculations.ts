@@ -23,24 +23,36 @@ export interface WeaponDetailParams {
 
 /**
  * 计算命中率
- * 根据目标距离选择对应的命中率档位
+ * 根据目标距离选择对应的命中率档位，并在范围之间进行线性插值
  */
 export function calculateHitChance(params: WeaponDetailParams, targetDistance: number): number {
   const { touchAccuracy, shortAccuracy, mediumAccuracy, longAccuracy } = params
 
-  // 根据距离选择命中率（注意：params 中的命中率是百分比形式 0-100）
+  // 转换为 0-1 范围
+  const touch = touchAccuracy / 100
+  const short = shortAccuracy / 100
+  const medium = mediumAccuracy / 100
+  const long = longAccuracy / 100
+
+  let value: number
+
   if (targetDistance <= 3) {
-    return touchAccuracy / 100
+    value = touch
   } else if (targetDistance <= 12) {
-    return shortAccuracy / 100
+    // 在 Touch 和 Short 之间插值
+    value = touch + (short - touch) * ((targetDistance - 3) / 9)
   } else if (targetDistance <= 25) {
-    return mediumAccuracy / 100
+    // 在 Short 和 Medium 之间插值
+    value = short + (medium - short) * ((targetDistance - 12) / 13)
   } else if (targetDistance <= 40) {
-    return longAccuracy / 100
+    // 在 Medium 和 Long 之间插值
+    value = medium + (long - medium) * ((targetDistance - 25) / 15)
   } else {
-    // 超过40格使用远距离命中率（可能会很低）
-    return longAccuracy / 100
+    value = long
   }
+
+  // 限制在 0.01 到 1.0 之间
+  return Math.max(0.01, Math.min(1.0, value))
 }
 
 /**
