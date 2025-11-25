@@ -29,28 +29,28 @@ const chartContainer = ref<HTMLDivElement | null>(null)
 function generateSurfaceData() {
   // 目标距离范围：0-50格
   const distances = []
-  for (let d = 0; d <= 50; d += 2) {
+  for (let d = 0; d <= 50; d += 1) {
     distances.push(d)
   }
 
   // 护甲值范围：0-200%
   const armorValues = []
-  for (let a = 0; a <= 200; a += 5) {
+  for (let a = 0; a <= 200; a += 4) {
     armorValues.push(a)
   }
 
   // 计算每个点的DPS和详细信息
-  // zData[i][j] 对应 armorValues[i], distances[j]
+  // zData[i][j] 对应 distances[i], armorValues[j]
   const zData: number[][] = []
   const hoverTexts: string[][] = []
 
-  for (let i = 0; i < armorValues.length; i++) {
+  for (let i = 0; i < distances.length; i++) {
     const row: number[] = []
     const hoverRow: string[] = []
-    const armor = armorValues[i] / 100
+    const distance = distances[i]
 
-    for (let j = 0; j < distances.length; j++) {
-      const distance = distances[j]
+    for (let j = 0; j < armorValues.length; j++) {
+      const armor = armorValues[j] / 100
 
       // 计算该距离下的命中率
       const detailParams: WeaponDetailParams = {
@@ -75,16 +75,16 @@ function generateSurfaceData() {
       // 构建悬停文本
       const hoverText = [
         `<b>目标距离:</b> ${distance} 格`,
-        `<b>护甲值:</b> ${armorValues[i]}%`,
+        `<b>护甲值:</b> ${armorValues[j]}%`,
         `<b>命中率:</b> ${(hitChance * 100).toFixed(2)}%`,
         `<b>最大DPS:</b> ${maxDPS.toFixed(2)}`,
-        `━━━━━━━━━━━━━━━━`,
-        `<b>期望DPS:</b> ${expectedDPS.toFixed(3)}`,
         `━━━━━━━━━━━━━━━━`,
         `<b>未命中:</b> ${(distribution.missProb * 100).toFixed(2)}%`,
         `<b>完全偏转 (0伤害):</b> ${(distribution.zeroDamageProb * 100).toFixed(2)}%`,
         `<b>部分偏转 (50%伤害):</b> ${(distribution.halfDamageProb * 100).toFixed(2)}% → ${distribution.halfDPS.toFixed(3)} DPS`,
         `<b>穿透 (100%伤害):</b> ${(distribution.fullDamageProb * 100).toFixed(2)}% → ${distribution.fullDPS.toFixed(3)} DPS`,
+        `━━━━━━━━━━━━━━━━`,
+        `<b>期望DPS:</b> ${expectedDPS.toFixed(3)}`,
       ].join('<br>')
 
       hoverRow.push(hoverText)
@@ -102,12 +102,26 @@ function plotSurface() {
 
   const { distances, armorValues, zData, hoverTexts } = generateSurfaceData()
 
+  // 转置zData，因为Plotly期望z[i][j]对应y[i]和x[j]
+  // 原始数据是z[距离][护甲]，需要转换为z[护甲][距离]
+  const zDataTransposed: number[][] = []
+
+  // 但不知道为什么hoverTexts不需要转置，也就是说hoverTexts[i][j]对应y[i]和x[j]已经正确，而其实际上对应的是zData[i][j]
+
+  for (let i = 0; i < armorValues.length; i++) {
+    const zRow: number[] = []
+    for (let j = 0; j < distances.length; j++) {
+      zRow.push(zData[j][i])
+    }
+    zDataTransposed.push(zRow)
+  }
+
   const data: Plotly.Data[] = [
     {
       type: 'surface',
       x: distances, // 目标距离
       y: armorValues, // 护甲值
-      z: zData, // DPS
+      z: zDataTransposed, // DPS
       text: hoverTexts, // 悬停文本
       hovertemplate: '%{text}<extra></extra>',
       colorscale: 'Viridis',

@@ -1,3 +1,10 @@
 # rimworld-dps-calculator
 
 武器数据来源：[[[分类:远程武器\]] - 灰机wiki](https://rimworld.huijiwiki.com/index.php?title=%E7%89%B9%E6%AE%8A:%E8%AF%A2%E9%97%AE&limit=100&offset=0&q=%5B%5B%E5%88%86%E7%B1%BB%3A%E8%BF%9C%E7%A8%8B%E6%AD%A6%E5%99%A8%5D%5D&p=mainlabel%3D-20%E5%90%8D%E7%A7%B0%2Fformat%3Dtable%2Flink%3D-20subject&po=%3F%E5%BC%B9%E8%8D%AF%E4%BC%A4%E5%AE%B3%0A%3F%E6%8A%A4%E7%94%B2%E7%A9%BF%E9%80%8F%0A%3F%E6%8A%91%E6%AD%A2%E8%83%BD%E5%8A%9B%0A%3F%E7%9E%84%E5%87%86%E6%97%B6%E9%97%B4%0A%3F%E8%BF%9C%E7%A8%8B%E5%86%B7%E5%8D%B4%E6%97%B6%E9%97%B4%3D%E5%86%B7%E5%8D%B4%E6%97%B6%E9%97%B4%0A%3F%E5%B0%84%E7%A8%8B%3D%E5%B0%84%E7%A8%8B%28tiles%29%0A%3F%E8%BF%9E%E5%8F%91%E6%95%B0%E9%87%8F%0A%3F%E8%BF%9E%E5%8F%91%E9%97%B4%E9%9A%94tick%E6%95%B0%3D%E8%BF%9E%E5%8F%91%E9%97%B4%E9%9A%94%28ticks%29%0A%3F%E7%B2%BE%E5%BA%A6%EF%BC%88%E8%B4%B4%E8%BF%91%EF%BC%89%0A%3F%E7%B2%BE%E5%BA%A6%EF%BC%88%E8%BF%91%EF%BC%89%0A%3F%E7%B2%BE%E5%BA%A6%EF%BC%88%E4%B8%AD%EF%BC%89%0A%3F%E7%B2%BE%E5%BA%A6%EF%BC%88%E8%BF%9C%EF%BC%89%0A%3F%E4%BB%B7%E5%80%BC%3D%E5%B8%82%E5%9C%BA%E4%BB%B7%E5%80%BC%0A&sort=&order=asc&eq=no#search)
+
+# TODO
+
+- 移除图表标题，使其占据整个高度
+- 缩小RimWorld DPS 计算器主标题，将其放在左侧
+- 滚动时只有左侧的标题和武器参数滚动，图表不动
+- 护甲值大于100时没有数据
