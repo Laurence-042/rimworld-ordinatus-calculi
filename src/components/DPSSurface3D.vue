@@ -106,7 +106,7 @@ function plotSurface() {
   // 原始数据是z[距离][护甲]，需要转换为z[护甲][距离]
   const zDataTransposed: number[][] = []
 
-  // 但不知道为什么hoverTexts不需要转置，也就是说hoverTexts[i][j]对应y[i]和x[j]已经正确，而其实际上对应的是zData[i][j]
+  // 但不知道为什么hoverTexts不需要转置，也就是说Plotly期望hoverTexts[i][j]对应x[i]和y[j]，也就是说它其实际上对应的是zData[j][i]
 
   for (let i = 0; i < armorValues.length; i++) {
     const zRow: number[] = []
