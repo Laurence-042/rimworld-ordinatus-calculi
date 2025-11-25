@@ -17,6 +17,9 @@ import DPSSurface3D from './DPSSurface3D.vue'
 // 图表模式：2D曲线 或 3D曲面
 const chartMode = ref<'2d' | '3d'>('2d')
 
+// 选中的武器预设索引
+const selectedPresetIndex = ref<number | null>(null)
+
 // 命中率参数
 const accuracyParams = ref({
   touchAccuracy: 95,
@@ -60,6 +63,7 @@ const actualMaxDPS = computed(() => {
 
 // 应用武器预设
 const applyPreset = (presetIndex: number) => {
+  selectedPresetIndex.value = presetIndex
   const preset = weaponPresets[presetIndex]
   // 更新命中率参数
   accuracyParams.value = {
@@ -120,7 +124,12 @@ const allDistributions = computed(() => {
             <!-- 武器预设 -->
             <el-divider content-position="left">武器预设</el-divider>
             <el-form-item label="选择预设">
-              <el-select placeholder="选择武器预设" @change="applyPreset" style="width: 300px">
+              <el-select
+                v-model="selectedPresetIndex"
+                placeholder="选择武器预设"
+                @change="applyPreset"
+                style="width: 300px"
+              >
                 <el-option
                   v-for="(preset, index) in weaponPresets"
                   :key="index"
