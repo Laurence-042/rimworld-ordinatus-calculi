@@ -39,11 +39,13 @@ function generateSurfaceData() {
     armorValues.push(a)
   }
 
-  // 计算每个点的DPS
+  // 计算每个点的DPS和详细信息
   const zData: number[][] = []
+  const hoverTexts: string[][] = []
 
   for (let i = 0; i < distances.length; i++) {
     const row: number[] = []
+    const hoverRow: string[] = []
     const distance = distances[i]
 
     // 计算该距离下的命中率
@@ -68,18 +70,36 @@ function generateSurfaceData() {
       const expectedDPS = distribution.expectedDPS
 
       row.push(expectedDPS)
+
+      // 构建悬停文本
+      const hoverText = [
+        `<b>目标距离:</b> ${distance} 格`,
+        `<b>护甲值:</b> ${armorValues[j]}%`,
+        `<b>命中率:</b> ${(hitChance * 100).toFixed(2)}%`,
+        `<b>最大DPS:</b> ${maxDPS.toFixed(2)}`,
+        `━━━━━━━━━━━━━━━━`,
+        `<b>期望DPS:</b> ${expectedDPS.toFixed(3)}`,
+        `━━━━━━━━━━━━━━━━`,
+        `<b>未命中:</b> ${(distribution.missProb * 100).toFixed(2)}%`,
+        `<b>完全偏转 (0伤害):</b> ${(distribution.zeroDamageProb * 100).toFixed(2)}%`,
+        `<b>部分偏转 (50%伤害):</b> ${(distribution.halfDamageProb * 100).toFixed(2)}% → ${distribution.halfDPS.toFixed(3)} DPS`,
+        `<b>穿透 (100%伤害):</b> ${(distribution.fullDamageProb * 100).toFixed(2)}% → ${distribution.fullDPS.toFixed(3)} DPS`,
+      ].join('<br>')
+
+      hoverRow.push(hoverText)
     }
     zData.push(row)
+    hoverTexts.push(hoverRow)
   }
 
-  return { distances, armorValues, zData }
+  return { distances, armorValues, zData, hoverTexts }
 }
 
 // 绘制3D图表
 function plotSurface() {
   if (!chartContainer.value) return
 
-  const { distances, armorValues, zData } = generateSurfaceData()
+  const { distances, armorValues, zData, hoverTexts } = generateSurfaceData()
 
   const data: Plotly.Data[] = [
     {
@@ -87,6 +107,8 @@ function plotSurface() {
       x: armorValues, // 护甲值
       y: distances, // 目标距离
       z: zData, // DPS
+      text: hoverTexts, // 悬停文本
+      hovertemplate: '%{text}<extra></extra>',
       colorscale: 'Viridis',
       colorbar: {
         title: {
