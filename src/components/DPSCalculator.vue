@@ -5,15 +5,13 @@ import {
   calculateDPSDistribution,
   type WeaponParams,
 } from '@/utils/armorCalculations'
+import DPSChart from './DPSChart.vue'
 
 // 武器参数 (转换为百分比形式便于 slider 使用)
 const hitChance = ref(80) // 0-100
 const maxDPS = ref(10)
 const armorPenetration = ref(10) // 0-100
 const targetArmor = ref(50) // 0-200
-
-// 折叠面板状态
-const activeCollapse = ref<string[]>([])
 
 // 计算DPS曲线
 const dpsCurve = computed(() => {
@@ -33,14 +31,6 @@ const dpsDistribution = computed(() => {
     armorPenetration: armorPenetration.value / 100,
   }
   return calculateDPSDistribution(params, targetArmor.value / 100)
-})
-
-// 样本数据用于表格展示
-const sampleData = computed(() => {
-  return [0, 25, 50, 75, 100, 125, 150, 175, 200].map((i) => ({
-    armor: `${i}%`,
-    dps: dpsCurve.value.dpsValues[i].toFixed(3),
-  }))
 })
 </script>
 
@@ -123,25 +113,14 @@ const sampleData = computed(() => {
 
     <el-card class="results-section">
       <template #header>
-        <h3>DPS曲线数据</h3>
+        <h3>DPS曲线图</h3>
       </template>
 
-      <el-alert
-        title="数据点信息"
-        type="info"
-        :closable="false"
-        show-icon
-        :description="`计算了 ${dpsCurve.dpsValues.length} 个数据点（护甲值 0% - 200%）`"
+      <DPSChart
+        :armor-values="dpsCurve.armorValues"
+        :dps-values="dpsCurve.dpsValues"
+        :target-armor="targetArmor"
       />
-
-      <el-collapse v-model="activeCollapse" class="data-collapse">
-        <el-collapse-item title="查看部分数据" name="1">
-          <el-table :data="sampleData" stripe style="width: 100%">
-            <el-table-column prop="armor" label="护甲值" width="120" />
-            <el-table-column prop="dps" label="期望DPS" />
-          </el-table>
-        </el-collapse-item>
-      </el-collapse>
     </el-card>
 
     <el-card class="distribution-section">
@@ -217,10 +196,6 @@ const sampleData = computed(() => {
 
 .unit-placeholder {
   width: 20px;
-}
-
-.data-collapse {
-  margin-top: 15px;
 }
 
 .dps-value {
