@@ -32,22 +32,19 @@ const calculationMode = ref<'weapon' | 'armor'>('weapon')
 }
 
 .app-header {
-  flex-shrink: 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-bottom: 1px solid var(--border-color);
   padding: 20px 30px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  top: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
 }
 
 .app-title {
-  color: white;
-  font-size: 1.8em;
-  font-weight: 600;
+  color: var(--el-text-color-primary);
+  font-size: 1.5em;
+  font-weight: 500;
   margin: 0;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .app-main {
@@ -55,6 +52,7 @@ const calculationMode = ref<'weapon' | 'armor'>('weapon')
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  background: var(--el-bg-color-page);
 }
 
 .placeholder {
@@ -63,7 +61,7 @@ const calculationMode = ref<'weapon' | 'armor'>('weapon')
   justify-content: center;
   height: 100%;
   font-size: 1.5em;
-  color: #909399;
+  color: var(--el-text-color-secondary);
 }
 
 @media (max-width: 768px) {
@@ -74,7 +72,7 @@ const calculationMode = ref<'weapon' | 'armor'>('weapon')
   }
 
   .app-title {
-    font-size: 1.4em;
+    font-size: 1.3em;
   }
 }
 </style>

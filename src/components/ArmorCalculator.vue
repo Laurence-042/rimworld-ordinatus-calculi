@@ -1226,7 +1226,7 @@ onMounted(async () => {
       <div class="middle-panel">
         <el-card>
           <template #header>
-            <h3>覆盖范围可视化</h3>
+            <h3>覆盖范围</h3>
           </template>
 
           <div
