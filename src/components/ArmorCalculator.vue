@@ -1280,6 +1280,7 @@ onMounted(async () => {
               node-key="value"
               :highlight-current="true"
               :current-node-key="selectedBodyPart"
+              :expand-on-click-node="false"
               @node-click="handleTreeNodeClick"
             >
               <template #default="{ node, data }">
@@ -1311,13 +1312,9 @@ onMounted(async () => {
         <div class="chart-controls">
           <div>
             <el-radio-group v-model="chartMode" size="default">
-              <el-radio-button value="2d">2D曲线</el-radio-button>
-              <el-radio-button value="3d">3D曲面</el-radio-button>
+              <el-radio-button value="2d">2D曲线 - {{ selectedBodyPartName }}</el-radio-button>
+              <el-radio-button value="3d">3D曲面 - {{ selectedBodyPartName }}</el-radio-button>
             </el-radio-group>
-            <div class="selected-body-part">
-              <span class="body-part-label">计算部位：</span>
-              <el-tag type="success" size="large">{{ selectedBodyPartName }}</el-tag>
-            </div>
           </div>
           <p class="chart-hint">
             <template v-if="chartMode === '2d'">
@@ -1446,19 +1443,6 @@ onMounted(async () => {
   flex-shrink: 0;
   justify-content: space-between;
   margin-bottom: 15px;
-}
-
-.selected-body-part {
-  align-items: center;
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.body-part-label {
-  color: #606266;
-  font-size: 0.9em;
-  font-weight: 500;
 }
 
 .coverage-hint {
