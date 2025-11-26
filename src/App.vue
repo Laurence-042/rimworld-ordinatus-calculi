@@ -13,3 +13,8 @@ main {
   min-height: 100vh;
 }
 </style>
+<style>
+body {
+  margin: 0;
+}
+</style>

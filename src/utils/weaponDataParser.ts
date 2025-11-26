@@ -6,12 +6,12 @@ export interface WeaponCSVData {
   弹药伤害: string
   护甲穿透: string
   抑止能力: string
-  预热时间: string
+  瞄准时间: string
   冷却时间: string
   '射程(tiles)': string
-  射速: string
   连发数量: string
   '连发间隔(ticks)': string
+  '精度（贴近）': string
   '精度（近）': string
   '精度（中）': string
   '精度（远）': string

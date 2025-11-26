@@ -65,6 +65,9 @@ const actualMaxDPS = computed(() => {
 const applyPreset = (presetIndex: number) => {
   selectedPresetIndex.value = presetIndex
   const preset = weaponPresets[presetIndex]
+
+  if (!preset) return
+
   // 更新命中率参数
   accuracyParams.value = {
     touchAccuracy: preset.params.touchAccuracy,
@@ -106,15 +109,10 @@ const allDistributions = computed(() => {
 
 <template>
   <div class="calculator">
-    <el-card class="header-card">
-      <template #header>
-        <h2>RimWorld DPS 计算器</h2>
-      </template>
-    </el-card>
-
     <div class="main-layout">
       <!-- 左侧：参数输入 -->
       <div class="left-panel">
+        <h2 class="main-title">RimWorld DPS 计算器</h2>
         <el-card class="input-section">
           <template #header>
             <h3>武器参数</h3>
@@ -326,25 +324,18 @@ const allDistributions = computed(() => {
 
       <!-- 右侧：结果显示 -->
       <div class="right-panel">
-        <el-card class="results-section">
-          <template #header>
-            <div style="display: flex; justify-content: space-between; align-items: center">
-              <div>
-                <h3>DPS图表</h3>
-                <p style="font-size: 0.9em; color: #909399; margin-top: 5px">
-                  <template v-if="chartMode === '2d'">
-                    悬停在曲线上查看该护甲值的详细DPS分布
-                  </template>
-                  <template v-else> 交互式3D曲面：护甲值 × 目标距离 → DPS </template>
-                </p>
-              </div>
-              <el-radio-group v-model="chartMode" size="default">
-                <el-radio-button value="2d">2D曲线</el-radio-button>
-                <el-radio-button value="3d">3D曲面</el-radio-button>
-              </el-radio-group>
-            </div>
-          </template>
+        <div class="chart-controls">
+          <el-radio-group v-model="chartMode" size="default">
+            <el-radio-button value="2d">2D曲线</el-radio-button>
+            <el-radio-button value="3d">3D曲面</el-radio-button>
+          </el-radio-group>
+          <p class="chart-hint">
+            <template v-if="chartMode === '2d'"> 悬停在曲线上查看该护甲值的详细DPS分布 </template>
+            <template v-else> 交互式3D曲面：护甲值 × 目标距离 → DPS </template>
+          </p>
+        </div>
 
+        <div class="chart-container">
           <DPSChart
             v-if="chartMode === '2d'"
             :armor-values="dpsCurve.armorValues"
@@ -357,7 +348,7 @@ const allDistributions = computed(() => {
             :accuracy-params="accuracyParams"
             :armor-penetration="armorPenetration"
           />
-        </el-card>
+        </div>
       </div>
     </div>
   </div>
@@ -365,42 +356,92 @@ const allDistributions = computed(() => {
 
 <style scoped>
 .calculator {
-  padding: 20px;
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
 }
 
-.header-card {
-  margin-bottom: 20px;
+.main-title {
+  font-size: 1.5em;
+  font-weight: 600;
+  color: #303133;
+  margin: 0 0 20px 0;
+  padding: 0;
 }
 
-/* 主布局：响应式左右分栏 */
+/* 主布局：左右分栏，占满视口 */
 .main-layout {
   display: flex;
   gap: 20px;
-  align-items: flex-start;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
-/* 在小屏幕上垂直堆叠 */
+/* 左侧面板：可滚动 */
+.left-panel {
+  flex: 0 0 500px;
+  min-width: 500px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 20px;
+  padding-right: 10px;
+}
+
+/* 右侧面板：固定，不滚动 */
+.right-panel {
+  flex: 1;
+  min-width: 600px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 20px;
+  padding-left: 10px;
+}
+
+.chart-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  flex-shrink: 0;
+}
+
+.chart-hint {
+  font-size: 0.9em;
+  color: #909399;
+  margin: 0;
+}
+
+.chart-container {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 在小屏幕上垂直堆叠并允许整体滚动 */
 @media (max-width: 1200px) {
+  .calculator {
+    height: auto;
+    overflow: auto;
+  }
+
   .main-layout {
     flex-direction: column;
+    height: auto;
+    overflow: visible;
   }
 
   .left-panel,
   .right-panel {
     width: 100%;
-  }
-}
-
-/* 在大屏幕上左右分栏 */
-@media (min-width: 1201px) {
-  .left-panel {
-    flex: 0 0 500px;
-    min-width: 500px;
+    overflow: visible;
+    height: auto;
   }
 
   .right-panel {
-    flex: 1;
-    min-width: 600px;
+    min-height: 600px;
   }
 }
 

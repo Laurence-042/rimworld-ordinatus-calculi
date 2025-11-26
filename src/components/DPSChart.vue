@@ -72,8 +72,10 @@ const chartOptions = computed(() => ({
       mode: 'index' as const,
       intersect: false,
       callbacks: {
-        label: (context: { parsed: { y: number }; dataIndex: number }) => {
-          return `期望DPS: ${context.parsed.y.toFixed(3)}`
+        label: (context: { parsed: { y: number | null }; dataIndex: number }) => {
+          const y = context.parsed.y
+          if (y === null) return ''
+          return `期望DPS: ${y.toFixed(3)}`
         },
         afterLabel: (context: { dataIndex: number }) => {
           const index = context.dataIndex
