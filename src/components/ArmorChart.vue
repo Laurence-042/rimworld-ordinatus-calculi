@@ -18,6 +18,7 @@ interface ArmorSetData {
 const props = defineProps<{
   armorSetsData: ArmorSetData[]
   damageType: DamageType
+  fixedDamage: number
 }>()
 
 const chartContainer = ref<HTMLElement | null>(null)
@@ -102,6 +103,15 @@ function renderChart() {
       hoverinfo: 'skip',
     })
 
+    // 准备累积概率的hover文本
+    const cumulativeHoverTexts = sortedMultipliers.map((multiplier, index) => {
+      const cumulativeProb = cumulativeProbabilities[index] ?? 0
+      const damageValue = props.fixedDamage ?? 0
+      const actualDamage = (damageValue * multiplier).toFixed(1)
+      const multiplierPercent = (multiplier * 100).toFixed(0)
+      return `有 ${cumulativeProb.toFixed(2)}% 的概率<br>受伤不大于 ${damageValue} × ${multiplierPercent}% = ${actualDamage}`
+    })
+
     // 折线图（累积概率）
     traces.push({
       name: `${armorSet.name} - 累积`,
@@ -109,6 +119,7 @@ function renderChart() {
       mode: 'lines+markers',
       x: sortedMultipliers,
       y: cumulativeProbabilities,
+      text: cumulativeHoverTexts,
       line: { color: armorSet.color, dash: 'dash', width: 3 },
       marker: {
         size: 8,
@@ -116,7 +127,7 @@ function renderChart() {
         line: { color: '#ffffff', width: 2 },
       },
       yaxis: 'y2',
-      hovertemplate: '%{x:.0%}伤害<br>累积概率: %{y:.2f}%<extra></extra>',
+      hovertemplate: '%{text}<extra></extra>',
     })
   })
 
@@ -158,7 +169,7 @@ function renderChart() {
   })
 }
 
-watch(() => [props.armorSetsData, props.damageType], renderChart, { deep: true })
+watch(() => [props.armorSetsData, props.damageType, props.fixedDamage], renderChart, { deep: true })
 
 onMounted(() => {
   renderChart()

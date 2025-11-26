@@ -1323,6 +1323,7 @@ onMounted(async () => {
             v-if="chartMode === '2d'"
             :armor-sets-data="allArmorSetsData"
             :damage-type="damageType"
+            :fixed-damage="fixedDamage"
           />
           <ArmorSurface3D v-else :armor-sets-data="allArmorSetsData" :damage-type="damageType" />
         </div>
