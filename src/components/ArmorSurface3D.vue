@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import Plotly from 'plotly.js-dist-min'
+import { transposeMatrix } from '@/utils/plotlyUtils'
 
 interface ArmorSetData {
   armorSet: {
@@ -42,14 +43,11 @@ function renderChart() {
   const { armorSet, damageCurve } = currentArmorData.value
   const { penetrationValues, damageValues, expectedDamageGrid } = damageCurve
 
-  const zDataTransposed: number[][] = []
-  for (let i = 0; i < damageValues.length; i++) {
-    const zRow: number[] = []
-    for (let j = 0; j < penetrationValues.length; j++) {
-      zRow.push(expectedDamageGrid[j]![i]!)
-    }
-    zDataTransposed.push(zRow)
-  }
+  // 数据结构：expectedDamageGrid[penetrationIndex][damageIndex]
+  // 目标映射：x=penetrationValues, y=damageValues, z=expectedDamage
+  // Plotly 要求：z[i][j] 对应 y[i] 和 x[j]（第一维=Y轴，第二维=X轴）
+  // 因此需要转置：将 [penetration][damage] 转为 [damage][penetration]
+  const zDataTransposed = transposeMatrix(expectedDamageGrid)
 
   const data = [
     {

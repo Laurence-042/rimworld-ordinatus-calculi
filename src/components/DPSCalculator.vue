@@ -7,7 +7,7 @@ import {
   calculateMaxDPS,
   getWeaponDataSources,
 } from '@/utils/weaponCalculations'
-import type { Weapon, WeaponArmorParams, WeaponDataSource } from '@/types/weapon'
+import type { Weapon, SimplifiedWeaponParams, WeaponDataSource } from '@/types/weapon'
 import DPSChart from './DPSChart.vue'
 import DPSSurface3D from './DPSSurface3D.vue'
 
@@ -85,7 +85,7 @@ function createWeapon(name: string, color: string, params?: Partial<Weapon>): We
   }
 }
 
-function toArmorCalculationParams(weapon: Weapon): WeaponArmorParams {
+function toArmorCalculationParams(weapon: Weapon): SimplifiedWeaponParams {
   const hitChance = calculateHitChance(weapon, targetDistance.value)
   const maxDPS = calculateMaxDPS(weapon)
   return {

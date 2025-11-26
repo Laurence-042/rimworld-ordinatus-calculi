@@ -49,12 +49,16 @@ export interface WeaponDataSource {
 }
 
 /**
- * 护甲计算中使用的武器参数
+ * 简化的武器参数
+ *
+ * 用于护甲计算和DPS分析的抽象武器参数，只包含影响最终伤害的关键属性。
+ * 相比完整的 WeaponParams，它已经将复杂的武器属性（如预热时间、连发间隔等）
+ * 转换为了计算结果（命中率、最大DPS）。
  */
-export interface WeaponArmorParams {
+export interface SimplifiedWeaponParams {
   armorPenetration?: number // 护甲穿透 (0-1, 可选，默认为0)
-  hitChance: number // 武器命中率 (0-1)
-  maxDPS: number // 命中率100%、目标无护甲时武器的最大DPS
+  hitChance: number // 武器命中率 (0-1)，已根据距离计算
+  maxDPS: number // 最大DPS (100%命中、无护甲时)，已根据武器属性计算
 }
 
 /**
