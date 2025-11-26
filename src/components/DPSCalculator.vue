@@ -10,6 +10,7 @@ import {
 import type { Weapon, SimplifiedWeaponParams, WeaponDataSource } from '@/types/weapon'
 import DPSChart from './DPSChart.vue'
 import DPSSurface3D from './DPSSurface3D.vue'
+import SliderInput from './SliderInput.vue'
 
 // 常量
 const WEAPON_COLORS = [
@@ -181,18 +182,7 @@ onMounted(async () => {
           </template>
           <el-form label-width="8em">
             <el-form-item label="目标距离">
-              <div class="slider-input-group">
-                <el-slider v-model="targetDistance" :min="0" :max="50" :step="1" />
-                <el-input-number
-                  v-model="targetDistance"
-                  :min="0"
-                  :max="100"
-                  :step="1"
-                  controls-position="right"
-                  class="input-number-fixed"
-                />
-                <span class="unit">格</span>
-              </div>
+              <SliderInput v-model="targetDistance" :min="0" :max="100" :step="1" unit="格" />
             </el-form-item>
           </el-form>
         </el-card>
@@ -269,175 +259,79 @@ onMounted(async () => {
             <el-divider content-position="left">命中率参数</el-divider>
 
             <el-form-item label="贴近 (≤3格)">
-              <div class="slider-input-group">
-                <el-slider v-model="weapon.touchAccuracy" :min="0" :max="100" :step="1" />
-                <el-input-number
-                  v-model="weapon.touchAccuracy"
-                  :min="0"
-                  :max="100"
-                  :step="1"
-                  controls-position="right"
-                  class="input-number-fixed"
-                />
-                <span class="unit">%</span>
-              </div>
+              <SliderInput v-model="weapon.touchAccuracy" :min="0" :max="100" :step="1" unit="%" />
             </el-form-item>
 
             <el-form-item label="近 (≤12格)">
-              <div class="slider-input-group">
-                <el-slider v-model="weapon.shortAccuracy" :min="0" :max="100" :step="1" />
-                <el-input-number
-                  v-model="weapon.shortAccuracy"
-                  :min="0"
-                  :max="100"
-                  :step="1"
-                  controls-position="right"
-                  class="input-number-fixed"
-                />
-                <span class="unit">%</span>
-              </div>
+              <SliderInput v-model="weapon.shortAccuracy" :min="0" :max="100" :step="1" unit="%" />
             </el-form-item>
 
             <el-form-item label="中 (≤25格)">
-              <div class="slider-input-group">
-                <el-slider v-model="weapon.mediumAccuracy" :min="0" :max="100" :step="1" />
-                <el-input-number
-                  v-model="weapon.mediumAccuracy"
-                  :min="0"
-                  :max="100"
-                  :step="1"
-                  controls-position="right"
-                  class="input-number-fixed"
-                />
-                <span class="unit">%</span>
-              </div>
+              <SliderInput v-model="weapon.mediumAccuracy" :min="0" :max="100" :step="1" unit="%" />
             </el-form-item>
 
             <el-form-item label="远 (≤40格)">
-              <div class="slider-input-group">
-                <el-slider v-model="weapon.longAccuracy" :min="0" :max="100" :step="1" />
-                <el-input-number
-                  v-model="weapon.longAccuracy"
-                  :min="0"
-                  :max="100"
-                  :step="1"
-                  controls-position="right"
-                  class="input-number-fixed"
-                />
-                <span class="unit">%</span>
-              </div>
+              <SliderInput v-model="weapon.longAccuracy" :min="0" :max="100" :step="1" unit="%" />
             </el-form-item>
 
             <!-- 武器属性 -->
             <el-divider content-position="left">武器属性</el-divider>
 
             <el-form-item label="伤害">
-              <div class="slider-input-group">
-                <el-slider v-model="weapon.damage" :min="1" :max="50" :step="1" />
-                <el-input-number
-                  v-model="weapon.damage"
-                  :min="1"
-                  :max="200"
-                  :step="1"
-                  controls-position="right"
-                  class="input-number-fixed"
-                />
-                <span class="unit-placeholder"></span>
-              </div>
+              <SliderInput v-model="weapon.damage" :min="1" :max="200" :step="1" />
             </el-form-item>
 
             <el-form-item label="预热时间 (Warm-Up)">
-              <div class="slider-input-group">
-                <el-slider v-model="weapon.warmUp" :min="0" :max="5" :step="0.1" />
-                <el-input-number
-                  v-model="weapon.warmUp"
-                  :min="0"
-                  :max="10"
-                  :step="0.1"
-                  :precision="2"
-                  controls-position="right"
-                  class="input-number-fixed"
-                />
-                <span class="unit">秒</span>
-              </div>
+              <SliderInput
+                v-model="weapon.warmUp"
+                :min="0"
+                :max="10"
+                :step="0.1"
+                :precision="2"
+                unit="秒"
+              />
             </el-form-item>
 
             <el-form-item label="冷却时间 (Cooldown)">
-              <div class="slider-input-group">
-                <el-slider v-model="weapon.cooldown" :min="0" :max="5" :step="0.1" />
-                <el-input-number
-                  v-model="weapon.cooldown"
-                  :min="0"
-                  :max="10"
-                  :step="0.1"
-                  :precision="2"
-                  controls-position="right"
-                  class="input-number-fixed"
-                />
-                <span class="unit">秒</span>
-              </div>
+              <SliderInput
+                v-model="weapon.cooldown"
+                :min="0"
+                :max="10"
+                :step="0.1"
+                :precision="2"
+                unit="秒"
+              />
             </el-form-item>
 
             <el-form-item label="连发数量 (Burst Count)">
-              <div class="slider-input-group">
-                <el-slider v-model="weapon.burstCount" :min="1" :max="10" :step="1" />
-                <el-input-number
-                  v-model="weapon.burstCount"
-                  :min="1"
-                  :max="20"
-                  :step="1"
-                  controls-position="right"
-                  class="input-number-fixed"
-                />
-                <span class="unit-placeholder"></span>
-              </div>
+              <SliderInput v-model="weapon.burstCount" :min="1" :max="20" :step="1" />
             </el-form-item>
 
             <el-form-item label="连发间隔 (Burst Ticks)">
-              <div class="slider-input-group">
-                <el-slider v-model="weapon.burstTicks" :min="0" :max="30" :step="1" />
-                <el-input-number
-                  v-model="weapon.burstTicks"
-                  :min="0"
-                  :max="60"
-                  :step="1"
-                  controls-position="right"
-                  class="input-number-fixed"
-                />
-                <span class="unit">ticks</span>
-              </div>
+              <SliderInput v-model="weapon.burstTicks" :min="0" :max="60" :step="1" unit="ticks" />
             </el-form-item>
 
             <el-form-item label="射程 (Range)">
-              <div class="slider-input-group">
-                <el-slider v-model="weapon.range" :min="0" :max="50" :step="0.5" />
-                <el-input-number
-                  v-model="weapon.range"
-                  :min="0"
-                  :max="50"
-                  :step="1"
-                  controls-position="right"
-                  class="input-number-fixed"
-                />
-                <span class="unit">格</span>
-              </div>
+              <SliderInput
+                v-model="weapon.range"
+                :min="0"
+                :max="50"
+                :step="0.5"
+                :precision="1"
+                unit="格"
+              />
             </el-form-item>
 
             <!-- 护甲穿透 -->
             <el-divider content-position="left">护甲穿透</el-divider>
             <el-form-item label="护甲穿透 (AP)">
-              <div class="slider-input-group">
-                <el-slider v-model="weapon.armorPenetration" :min="0" :max="100" :step="1" />
-                <el-input-number
-                  v-model="weapon.armorPenetration"
-                  :min="0"
-                  :max="100"
-                  :step="1"
-                  controls-position="right"
-                  class="input-number-fixed"
-                />
-                <span class="unit">%</span>
-              </div>
+              <SliderInput
+                v-model="weapon.armorPenetration"
+                :min="0"
+                :max="100"
+                :step="1"
+                unit="%"
+              />
             </el-form-item>
 
             <el-alert
@@ -593,29 +487,5 @@ onMounted(async () => {
   .right-panel {
     min-height: 600px;
   }
-}
-
-.slider-input-group {
-  align-items: center;
-  display: flex;
-  gap: 15px;
-  width: 100%;
-}
-
-.slider-input-group :deep(.el-slider) {
-  flex: 1;
-}
-
-.input-number-fixed {
-  width: 150px;
-}
-
-.unit {
-  color: #909399;
-  width: 20px;
-}
-
-.unit-placeholder {
-  width: 20px;
 }
 </style>

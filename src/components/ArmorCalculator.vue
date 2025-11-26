@@ -27,6 +27,7 @@ import {
 } from '@/utils/coverageUtils'
 import ArmorChart from './ArmorChart.vue'
 import ArmorSurface3D from './ArmorSurface3D.vue'
+import SliderInput from './SliderInput.vue'
 
 // 常量
 const ARMOR_COLORS = [
@@ -553,33 +554,11 @@ onMounted(async () => {
               <el-divider content-position="left">固定攻击参数</el-divider>
 
               <el-form-item label="固定穿甲">
-                <div class="slider-input-group">
-                  <el-slider v-model="fixedPenetration" :min="0" :max="100" :step="1" />
-                  <el-input-number
-                    v-model="fixedPenetration"
-                    :min="0"
-                    :max="100"
-                    :step="1"
-                    controls-position="right"
-                    class="input-number-fixed"
-                  />
-                  <span class="unit">%</span>
-                </div>
+                <SliderInput v-model="fixedPenetration" :min="0" :max="100" :step="1" unit="%" />
               </el-form-item>
 
               <el-form-item label="固定单发伤害">
-                <div class="slider-input-group">
-                  <el-slider v-model="fixedDamage" :min="1" :max="50" :step="1" />
-                  <el-input-number
-                    v-model="fixedDamage"
-                    :min="1"
-                    :max="100"
-                    :step="1"
-                    controls-position="right"
-                    class="input-number-fixed"
-                  />
-                  <span class="unit-placeholder"></span>
-                </div>
+                <SliderInput v-model="fixedDamage" :min="1" :max="100" :step="1" />
               </el-form-item>
             </template>
 
@@ -616,75 +595,39 @@ onMounted(async () => {
                 </el-form-item>
 
                 <el-form-item label="利器护甲">
-                  <div class="slider-input-group">
-                    <el-slider
-                      v-model="globalMaterials[materialType.tag].armorSharp"
-                      :min="0"
-                      :max="200"
-                      :step="1"
-                      :format-tooltip="(val: number) => `${val}%`"
-                      @input="() => onMaterialValueChange(materialType.tag)"
-                    />
-                    <el-input-number
-                      v-model="globalMaterials[materialType.tag].armorSharp"
-                      :min="0"
-                      :max="200"
-                      :step="1"
-                      :precision="0"
-                      controls-position="right"
-                      class="input-number-fixed"
-                      @change="() => onMaterialValueChange(materialType.tag)"
-                    />
-                    <span class="unit">%</span>
-                  </div>
+                  <SliderInput
+                    v-model="globalMaterials[materialType.tag].armorSharp"
+                    :min="0"
+                    :max="200"
+                    :step="1"
+                    :format-tooltip="(val: number) => `${val}%`"
+                    unit="%"
+                    @change="() => onMaterialValueChange(materialType.tag)"
+                  />
                 </el-form-item>
 
                 <el-form-item label="钝器护甲">
-                  <div class="slider-input-group">
-                    <el-slider
-                      v-model="globalMaterials[materialType.tag].armorBlunt"
-                      :min="0"
-                      :max="200"
-                      :step="1"
-                      :format-tooltip="(val: number) => `${val}%`"
-                      @input="() => onMaterialValueChange(materialType.tag)"
-                    />
-                    <el-input-number
-                      v-model="globalMaterials[materialType.tag].armorBlunt"
-                      :min="0"
-                      :max="200"
-                      :step="1"
-                      :precision="0"
-                      controls-position="right"
-                      class="input-number-fixed"
-                      @change="() => onMaterialValueChange(materialType.tag)"
-                    />
-                    <span class="unit">%</span>
-                  </div>
+                  <SliderInput
+                    v-model="globalMaterials[materialType.tag].armorBlunt"
+                    :min="0"
+                    :max="200"
+                    :step="1"
+                    :format-tooltip="(val: number) => `${val}%`"
+                    unit="%"
+                    @change="() => onMaterialValueChange(materialType.tag)"
+                  />
                 </el-form-item>
 
                 <el-form-item label="热能护甲">
-                  <div class="slider-input-group">
-                    <el-slider
-                      v-model="globalMaterials[materialType.tag].armorHeat"
-                      :min="0"
-                      :max="300"
-                      :step="1"
-                      :format-tooltip="(val: number) => `${val}%`"
-                      @input="() => onMaterialValueChange(materialType.tag)"
-                    />
-                    <el-input-number
-                      v-model="globalMaterials[materialType.tag].armorHeat"
-                      :min="0"
-                      :max="300"
-                      :step="1"
-                      :precision="0"
-                      controls-position="right"
-                      class="input-number-fixed"
-                      @change="() => onMaterialValueChange(materialType.tag)"
-                    />
-                    <span class="unit">%</span>
-                  </div>
+                  <SliderInput
+                    v-model="globalMaterials[materialType.tag].armorHeat"
+                    :min="0"
+                    :max="300"
+                    :step="1"
+                    :format-tooltip="(val: number) => `${val}%`"
+                    unit="%"
+                    @change="() => onMaterialValueChange(materialType.tag)"
+                  />
                 </el-form-item>
               </el-collapse-item>
             </el-collapse>
@@ -829,93 +772,50 @@ onMounted(async () => {
 
                 <template v-if="!layer.useMaterial">
                   <el-form-item label="利器护甲">
-                    <div class="slider-input-group">
-                      <el-slider
-                        v-model="layer.armorSharp"
-                        :min="0"
-                        :max="200"
-                        :step="1"
-                        :format-tooltip="(val: number) => `${val}%`"
-                      />
-                      <el-input-number
-                        v-model="layer.armorSharp"
-                        :min="0"
-                        :max="200"
-                        :step="1"
-                        :precision="0"
-                        controls-position="right"
-                        class="input-number-fixed"
-                      />
-                      <span class="unit">%</span>
-                    </div>
+                    <SliderInput
+                      v-model="layer.armorSharp"
+                      :min="0"
+                      :max="200"
+                      :step="1"
+                      :format-tooltip="(val: number) => `${val}%`"
+                      unit="%"
+                    />
                   </el-form-item>
 
                   <el-form-item label="钝器护甲">
-                    <div class="slider-input-group">
-                      <el-slider
-                        v-model="layer.armorBlunt"
-                        :min="0"
-                        :max="200"
-                        :step="1"
-                        :format-tooltip="(val: number) => `${val}%`"
-                      />
-                      <el-input-number
-                        v-model="layer.armorBlunt"
-                        :min="0"
-                        :max="200"
-                        :step="1"
-                        :precision="0"
-                        controls-position="right"
-                        class="input-number-fixed"
-                      />
-                      <span class="unit">%</span>
-                    </div>
+                    <SliderInput
+                      v-model="layer.armorBlunt"
+                      :min="0"
+                      :max="200"
+                      :step="1"
+                      :format-tooltip="(val: number) => `${val}%`"
+                      unit="%"
+                    />
                   </el-form-item>
 
                   <el-form-item label="热能护甲">
-                    <div class="slider-input-group">
-                      <el-slider
-                        v-model="layer.armorHeat"
-                        :min="0"
-                        :max="300"
-                        :step="1"
-                        :format-tooltip="(val: number) => `${val}%`"
-                      />
-                      <el-input-number
-                        v-model="layer.armorHeat"
-                        :min="0"
-                        :max="300"
-                        :step="1"
-                        :precision="0"
-                        controls-position="right"
-                        class="input-number-fixed"
-                      />
-                      <span class="unit">%</span>
-                    </div>
+                    <SliderInput
+                      v-model="layer.armorHeat"
+                      :min="0"
+                      :max="300"
+                      :step="1"
+                      :format-tooltip="(val: number) => `${val}%`"
+                      unit="%"
+                    />
                   </el-form-item>
                 </template>
 
                 <template v-else>
                   <el-form-item label="材料系数">
-                    <div class="slider-input-group">
-                      <el-slider
-                        v-model="layer.materialCoefficient"
-                        :min="0"
-                        :max="2"
-                        :step="0.01"
-                        :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
-                      />
-                      <el-input-number
-                        v-model="layer.materialCoefficient"
-                        :min="0"
-                        :max="2"
-                        :step="0.01"
-                        :precision="2"
-                        controls-position="right"
-                        class="input-number-fixed"
-                      />
-                      <span class="unit">x</span>
-                    </div>
+                    <SliderInput
+                      v-model="layer.materialCoefficient!"
+                      :min="0"
+                      :max="2"
+                      :step="0.01"
+                      :precision="2"
+                      :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
+                      unit="x"
+                    />
                   </el-form-item>
 
                   <el-form-item label="使用的材料">
@@ -1222,30 +1122,6 @@ onMounted(async () => {
   .right-panel {
     min-height: 600px;
   }
-}
-
-.slider-input-group {
-  align-items: center;
-  display: flex;
-  gap: 15px;
-  width: 100%;
-}
-
-.slider-input-group :deep(.el-slider) {
-  flex: 1;
-}
-
-.input-number-fixed {
-  width: 150px;
-}
-
-.unit {
-  color: #909399;
-  width: 20px;
-}
-
-.unit-placeholder {
-  width: 20px;
 }
 
 .coverage-tree-section {
