@@ -275,29 +275,12 @@ const allArmorSetsData = computed(() => {
       damageType: damageType.value,
     })
 
-    // 从 damageStates 计算概率
-    let noDeflectProb = 0
-    let halfDeflectProb = 0
-    let fullDamageProb = 0
-
-    for (const state of result.damageStates) {
-      if (state.damageMultiplier === 0) {
-        noDeflectProb += state.probability
-      } else if (state.damageMultiplier < 1) {
-        halfDeflectProb += state.probability
-      } else {
-        fullDamageProb += state.probability
-      }
-    }
-
     return {
       armorSet,
       damageCurve,
       fixedDamageResult: {
         expectedDamage: result.expectedDamage,
-        noDeflectProb,
-        halfDeflectProb,
-        fullDamageProb,
+        damageStates: result.damageStates,
       },
     }
   })
