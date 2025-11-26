@@ -196,53 +196,61 @@ function calculateIntersectionLine(
     }
   }
 
-  // 按距离(x)和护甲(y)排序，确保形成连续曲线
-  // 使用"最近邻"算法：每次选择离当前点最近的下一个点
+  // 使用最近邻算法连接点，但避免长距离跳跃
+  // 将点分组为多条独立的曲线
+  const curves: Array<typeof intersectionPoints> = []
+
   if (intersectionPoints.length > 1) {
-    const sorted: typeof intersectionPoints = [intersectionPoints[0]!]
-    const remaining = intersectionPoints.slice(1)
+    const remaining = [...intersectionPoints]
 
     while (remaining.length > 0) {
-      const last = sorted[sorted.length - 1]!
-      let minDist = Infinity
-      let minIndex = 0
+      const currentCurve: typeof intersectionPoints = [remaining[0]!]
+      remaining.splice(0, 1)
 
-      // 找到离最后一个点最近的点
-      for (let i = 0; i < remaining.length; i++) {
-        const point = remaining[i]!
-        const dist = Math.sqrt(
-          Math.pow(point.x - last.x, 2) +
-            Math.pow(point.y - last.y, 2) +
-            Math.pow(point.z - last.z, 2),
-        )
-        if (dist < minDist) {
-          minDist = dist
-          minIndex = i
+      // 持续添加最近的点，直到距离超过阈值
+      let foundNext = true
+      while (foundNext && remaining.length > 0) {
+        const last = currentCurve[currentCurve.length - 1]!
+        let minDist = Infinity
+        let minIndex = -1
+
+        // 找到离最后一个点最近的点
+        for (let i = 0; i < remaining.length; i++) {
+          const point = remaining[i]!
+          // 使用归一化距离：考虑x、y的实际范围
+          const distX = (point.x - last.x) / 50 // 距离范围 0-50
+          const distY = (point.y - last.y) / 200 // 护甲范围 0-200
+          const distZ = (point.z - last.z) / Math.max(last.z, 1) // 归一化DPS差异
+          const dist = Math.sqrt(distX * distX + distY * distY + distZ * distZ)
+
+          if (dist < minDist) {
+            minDist = dist
+            minIndex = i
+          }
+        }
+
+        // 如果最近的点距离太远，认为是不同的曲线段
+        // 阈值：归一化距离 > 0.1 表示跳跃太大
+        if (minIndex >= 0 && minDist < 0.1) {
+          currentCurve.push(remaining[minIndex]!)
+          remaining.splice(minIndex, 1)
+        } else {
+          foundNext = false
         }
       }
 
-      sorted.push(remaining[minIndex]!)
-      remaining.splice(minIndex, 1)
+      curves.push(currentCurve)
     }
-
-    // 转换为三个数组
-    const result = {
-      x: sorted.map((p) => p.x),
-      y: sorted.map((p) => p.y),
-      z: sorted.map((p) => p.z),
-    }
-
-    return result
+  } else if (intersectionPoints.length === 1) {
+    curves.push([intersectionPoints[0]!])
   }
 
-  // 转换为三个数组
-  const result = {
-    x: intersectionPoints.map((p) => p.x),
-    y: intersectionPoints.map((p) => p.y),
-    z: intersectionPoints.map((p) => p.z),
-  }
-
-  return result
+  // 转换为三个数组的数组（每条曲线一组）
+  return curves.map((curve) => ({
+    x: curve.map((p) => p.x),
+    y: curve.map((p) => p.y),
+    z: curve.map((p) => p.z),
+  }))
 }
 
 // 绘制3D图表
@@ -301,34 +309,39 @@ function plotSurface() {
       for (let j = i + 1; j < props.weaponsData.length; j++) {
         const weaponData1 = props.weaponsData[i]!
         const weaponData2 = props.weaponsData[j]!
-        const intersectionPoints = calculateIntersectionLine(
+        const intersectionCurves = calculateIntersectionLine(
           weaponData1,
           weaponData2,
           distances,
           armorValues,
         )
 
-        if (intersectionPoints.x.length > 0) {
-          // 添加交线
-          plotData.push({
-            type: 'scatter3d',
-            mode: 'lines',
-            name: `${weaponData1.weapon.name} ∩ ${weaponData2.weapon.name}`,
-            x: intersectionPoints.x,
-            y: intersectionPoints.y,
-            z: intersectionPoints.z,
-            line: {
-              color: '#FF0000',
-              width: 6,
-            },
-            hovertemplate:
-              '<b>交线</b><br>' +
-              '距离: %{x} 格<br>' +
-              '护甲: %{y:.1f}%<br>' +
-              'DPS: %{z:.2f}<br>' +
-              '<extra></extra>',
-          } as unknown as Plotly.Data)
-        }
+        // 为每条独立的交线段添加一个轨迹
+        intersectionCurves.forEach((curve, curveIndex) => {
+          if (curve.x.length > 0) {
+            plotData.push({
+              type: 'scatter3d',
+              mode: 'lines',
+              name:
+                curveIndex === 0
+                  ? `${weaponData1.weapon.name} ∩ ${weaponData2.weapon.name}`
+                  : `${weaponData1.weapon.name} ∩ ${weaponData2.weapon.name} (${curveIndex + 1})`,
+              x: curve.x,
+              y: curve.y,
+              z: curve.z,
+              line: {
+                color: '#FF0000',
+                width: 6,
+              },
+              hovertemplate:
+                '<b>交线</b><br>' +
+                '距离: %{x} 格<br>' +
+                '护甲: %{y:.1f}%<br>' +
+                'DPS: %{z:.2f}<br>' +
+                '<extra></extra>',
+            } as unknown as Plotly.Data)
+          }
+        })
       }
     }
   }
