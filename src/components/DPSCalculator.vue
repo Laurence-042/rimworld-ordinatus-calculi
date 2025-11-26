@@ -39,7 +39,7 @@ const DEFAULT_WEAPON_PARAMS = {
 
 // 状态
 const chartMode = ref<'2d' | '3d'>('3d')
-const targetDistance = ref(25)
+const targetDistance = ref(17)
 const weaponDataSources = ref<WeaponDataSource[]>([])
 
 let nextWeaponId = 1
@@ -177,7 +177,7 @@ onMounted(async () => {
         <h2 class="main-title">RimWorld DPS 计算器</h2>
 
         <!-- 全局参数：目标距离 -->
-        <el-card class="global-section">
+        <el-card v-if="chartMode === '2d'" class="global-section">
           <template #header>
             <h3>全局参数</h3>
           </template>
