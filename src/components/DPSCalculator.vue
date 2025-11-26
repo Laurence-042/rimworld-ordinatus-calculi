@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { Delete } from '@element-plus/icons-vue'
 import { calculateDPSCurve, calculateDPSDistribution } from '@/utils/armorCalculations'
 import {
   calculateHitChance,
@@ -218,7 +219,7 @@ onMounted(async () => {
                   v-if="weapons.length > 1"
                   type="danger"
                   size="small"
-                  :icon="'Delete'"
+                  :icon="Delete"
                   circle
                   @click="removeWeapon(weapon.id)"
                 />
