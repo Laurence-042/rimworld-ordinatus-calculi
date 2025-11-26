@@ -1,32 +1,61 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
-import Plotly from 'plotly.js-dist'
+import Plotly from 'plotly.js-dist-min'
 import type { WeaponDetailParams } from '@/utils/weaponCalculations'
 import { calculateHitChance, calculateMaxDPS } from '@/utils/weaponCalculations'
 import type { WeaponParams } from '@/utils/armorCalculations'
 import { calculateDPSDistribution } from '@/utils/armorCalculations'
 
-const props = defineProps<{
-  weaponParams: {
-    damage: number
-    warmUp: number
-    cooldown: number
-    burstCount: number
-    burstTicks: number
+interface DPSDistribution {
+  missProb: number
+  zeroDamageProb: number
+  halfDamageProb: number
+  fullDamageProb: number
+  halfDPS: number
+  fullDPS: number
+  expectedDPS: number
+}
+
+interface WeaponData {
+  weapon: {
+    id: number
+    name: string
+    color: string
+    selectedPresetIndex: number | null
+    accuracyParams: {
+      touchAccuracy: number
+      shortAccuracy: number
+      mediumAccuracy: number
+      longAccuracy: number
+    }
+    weaponParams: {
+      damage: number
+      warmUp: number
+      cooldown: number
+      burstCount: number
+      burstTicks: number
+    }
+    armorPenetration: number
   }
-  accuracyParams: {
-    touchAccuracy: number
-    shortAccuracy: number
-    mediumAccuracy: number
-    longAccuracy: number
+  hitChance: number
+  maxDPS: number
+  dpsCurve: {
+    armorValues: number[]
+    dpsValues: number[]
   }
-  armorPenetration: number
-}>()
+  distributions: DPSDistribution[]
+}
+
+interface Props {
+  weaponsData: WeaponData[]
+}
+
+const props = defineProps<Props>()
 
 const chartContainer = ref<HTMLDivElement | null>(null)
 
-// 生成3D曲面数据
-function generateSurfaceData() {
+// 为单个武器生成3D曲面数据
+function generateWeaponSurfaceData(weaponData: WeaponData) {
   // 目标距离范围：0-50格
   const distances = []
   for (let d = 0; d <= 50; d += 1) {
@@ -47,16 +76,16 @@ function generateSurfaceData() {
   for (let i = 0; i < distances.length; i++) {
     const row: number[] = []
     const hoverRow: string[] = []
-    const distance = distances[i]
+    const distance = distances[i]!
 
     for (let j = 0; j < armorValues.length; j++) {
-      const armor = armorValues[j] / 100
+      const armor = armorValues[j]! / 100
 
       // 计算该距离下的命中率
       const detailParams: WeaponDetailParams = {
-        ...props.accuracyParams,
-        ...props.weaponParams,
-        armorPenetration: props.armorPenetration,
+        ...weaponData.weapon.accuracyParams,
+        ...weaponData.weapon.weaponParams,
+        armorPenetration: weaponData.weapon.armorPenetration,
       }
       const hitChance = calculateHitChance(detailParams, distance)
       const maxDPS = calculateMaxDPS(detailParams)
@@ -64,7 +93,7 @@ function generateSurfaceData() {
       const weaponParams: WeaponParams = {
         hitChance,
         maxDPS,
-        armorPenetration: props.armorPenetration / 100,
+        armorPenetration: weaponData.weapon.armorPenetration / 100,
       }
 
       const distribution = calculateDPSDistribution(weaponParams, armor)
@@ -74,6 +103,7 @@ function generateSurfaceData() {
 
       // 构建悬停文本
       const hoverText = [
+        `<b>${weaponData.weapon.name}</b>`,
         `<b>目标距离:</b> ${distance} 格`,
         `<b>护甲值:</b> ${armorValues[j]}%`,
         `<b>命中率:</b> ${(hitChance * 100).toFixed(2)}%`,
@@ -98,67 +128,53 @@ function generateSurfaceData() {
 
 // 绘制3D图表
 function plotSurface() {
-  if (!chartContainer.value) return
+  if (!chartContainer.value || !props.weaponsData || props.weaponsData.length === 0) return
 
-  const { distances, armorValues, zData, hoverTexts } = generateSurfaceData()
+  const plotData: Plotly.Data[] = []
 
-  // Plotly Surface 的坐标系统说明：
-  // 1. z数据：z[i][j] 对应 y[i] 和 x[j]（第一维=Y轴，第二维=X轴）
-  // 2. text数据：text[i][j] 对应 x[i] 和 y[j]（第一维=X轴，第二维=Y轴）
-  //
-  // 原始数据结构：
-  // - zData[距离索引][护甲索引] = zData[i][j] 其中 i对应distances, j对应armorValues
-  // - hoverTexts[距离索引][护甲索引] = 同上
-  //
-  // 需要的数据结构：
-  // - z需要：z[护甲索引][距离索引]（因为y=护甲，x=距离）
-  // - text需要：text[距离索引][护甲索引]（因为x=距离，y=护甲）
-  //
-  // 结论：只需要转置 zData，hoverTexts保持不变
-  // 我不懂，但我大受震撼
+  // 为每个武器创建一个曲面
+  props.weaponsData.forEach((weaponData) => {
+    const { distances, armorValues, zData, hoverTexts } = generateWeaponSurfaceData(weaponData)
 
-  const zDataTransposed: number[][] = []
-
-  for (let i = 0; i < armorValues.length; i++) {
-    const zRow: number[] = []
-    for (let j = 0; j < distances.length; j++) {
-      zRow.push(zData[j][i])
+    // 转置 zData
+    const zDataTransposed: number[][] = []
+    for (let i = 0; i < armorValues.length; i++) {
+      const zRow: number[] = []
+      for (let j = 0; j < distances.length; j++) {
+        zRow.push(zData[j]![i]!)
+      }
+      zDataTransposed.push(zRow)
     }
-    zDataTransposed.push(zRow)
-  }
 
-  const data: Plotly.Data[] = [
-    {
+    plotData.push({
       type: 'surface',
+      name: weaponData.weapon.name,
       x: distances, // 目标距离
       y: armorValues, // 护甲值
       z: zDataTransposed, // DPS
-      text: hoverTexts, // 悬停文本
-      hovertemplate: '%{text}<extra></extra>',
+      customdata: hoverTexts,
+      hovertemplate: '%{customdata}<extra></extra>',
       colorscale: 'Viridis',
-      colorbar: {
-        title: {
-          text: '期望DPS',
-          side: 'right',
-          font: { size: 14 },
-        },
-        thickness: 20,
-        len: 0.7,
-      },
-      contours: {
-        z: {
-          show: true,
-          usecolormap: true,
-          highlightcolor: '#42f462',
-          project: { z: true },
-        },
-      },
-    },
-  ]
+      showscale: plotData.length === 0, // 只显示第一个颜色条
+      opacity: 0.85,
+      colorbar:
+        plotData.length === 0
+          ? {
+              title: {
+                text: '期望DPS',
+                side: 'right',
+                font: { size: 14 },
+              },
+              thickness: 20,
+              len: 0.7,
+            }
+          : undefined,
+    } as unknown as Plotly.Data)
+  })
 
   const layout: Partial<Plotly.Layout> = {
     title: {
-      text: 'DPS 三维曲面图',
+      text: 'DPS 三维曲面对比图',
       font: { size: 18 },
     },
     autosize: true,
@@ -208,12 +224,12 @@ function plotSurface() {
     displaylogo: false,
   }
 
-  Plotly.newPlot(chartContainer.value, data, layout, config)
+  Plotly.newPlot(chartContainer.value, plotData, layout, config)
 }
 
 // 监听参数变化，重新绘制
 watch(
-  () => [props.weaponParams, props.accuracyParams, props.armorPenetration],
+  () => props.weaponsData,
   () => {
     plotSurface()
   },

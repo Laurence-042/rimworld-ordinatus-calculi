@@ -35,30 +35,55 @@ interface DPSDistribution {
   expectedDPS: number
 }
 
-interface Props {
-  armorValues: number[]
-  dpsValues: number[]
+interface WeaponData {
+  weapon: {
+    id: number
+    name: string
+    color: string
+  }
+  hitChance: number
+  maxDPS: number
+  dpsCurve: {
+    armorValues: number[]
+    dpsValues: number[]
+  }
   distributions: DPSDistribution[]
+}
+
+interface Props {
+  weaponsData: WeaponData[]
 }
 
 const props = defineProps<Props>()
 
-const chartData = computed(() => ({
-  labels: props.armorValues.map((v) => `${v}%`),
-  datasets: [
-    {
-      label: 'DPS期望',
-      data: props.dpsValues,
-      borderColor: '#409EFF',
-      backgroundColor: 'rgba(64, 158, 255, 0.1)',
-      borderWidth: 2,
-      fill: true,
-      tension: 0.4,
-      pointRadius: 0,
-      pointHoverRadius: 6,
-    },
-  ],
-}))
+const chartData = computed(() => {
+  if (!props.weaponsData || props.weaponsData.length === 0) {
+    return {
+      labels: [],
+      datasets: [],
+    }
+  }
+
+  // 使用第一个武器的护甲值作为标签（假设所有武器使用相同的护甲值范围）
+  const labels = props.weaponsData[0]!.dpsCurve.armorValues.map((v) => `${v}%`)
+
+  const datasets = props.weaponsData.map((weaponData) => ({
+    label: weaponData.weapon.name,
+    data: weaponData.dpsCurve.dpsValues,
+    borderColor: weaponData.weapon.color,
+    backgroundColor: `${weaponData.weapon.color}20`,
+    borderWidth: 2,
+    fill: true,
+    tension: 0.4,
+    pointRadius: 0,
+    pointHoverRadius: 6,
+  }))
+
+  return {
+    labels,
+    datasets,
+  }
+})
 
 const chartOptions = computed(() => ({
   responsive: true,
@@ -72,14 +97,23 @@ const chartOptions = computed(() => ({
       mode: 'index' as const,
       intersect: false,
       callbacks: {
-        label: (context: { parsed: { y: number | null }; dataIndex: number }) => {
+        label: (context: {
+          parsed: { y: number | null }
+          dataIndex: number
+          datasetIndex: number
+        }) => {
           const y = context.parsed.y
           if (y === null) return ''
-          return `期望DPS: ${y.toFixed(3)}`
+
+          const weaponData = props.weaponsData[context.datasetIndex]
+          if (!weaponData) return ''
+          return `${weaponData.weapon.name} - 期望DPS: ${y.toFixed(3)}`
         },
-        afterLabel: (context: { dataIndex: number }) => {
+        afterLabel: (context: { dataIndex: number; datasetIndex: number }) => {
           const index = context.dataIndex
-          const dist = props.distributions[index]
+          const weaponData = props.weaponsData[context.datasetIndex]
+          if (!weaponData) return []
+          const dist = weaponData.distributions[index]
           if (!dist) return []
 
           return [

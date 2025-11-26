@@ -14,96 +14,165 @@ import {
 import DPSChart from './DPSChart.vue'
 import DPSSurface3D from './DPSSurface3D.vue'
 
+// 武器接口定义
+interface Weapon {
+  id: number
+  name: string
+  selectedPresetIndex: number | null
+  accuracyParams: {
+    touchAccuracy: number
+    shortAccuracy: number
+    mediumAccuracy: number
+    longAccuracy: number
+  }
+  weaponParams: {
+    damage: number
+    warmUp: number
+    cooldown: number
+    burstCount: number
+    burstTicks: number
+  }
+  armorPenetration: number
+  color: string
+}
+
 // 图表模式：2D曲线 或 3D曲面
 const chartMode = ref<'2d' | '3d'>('2d')
 
-// 选中的武器预设索引
-const selectedPresetIndex = ref<number | null>(null)
-
-// 命中率参数
-const accuracyParams = ref({
-  touchAccuracy: 95,
-  shortAccuracy: 85,
-  mediumAccuracy: 70,
-  longAccuracy: 50,
-})
+// 目标距离（全局共享）
 const targetDistance = ref(25) // 目标距离（格）
 
-// 武器属性
-const weaponParams = ref({
-  damage: 12,
-  warmUp: 1.5, // 秒
-  cooldown: 1.0, // 秒
-  burstCount: 3,
-  burstTicks: 8,
-})
+// 武器列表
+let nextWeaponId = 1
+const weapons = ref<Weapon[]>([
+  {
+    id: nextWeaponId++,
+    name: '武器 1',
+    selectedPresetIndex: null,
+    accuracyParams: {
+      touchAccuracy: 95,
+      shortAccuracy: 85,
+      mediumAccuracy: 70,
+      longAccuracy: 50,
+    },
+    weaponParams: {
+      damage: 12,
+      warmUp: 1.5,
+      cooldown: 1.0,
+      burstCount: 3,
+      burstTicks: 8,
+    },
+    armorPenetration: 15,
+    color: '#409EFF',
+  },
+])
 
-// 护甲穿透（共用）
-const armorPenetration = ref(15) // 0-100
+// 预定义颜色列表
+const weaponColors = [
+  '#409EFF',
+  '#67C23A',
+  '#E6A23C',
+  '#F56C6C',
+  '#909399',
+  '#00D9FF',
+  '#FF00FF',
+  '#FFD700',
+]
 
-// 计算实际的命中率
-const actualHitChance = computed(() => {
-  const detailParams: WeaponDetailParams = {
-    ...accuracyParams.value,
-    ...weaponParams.value,
-    armorPenetration: armorPenetration.value,
+// 添加武器
+const addWeapon = () => {
+  const newWeapon: Weapon = {
+    id: nextWeaponId++,
+    name: `武器 ${weapons.value.length + 1}`,
+    selectedPresetIndex: null,
+    accuracyParams: {
+      touchAccuracy: 95,
+      shortAccuracy: 85,
+      mediumAccuracy: 70,
+      longAccuracy: 50,
+    },
+    weaponParams: {
+      damage: 12,
+      warmUp: 1.5,
+      cooldown: 1.0,
+      burstCount: 3,
+      burstTicks: 8,
+    },
+    armorPenetration: 15,
+    color: weaponColors[weapons.value.length % weaponColors.length] || '#409EFF',
   }
-  return calculateHitChance(detailParams, targetDistance.value)
-})
+  weapons.value.push(newWeapon)
+}
 
-// 计算最大DPS
-const actualMaxDPS = computed(() => {
-  const detailParams: WeaponDetailParams = {
-    ...accuracyParams.value,
-    ...weaponParams.value,
-    armorPenetration: armorPenetration.value,
+// 移除武器
+const removeWeapon = (id: number) => {
+  if (weapons.value.length > 1) {
+    weapons.value = weapons.value.filter((w) => w.id !== id)
   }
-  return calculateMaxDPS(detailParams)
-})
+}
 
 // 应用武器预设
-const applyPreset = (presetIndex: number) => {
-  selectedPresetIndex.value = presetIndex
+const applyPreset = (weapon: Weapon, presetIndex: number) => {
+  weapon.selectedPresetIndex = presetIndex
   const preset = weaponPresets[presetIndex]
 
   if (!preset) return
 
+  // 更新武器名称
+  weapon.name = preset.name
+
   // 更新命中率参数
-  accuracyParams.value = {
+  weapon.accuracyParams = {
     touchAccuracy: preset.params.touchAccuracy,
     shortAccuracy: preset.params.shortAccuracy,
     mediumAccuracy: preset.params.mediumAccuracy,
     longAccuracy: preset.params.longAccuracy,
   }
   // 更新武器属性
-  weaponParams.value = {
+  weapon.weaponParams = {
     damage: preset.params.damage,
     warmUp: preset.params.warmUp,
     cooldown: preset.params.cooldown,
     burstCount: preset.params.burstCount,
     burstTicks: preset.params.burstTicks,
   }
-  armorPenetration.value = preset.params.armorPenetration
+  weapon.armorPenetration = preset.params.armorPenetration
 }
 
-// 计算DPS曲线
-const dpsCurve = computed(() => {
-  const params: WeaponParams = {
-    hitChance: actualHitChance.value,
-    maxDPS: actualMaxDPS.value,
-    armorPenetration: armorPenetration.value / 100,
+// 为每个武器计算命中率和最大DPS
+const calculateWeaponStats = (weapon: Weapon) => {
+  const detailParams: WeaponDetailParams = {
+    ...weapon.accuracyParams,
+    ...weapon.weaponParams,
+    armorPenetration: weapon.armorPenetration,
   }
-  return calculateDPSCurve(params)
-})
+  const hitChance = calculateHitChance(detailParams, targetDistance.value)
+  const maxDPS = calculateMaxDPS(detailParams)
+  return { hitChance, maxDPS }
+}
 
-// 为每个护甲值计算分布（用于图表悬浮显示）
-const allDistributions = computed(() => {
-  const params: WeaponParams = {
-    hitChance: actualHitChance.value,
-    maxDPS: actualMaxDPS.value,
-    armorPenetration: armorPenetration.value / 100,
-  }
-  return dpsCurve.value.armorValues.map((armor) => calculateDPSDistribution(params, armor / 100))
+// 计算所有武器的DPS曲线数据
+const allWeaponsData = computed(() => {
+  return weapons.value.map((weapon) => {
+    const { hitChance, maxDPS } = calculateWeaponStats(weapon)
+    const params: WeaponParams = {
+      hitChance,
+      maxDPS,
+      armorPenetration: weapon.armorPenetration / 100,
+    }
+    const dpsCurve = calculateDPSCurve(params)
+    const distributions = dpsCurve.armorValues.map((armor) =>
+      calculateDPSDistribution(params, armor / 100),
+    )
+
+    return {
+      weapon,
+      hitChance,
+      maxDPS,
+      dpsCurve,
+      distributions,
+    }
+  })
 })
 </script>
 
@@ -113,93 +182,13 @@ const allDistributions = computed(() => {
       <!-- 左侧：参数输入 -->
       <div class="left-panel">
         <h2 class="main-title">RimWorld DPS 计算器</h2>
-        <el-card class="input-section">
+
+        <!-- 全局参数：目标距离 -->
+        <el-card class="global-section">
           <template #header>
-            <h3>武器参数</h3>
+            <h3>全局参数</h3>
           </template>
-
-          <el-form label-width="13em">
-            <!-- 武器预设 -->
-            <el-divider content-position="left">武器预设</el-divider>
-            <el-form-item label="选择预设">
-              <el-select
-                v-model="selectedPresetIndex"
-                placeholder="选择武器预设"
-                @change="applyPreset"
-                style="width: 300px"
-              >
-                <el-option
-                  v-for="(preset, index) in weaponPresets"
-                  :key="index"
-                  :label="preset.name"
-                  :value="index"
-                />
-              </el-select>
-            </el-form-item>
-
-            <!-- 命中率参数 -->
-            <el-divider content-position="left">命中率参数</el-divider>
-
-            <el-form-item label="贴近 (≤3格)">
-              <div class="slider-input-group">
-                <el-slider v-model="accuracyParams.touchAccuracy" :min="0" :max="100" :step="1" />
-                <el-input-number
-                  v-model="accuracyParams.touchAccuracy"
-                  :min="0"
-                  :max="100"
-                  :step="1"
-                  controls-position="right"
-                  class="input-number-fixed"
-                />
-                <span class="unit">%</span>
-              </div>
-            </el-form-item>
-
-            <el-form-item label="近 (≤12格)">
-              <div class="slider-input-group">
-                <el-slider v-model="accuracyParams.shortAccuracy" :min="0" :max="100" :step="1" />
-                <el-input-number
-                  v-model="accuracyParams.shortAccuracy"
-                  :min="0"
-                  :max="100"
-                  :step="1"
-                  controls-position="right"
-                  class="input-number-fixed"
-                />
-                <span class="unit">%</span>
-              </div>
-            </el-form-item>
-
-            <el-form-item label="中 (≤25格)">
-              <div class="slider-input-group">
-                <el-slider v-model="accuracyParams.mediumAccuracy" :min="0" :max="100" :step="1" />
-                <el-input-number
-                  v-model="accuracyParams.mediumAccuracy"
-                  :min="0"
-                  :max="100"
-                  :step="1"
-                  controls-position="right"
-                  class="input-number-fixed"
-                />
-                <span class="unit">%</span>
-              </div>
-            </el-form-item>
-
-            <el-form-item label="远 (≤40格)">
-              <div class="slider-input-group">
-                <el-slider v-model="accuracyParams.longAccuracy" :min="0" :max="100" :step="1" />
-                <el-input-number
-                  v-model="accuracyParams.longAccuracy"
-                  :min="0"
-                  :max="100"
-                  :step="1"
-                  controls-position="right"
-                  class="input-number-fixed"
-                />
-                <span class="unit">%</span>
-              </div>
-            </el-form-item>
-
+          <el-form label-width="8em">
             <el-form-item label="目标距离">
               <div class="slider-input-group">
                 <el-slider v-model="targetDistance" :min="0" :max="50" :step="1" />
@@ -214,15 +203,145 @@ const allDistributions = computed(() => {
                 <span class="unit">格</span>
               </div>
             </el-form-item>
+          </el-form>
+        </el-card>
+
+        <!-- 武器卡片列表 -->
+        <el-card
+          v-for="(weapon, index) in weapons"
+          :key="weapon.id"
+          class="weapon-card"
+          :style="{ borderLeft: `4px solid ${weapon.color}` }"
+        >
+          <template #header>
+            <div class="weapon-header">
+              <div class="weapon-header-top">
+                <el-input
+                  v-model="weapon.name"
+                  placeholder="武器名称"
+                  class="weapon-name-input"
+                  :style="{ '--weapon-color': weapon.color }"
+                />
+                <el-button
+                  v-if="weapons.length > 1"
+                  type="danger"
+                  size="small"
+                  :icon="'Delete'"
+                  circle
+                  @click="removeWeapon(weapon.id)"
+                />
+              </div>
+              <div class="weapon-preset">
+                <el-select
+                  v-model="weapon.selectedPresetIndex"
+                  placeholder="选择武器预设"
+                  @change="applyPreset(weapon, weapon.selectedPresetIndex!)"
+                  style="width: 100%"
+                  clearable
+                >
+                  <el-option
+                    v-for="(preset, presetIdx) in weaponPresets"
+                    :key="presetIdx"
+                    :label="preset.name"
+                    :value="presetIdx"
+                  />
+                </el-select>
+              </div>
+            </div>
+          </template>
+
+          <el-form label-width="13em">
+            <!-- 命中率参数 -->
+            <el-divider content-position="left">命中率参数</el-divider>
+
+            <el-form-item label="贴近 (≤3格)">
+              <div class="slider-input-group">
+                <el-slider
+                  v-model="weapon.accuracyParams.touchAccuracy"
+                  :min="0"
+                  :max="100"
+                  :step="1"
+                />
+                <el-input-number
+                  v-model="weapon.accuracyParams.touchAccuracy"
+                  :min="0"
+                  :max="100"
+                  :step="1"
+                  controls-position="right"
+                  class="input-number-fixed"
+                />
+                <span class="unit">%</span>
+              </div>
+            </el-form-item>
+
+            <el-form-item label="近 (≤12格)">
+              <div class="slider-input-group">
+                <el-slider
+                  v-model="weapon.accuracyParams.shortAccuracy"
+                  :min="0"
+                  :max="100"
+                  :step="1"
+                />
+                <el-input-number
+                  v-model="weapon.accuracyParams.shortAccuracy"
+                  :min="0"
+                  :max="100"
+                  :step="1"
+                  controls-position="right"
+                  class="input-number-fixed"
+                />
+                <span class="unit">%</span>
+              </div>
+            </el-form-item>
+
+            <el-form-item label="中 (≤25格)">
+              <div class="slider-input-group">
+                <el-slider
+                  v-model="weapon.accuracyParams.mediumAccuracy"
+                  :min="0"
+                  :max="100"
+                  :step="1"
+                />
+                <el-input-number
+                  v-model="weapon.accuracyParams.mediumAccuracy"
+                  :min="0"
+                  :max="100"
+                  :step="1"
+                  controls-position="right"
+                  class="input-number-fixed"
+                />
+                <span class="unit">%</span>
+              </div>
+            </el-form-item>
+
+            <el-form-item label="远 (≤40格)">
+              <div class="slider-input-group">
+                <el-slider
+                  v-model="weapon.accuracyParams.longAccuracy"
+                  :min="0"
+                  :max="100"
+                  :step="1"
+                />
+                <el-input-number
+                  v-model="weapon.accuracyParams.longAccuracy"
+                  :min="0"
+                  :max="100"
+                  :step="1"
+                  controls-position="right"
+                  class="input-number-fixed"
+                />
+                <span class="unit">%</span>
+              </div>
+            </el-form-item>
 
             <!-- 武器属性 -->
             <el-divider content-position="left">武器属性</el-divider>
 
             <el-form-item label="伤害">
               <div class="slider-input-group">
-                <el-slider v-model="weaponParams.damage" :min="1" :max="50" :step="1" />
+                <el-slider v-model="weapon.weaponParams.damage" :min="1" :max="50" :step="1" />
                 <el-input-number
-                  v-model="weaponParams.damage"
+                  v-model="weapon.weaponParams.damage"
                   :min="1"
                   :max="200"
                   :step="1"
@@ -235,9 +354,9 @@ const allDistributions = computed(() => {
 
             <el-form-item label="预热时间 (Warm-Up)">
               <div class="slider-input-group">
-                <el-slider v-model="weaponParams.warmUp" :min="0" :max="5" :step="0.1" />
+                <el-slider v-model="weapon.weaponParams.warmUp" :min="0" :max="5" :step="0.1" />
                 <el-input-number
-                  v-model="weaponParams.warmUp"
+                  v-model="weapon.weaponParams.warmUp"
                   :min="0"
                   :max="10"
                   :step="0.1"
@@ -251,9 +370,9 @@ const allDistributions = computed(() => {
 
             <el-form-item label="冷却时间 (Cooldown)">
               <div class="slider-input-group">
-                <el-slider v-model="weaponParams.cooldown" :min="0" :max="5" :step="0.1" />
+                <el-slider v-model="weapon.weaponParams.cooldown" :min="0" :max="5" :step="0.1" />
                 <el-input-number
-                  v-model="weaponParams.cooldown"
+                  v-model="weapon.weaponParams.cooldown"
                   :min="0"
                   :max="10"
                   :step="0.1"
@@ -267,9 +386,9 @@ const allDistributions = computed(() => {
 
             <el-form-item label="连发数量 (Burst Count)">
               <div class="slider-input-group">
-                <el-slider v-model="weaponParams.burstCount" :min="1" :max="10" :step="1" />
+                <el-slider v-model="weapon.weaponParams.burstCount" :min="1" :max="10" :step="1" />
                 <el-input-number
-                  v-model="weaponParams.burstCount"
+                  v-model="weapon.weaponParams.burstCount"
                   :min="1"
                   :max="20"
                   :step="1"
@@ -282,9 +401,9 @@ const allDistributions = computed(() => {
 
             <el-form-item label="连发间隔 (Burst Ticks)">
               <div class="slider-input-group">
-                <el-slider v-model="weaponParams.burstTicks" :min="0" :max="30" :step="1" />
+                <el-slider v-model="weapon.weaponParams.burstTicks" :min="0" :max="30" :step="1" />
                 <el-input-number
-                  v-model="weaponParams.burstTicks"
+                  v-model="weapon.weaponParams.burstTicks"
                   :min="0"
                   :max="60"
                   :step="1"
@@ -295,13 +414,13 @@ const allDistributions = computed(() => {
               </div>
             </el-form-item>
 
-            <!-- 护甲穿透（共用） -->
+            <!-- 护甲穿透 -->
             <el-divider content-position="left">护甲穿透</el-divider>
             <el-form-item label="护甲穿透 (AP)">
               <div class="slider-input-group">
-                <el-slider v-model="armorPenetration" :min="0" :max="100" :step="1" />
+                <el-slider v-model="weapon.armorPenetration" :min="0" :max="100" :step="1" />
                 <el-input-number
-                  v-model="armorPenetration"
+                  v-model="weapon.armorPenetration"
                   :min="0"
                   :max="100"
                   :step="1"
@@ -316,10 +435,15 @@ const allDistributions = computed(() => {
               title="计算结果"
               type="success"
               :closable="false"
-              :description="`命中率: ${(actualHitChance * 100).toFixed(2)}% | 最大DPS: ${actualMaxDPS.toFixed(2)} | 护甲穿透: ${armorPenetration.toFixed(0)}%`"
+              :description="`命中率: ${((allWeaponsData[index]?.hitChance ?? 0) * 100).toFixed(2)}% | 最大DPS: ${(allWeaponsData[index]?.maxDPS ?? 0).toFixed(2)} | 护甲穿透: ${weapon.armorPenetration.toFixed(0)}%`"
             />
           </el-form>
         </el-card>
+
+        <!-- 添加武器按钮 -->
+        <el-button type="primary" @click="addWeapon" style="width: 100%; margin-top: 20px">
+          + 添加武器进行对比
+        </el-button>
       </div>
 
       <!-- 右侧：结果显示 -->
@@ -336,18 +460,8 @@ const allDistributions = computed(() => {
         </div>
 
         <div class="chart-container">
-          <DPSChart
-            v-if="chartMode === '2d'"
-            :armor-values="dpsCurve.armorValues"
-            :dps-values="dpsCurve.dpsValues"
-            :distributions="allDistributions"
-          />
-          <DPSSurface3D
-            v-else
-            :weapon-params="weaponParams"
-            :accuracy-params="accuracyParams"
-            :armor-penetration="armorPenetration"
-          />
+          <DPSChart v-if="chartMode === '2d'" :weapons-data="allWeaponsData" />
+          <DPSSurface3D v-else :weapons-data="allWeaponsData" />
         </div>
       </div>
     </div>
@@ -397,6 +511,43 @@ const allDistributions = computed(() => {
   overflow: hidden;
   padding: 20px;
   padding-left: 10px;
+}
+
+/* 全局参数卡片 */
+.global-section {
+  margin-bottom: 20px;
+}
+
+/* 武器卡片 */
+.weapon-card {
+  margin-bottom: 20px;
+}
+
+.weapon-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.weapon-header-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.weapon-name-input {
+  flex: 1;
+}
+
+.weapon-name-input :deep(.el-input__inner) {
+  font-weight: 600;
+  font-size: 1.1em;
+  color: var(--weapon-color);
+}
+
+.weapon-preset {
+  width: 100%;
 }
 
 .chart-controls {
