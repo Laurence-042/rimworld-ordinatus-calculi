@@ -17,8 +17,10 @@ export interface ArmorLayer {
   useMaterial?: boolean
   /** 材料系数 (0-2) */
   materialCoefficient?: number
-  /** 接受的材料类型 */
-  acceptedMaterialTags?: Array<'metal' | 'wood' | 'leather' | 'fabric'>
+  /** 使用的全局材料类型 */
+  selectedMaterial?: 'metal' | 'wood' | 'leather' | 'fabric'
+  /** 支持的材料类型（从预设加载） */
+  supportedMaterials?: Array<'metal' | 'wood' | 'leather' | 'fabric'>
 }
 
 export interface ArmorSet {

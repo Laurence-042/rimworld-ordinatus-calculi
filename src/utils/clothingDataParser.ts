@@ -22,8 +22,6 @@ export interface MaterialData {
   tags: MaterialTag[] // 材料标签
 }
 
-export type MaterialTag = 'metal' | 'wood' | 'leather' | 'fabric'
-
 export interface MaterialDataSource {
   id: string
   label: string
@@ -34,6 +32,14 @@ export interface MaterialDataSource {
     fabric: MaterialData[]
   }
 }
+
+export interface ClothingDataSource {
+  id: string
+  label: string
+  clothing: ClothingData[]
+}
+
+export type MaterialTag = 'metal' | 'wood' | 'leather' | 'fabric'
 
 /**
  * 根据分类判断材料标签
@@ -232,6 +238,7 @@ function groupMaterialsByTags(materials: MaterialData[]): MaterialDataSource['ma
 
 // 缓存
 let cachedMaterialDataSources: MaterialDataSource[] | null = null
+let cachedClothingDataSources: ClothingDataSource[] | null = null
 
 /**
  * 加载材料数据源
@@ -259,5 +266,33 @@ export async function getMaterialDataSources(): Promise<MaterialDataSource[]> {
   }
 
   cachedMaterialDataSources = dataSources
+  return dataSources
+}
+
+/**
+ * 加载衣物数据源
+ */
+export async function getClothingDataSources(): Promise<ClothingDataSource[]> {
+  if (cachedClothingDataSources) {
+    return cachedClothingDataSources
+  }
+
+  const dataSources: ClothingDataSource[] = []
+
+  try {
+    // 动态导入 Vanilla 衣物数据
+    const vanillaCSV = await import('./clothing_data/Vanilla.csv?raw')
+    const vanillaClothing = await parseClothingDataFromCSV(vanillaCSV.default)
+
+    dataSources.push({
+      id: 'vanilla',
+      label: 'Vanilla',
+      clothing: vanillaClothing,
+    })
+  } catch (error) {
+    console.error('Failed to load Vanilla clothing:', error)
+  }
+
+  cachedClothingDataSources = dataSources
   return dataSources
 }
