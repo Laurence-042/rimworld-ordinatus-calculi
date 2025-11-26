@@ -335,6 +335,7 @@ onMounted(async () => {
             </el-form-item>
 
             <el-alert
+              v-if="chartMode === '2d'"
               title="计算结果"
               type="success"
               :closable="false"

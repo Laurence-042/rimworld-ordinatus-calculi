@@ -765,7 +765,7 @@ onMounted(async () => {
 
                 <el-form-item label="护甲来源">
                   <el-radio-group v-model="layer.useMaterial">
-                    <el-radio-button :value="false">直接输入</el-radio-button>
+                    <el-radio-button :value="false">固定数值</el-radio-button>
                     <el-radio-button :value="true">依赖材料</el-radio-button>
                   </el-radio-group>
                 </el-form-item>
