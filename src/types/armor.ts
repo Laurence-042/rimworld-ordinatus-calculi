@@ -86,22 +86,27 @@ export interface ArmorSet {
   color: string
 }
 
+export type DamageType = 'blunt' | 'sharp' | 'heat'
+
 export interface AttackParams {
   /** 武器护甲穿透 (0-1) */
   armorPenetration: number
   /** 武器单发伤害 */
   damagePerShot: number
   /** 伤害类型 */
-  damageType: 'blunt' | 'sharp' | 'heat'
+  damageType: DamageType
+}
+
+// 概率状态追踪
+export interface DamageState {
+  damageMultiplier: number // 当前伤害倍率（0, 0.25, 0.5, 1等）
+  probability: number // 该状态的概率
+  damageType: DamageType // 当前伤害类型
 }
 
 export interface DamageResult {
-  /** 0伤害的概率 */
-  noDeflectProb: number
-  /** 减半伤害的概率 */
-  halfDeflectProb: number
-  /** 全伤害的概率 */
-  fullDamageProb: number
+  /** 各种伤害状态及其概率 */
+  damageStates: DamageState[]
   /** 期望伤害值 */
   expectedDamage: number
   /** 各层伤害详情 */

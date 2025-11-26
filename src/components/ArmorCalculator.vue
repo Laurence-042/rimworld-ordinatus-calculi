@@ -269,16 +269,36 @@ const allArmorSetsData = computed(() => {
     const damageCurve = calculateArmorDamageCurve(actualLayers, damageType.value)
 
     // 计算在固定条件下的伤害分布（用于2D模式）
-    const fixedDamageResult = calculateMultiLayerDamage(actualLayers, {
+    const result = calculateMultiLayerDamage(actualLayers, {
       armorPenetration: fixedPenetration.value / 100,
       damagePerShot: fixedDamage.value,
       damageType: damageType.value,
     })
 
+    // 从 damageStates 计算概率
+    let noDeflectProb = 0
+    let halfDeflectProb = 0
+    let fullDamageProb = 0
+
+    for (const state of result.damageStates) {
+      if (state.damageMultiplier === 0) {
+        noDeflectProb += state.probability
+      } else if (state.damageMultiplier < 1) {
+        halfDeflectProb += state.probability
+      } else {
+        fullDamageProb += state.probability
+      }
+    }
+
     return {
       armorSet,
       damageCurve,
-      fixedDamageResult,
+      fixedDamageResult: {
+        expectedDamage: result.expectedDamage,
+        noDeflectProb,
+        halfDeflectProb,
+        fullDamageProb,
+      },
     }
   })
 })

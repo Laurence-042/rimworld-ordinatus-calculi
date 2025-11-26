@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import Plotly from 'plotly.js-dist-min'
+import type { DamageType } from '@/types/armor'
 
 interface ArmorSetData {
   armorSet: {
@@ -18,7 +19,7 @@ interface ArmorSetData {
 
 const props = defineProps<{
   armorSetsData: ArmorSetData[]
-  damageType: 'blunt' | 'sharp' | 'heat'
+  damageType: DamageType
 }>()
 
 const chartContainer = ref<HTMLElement | null>(null)
