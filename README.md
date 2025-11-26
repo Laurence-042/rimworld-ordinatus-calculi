@@ -2,7 +2,7 @@
 
 > RimWorld Ordinatus Calculi：Song of the Breaker ・ Chant of the Keeper
 
-一个基于 Vue 3 + TypeScript 的 RimWorld 战斗机制计算器，精确实现游戏内命中率插值、连发时序和多层护甲伤害计算。
+一个基于 Vue 3 + TypeScript 的 RimWorld 战斗机制计算器，用于计算给定武器在不同的距离/护甲情况下的DPS，以及给定护甲组合在不同单发伤害/穿甲情况下的受伤期望。
 
 ![Vue 3](https://img.shields.io/badge/Vue-3.5-brightgreen) ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue) ![Element Plus](https://img.shields.io/badge/Element%20Plus-2.11-409EFF)
 
