@@ -1,4 +1,6 @@
 import Papa from 'papaparse'
+import { ApparelLayer } from '@/types/armor'
+import { BodyPart } from '@/types/bodyPart'
 
 /**
  * 衣物数据接口
@@ -13,8 +15,8 @@ export interface ClothingData {
   materialCoefficient?: number // 护甲 - 材料系数
   acceptedMaterials?: string[] // 材质
   // 覆盖部位和层次
-  coverage?: string // 覆盖
-  layers?: string[] // 层
+  bodyPartCoverage?: BodyPart[] // 覆盖的身体部位
+  apparelLayers?: ApparelLayer[] // 服装层级
 }
 
 /**
@@ -74,16 +76,13 @@ export async function parseClothingDataFromCSV(csvContent: string): Promise<Clot
               // 解析覆盖部位
               const coverage = row['覆盖']?.trim()
               if (coverage) {
-                clothing.coverage = coverage
+                clothing.bodyPartCoverage = parseBodyParts(coverage)
               }
 
               // 解析层次
               const layers = row['层']?.trim()
               if (layers) {
-                clothing.layers = layers
-                  .split(/[、，,]/)
-                  .map((l) => l.trim())
-                  .filter(Boolean)
+                clothing.apparelLayers = parseApparelLayers(layers)
               }
 
               return clothing
@@ -118,6 +117,111 @@ function parsePercentage(value: string): number {
 
   // 转换为0-2范围（假设输入是百分比）
   return num / 100
+}
+
+/**
+ * 中文身体部位名称到 BodyPart 枚举的映射
+ */
+const bodyPartNameMap: Record<string, BodyPart> = {
+  躯干: BodyPart.Torso,
+  颈部: BodyPart.Neck,
+  头部: BodyPart.Head,
+  头骨: BodyPart.Skull,
+  颅骨: BodyPart.Skull,
+  大脑: BodyPart.Brain,
+  眼睛: BodyPart.Eyes,
+  左眼: BodyPart.Eyes,
+  右眼: BodyPart.Eyes,
+  耳朵: BodyPart.Ears,
+  左耳: BodyPart.Ears,
+  右耳: BodyPart.Ears,
+  鼻子: BodyPart.Nose,
+  舌头: BodyPart.Tongue,
+  下颌: BodyPart.Jaw,
+  脊柱: BodyPart.Spine,
+  骨盆: BodyPart.Pelvis,
+  胸骨: BodyPart.Sternum,
+  肋骨: BodyPart.Ribcage,
+  肺: BodyPart.Lung,
+  胃: BodyPart.Stomach,
+  肝脏: BodyPart.Liver,
+  心脏: BodyPart.Heart,
+  肾脏: BodyPart.Kidney,
+  肩部: BodyPart.Shoulder,
+  左肩: BodyPart.Shoulder,
+  右肩: BodyPart.Shoulder,
+  锁骨: BodyPart.Clavicle,
+  手臂: BodyPart.Arm,
+  左臂: BodyPart.Arm,
+  右臂: BodyPart.Arm,
+  肱骨: BodyPart.Humerus,
+  桡骨: BodyPart.Radius,
+  手: BodyPart.Hand,
+  左手: BodyPart.Hand,
+  右手: BodyPart.Hand,
+  手指: BodyPart.Fingers,
+  腿: BodyPart.Leg,
+  左腿: BodyPart.Leg,
+  右腿: BodyPart.Leg,
+  股骨: BodyPart.Femur,
+  胫骨: BodyPart.Tibia,
+  脚: BodyPart.Foot,
+  左脚: BodyPart.Foot,
+  右脚: BodyPart.Foot,
+  脚趾: BodyPart.Toes,
+}
+
+/**
+ * 中文层级名称到 ApparelLayer 枚举的映射
+ */
+const apparelLayerNameMap: Record<string, ApparelLayer> = {
+  皮肤: ApparelLayer.Skin,
+  贴身: ApparelLayer.OnSkin,
+  夹层: ApparelLayer.Middle,
+  外套: ApparelLayer.Shell,
+  配件: ApparelLayer.Belt,
+  头饰: ApparelLayer.Overhead,
+  眼饰: ApparelLayer.EyeCover,
+}
+
+/**
+ * 解析身体部位字符串为 BodyPart 枚举数组
+ */
+function parseBodyParts(coverageStr: string): BodyPart[] {
+  const parts = coverageStr
+    .split(/[,，、]/)
+    .map((part) => part.trim())
+    .filter(Boolean)
+
+  const bodyParts = new Set<BodyPart>()
+  for (const partStr of parts) {
+    const bodyPart = bodyPartNameMap[partStr]
+    if (bodyPart) {
+      bodyParts.add(bodyPart)
+    }
+  }
+
+  return Array.from(bodyParts)
+}
+
+/**
+ * 解析服装层级字符串为 ApparelLayer 枚举数组
+ */
+function parseApparelLayers(layersStr: string): ApparelLayer[] {
+  const layers = layersStr
+    .split(/[,，、]/)
+    .map((layer) => layer.trim())
+    .filter(Boolean)
+
+  const apparelLayers: ApparelLayer[] = []
+  for (const layerStr of layers) {
+    const layer = apparelLayerNameMap[layerStr]
+    if (layer !== undefined) {
+      apparelLayers.push(layer)
+    }
+  }
+
+  return apparelLayers
 }
 
 // 缓存

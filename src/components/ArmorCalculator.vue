@@ -13,9 +13,9 @@ import {
   type MaterialDataSource,
 } from '@/utils/materialDataParser'
 import { MaterialTag, parseAcceptedMaterials } from '@/types/material'
-import { type ArmorSet, ApparelLayer, ApparelLayerNames, getApparelLayerName } from '@/types/armor'
+import { type ArmorSet, ApparelLayer, getApparelLayerName } from '@/types/armor'
 import { BodyPart, buildBodyPartTree } from '@/types/bodyPart'
-import { buildCoverageTree, getApparelLayerOptions } from '@/utils/coverageUtils'
+import { buildCoverageMap, buildCoverageTree, getApparelLayerOptions } from '@/utils/coverageUtils'
 import ArmorChart from './ArmorChart.vue'
 import ArmorSurface3D from './ArmorSurface3D.vue'
 
@@ -300,19 +300,14 @@ const currentClothing = computed(() => {
 
 // 覆盖树（用于可视化哪些部位和层级被覆盖）
 const allCoverageTrees = computed(() => {
-  return armorSets.value.map((armorSet) => ({
-    armorSetId: armorSet.id,
-    coverageTree: buildCoverageTree(
-      new Map(
-        armorSet.layers.flatMap((layer) =>
-          layer.bodyPartCoverage.map((partStr) => [
-            partStr as BodyPart,
-            new Set(layer.apparelLayers),
-          ]),
-        ),
-      ),
-    ),
-  }))
+  return armorSets.value.map((armorSet) => {
+    // 使用 buildCoverageMap 正确合并所有层的覆盖信息
+    const coverageMap = buildCoverageMap(armorSet.layers)
+    return {
+      armorSetId: armorSet.id,
+      coverageTree: buildCoverageTree(coverageMap),
+    }
+  })
 })
 
 // 开始加载预设（设置标志并启动计时器）
@@ -349,50 +344,15 @@ const loadClothingPreset = (layer: ArmorSet['layers'][number], clothing: Clothin
   layer.itemName = clothing.name
 
   // 解析层级信息
-  if (clothing.layers && clothing.layers.length > 0) {
-    layer.apparelLayers = clothing.layers
-      .map((layerName) => {
-        const trimmed = layerName.trim()
-        // 在 ApparelLayerNames 映射中查找
-        return ApparelLayerNames[trimmed]
-      })
-      .filter((l): l is ApparelLayer => l !== undefined)
+  if (clothing.apparelLayers && clothing.apparelLayers.length > 0) {
+    layer.apparelLayers = clothing.apparelLayers
   } else {
     layer.apparelLayers = [ApparelLayer.Shell] // 默认外套层
   }
 
-  // 解析覆盖部位信息 - 将中文映射到BodyPart枚举
-  if (clothing.coverage) {
-    const coverageStrings = clothing.coverage
-      .split(/[,，、]/)
-      .map((part) => part.trim())
-      .filter(Boolean)
-
-    // 简单映射（可以根据需要扩展）
-    const coverageMap: Record<string, BodyPart> = {
-      躯干: BodyPart.Torso,
-      颈部: BodyPart.Neck,
-      头部: BodyPart.Head,
-      肩部: BodyPart.Shoulder,
-      左肩: BodyPart.Shoulder,
-      右肩: BodyPart.Shoulder,
-      手臂: BodyPart.Arm,
-      左臂: BodyPart.Arm,
-      右臂: BodyPart.Arm,
-      腿: BodyPart.Leg,
-      左腿: BodyPart.Leg,
-      右腿: BodyPart.Leg,
-    }
-
-    const bodyParts = new Set<BodyPart>()
-    for (const coverageStr of coverageStrings) {
-      const bodyPart = coverageMap[coverageStr]
-      if (bodyPart) {
-        bodyParts.add(bodyPart)
-      }
-    }
-
-    layer.bodyPartCoverage = Array.from(bodyParts)
+  // 解析覆盖部位信息
+  if (clothing.bodyPartCoverage && clothing.bodyPartCoverage.length > 0) {
+    layer.bodyPartCoverage = clothing.bodyPartCoverage
   } else {
     layer.bodyPartCoverage = [BodyPart.Torso] // 默认覆盖躯干
   }
