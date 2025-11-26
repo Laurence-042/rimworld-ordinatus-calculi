@@ -13,6 +13,12 @@ export interface ArmorLayer {
   armorBlunt: number
   /** 热能护甲值 (0-2) */
   armorHeat: number
+  /** 是否依赖材料计算护甲 */
+  useMaterial?: boolean
+  /** 材料系数 (0-2) */
+  materialCoefficient?: number
+  /** 接受的材料类型 */
+  acceptedMaterialTags?: Array<'metal' | 'wood' | 'leather' | 'fabric'>
 }
 
 export interface ArmorSet {

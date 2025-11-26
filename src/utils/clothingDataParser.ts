@@ -16,9 +16,51 @@ export interface ClothingData {
 
 export interface MaterialData {
   name: string
-  armorBlunt: number // 护甲 - 钝器
   armorSharp: number // 护甲 - 利器
+  armorBlunt: number // 护甲 - 钝器
   armorHeat: number // 护甲 - 热能
+  tags: MaterialTag[] // 材料标签
+}
+
+export type MaterialTag = 'metal' | 'wood' | 'leather' | 'fabric'
+
+export interface MaterialDataSource {
+  id: string
+  label: string
+  materials: {
+    metal: MaterialData[]
+    wood: MaterialData[]
+    leather: MaterialData[]
+    fabric: MaterialData[]
+  }
+}
+
+/**
+ * 根据分类判断材料标签
+ */
+function parseMaterialTags(category: string): MaterialTag[] {
+  const tags: MaterialTag[] = []
+  const lowerCategory = category.toLowerCase()
+
+  if (lowerCategory.includes('金属') || lowerCategory.includes('metal')) {
+    tags.push('metal')
+  }
+  if (lowerCategory.includes('木材') || lowerCategory.includes('wood')) {
+    tags.push('wood')
+  }
+  if (lowerCategory.includes('皮革') || lowerCategory.includes('leather')) {
+    tags.push('leather')
+  }
+  if (
+    lowerCategory.includes('织物') ||
+    lowerCategory.includes('纤维') ||
+    lowerCategory.includes('fabric') ||
+    lowerCategory.includes('cloth')
+  ) {
+    tags.push('fabric')
+  }
+
+  return tags
 }
 
 /**
@@ -109,11 +151,15 @@ export async function parseMaterialDataFromCSV(csvContent: string): Promise<Mate
           const materialData = results.data
             .filter((row) => row['名称'] && row['名称'].trim())
             .map((row) => {
+              const category = row['分类'] || ''
+              const tags = parseMaterialTags(category)
+
               const material: MaterialData = {
                 name: row['名称']!.trim(),
-                armorBlunt: parsePercentage(row['护甲 - 钝器']?.trim() || '0%'),
                 armorSharp: parsePercentage(row['护甲 - 利器']?.trim() || '0%'),
+                armorBlunt: parsePercentage(row['护甲 - 钝器']?.trim() || '0%'),
                 armorHeat: parsePercentage(row['护甲 - 热能']?.trim() || '0%'),
+                tags,
               }
 
               return material
@@ -156,10 +202,62 @@ function parsePercentage(value: string): number {
 export function calculateArmorFromMaterial(
   materialCoefficient: number,
   material: MaterialData,
-): { armorBlunt: number; armorSharp: number; armorHeat: number } {
+): { armorSharp: number; armorBlunt: number; armorHeat: number } {
   return {
-    armorBlunt: materialCoefficient * material.armorBlunt,
     armorSharp: materialCoefficient * material.armorSharp,
+    armorBlunt: materialCoefficient * material.armorBlunt,
     armorHeat: materialCoefficient * material.armorHeat,
   }
+}
+
+/**
+ * 将材料列表按标签分组
+ */
+function groupMaterialsByTags(materials: MaterialData[]): MaterialDataSource['materials'] {
+  const grouped: MaterialDataSource['materials'] = {
+    metal: [],
+    wood: [],
+    leather: [],
+    fabric: [],
+  }
+
+  materials.forEach((material) => {
+    material.tags.forEach((tag) => {
+      grouped[tag].push(material)
+    })
+  })
+
+  return grouped
+}
+
+// 缓存
+let cachedMaterialDataSources: MaterialDataSource[] | null = null
+
+/**
+ * 加载材料数据源
+ */
+export async function getMaterialDataSources(): Promise<MaterialDataSource[]> {
+  if (cachedMaterialDataSources) {
+    return cachedMaterialDataSources
+  }
+
+  const dataSources: MaterialDataSource[] = []
+
+  try {
+    // 动态导入 Vanilla 材料数据
+    const vanillaCSV = await import('./material_data/Vanilla.csv?raw')
+    const vanillaMaterials = await parseMaterialDataFromCSV(vanillaCSV.default)
+    const groupedMaterials = groupMaterialsByTags(vanillaMaterials)
+
+    dataSources.push({
+      id: 'vanilla',
+      label: 'Vanilla',
+      materials: groupedMaterials,
+    })
+  } catch (error) {
+    console.error('Failed to load Vanilla materials:', error)
+  }
+
+  cachedMaterialDataSources = dataSources
+  return dataSources
 }
