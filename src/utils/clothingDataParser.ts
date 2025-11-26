@@ -121,54 +121,116 @@ function parsePercentage(value: string): number {
 
 /**
  * 中文身体部位名称到 BodyPart 枚举的映射
+ * 基于 RimWorld 官方中文部位名称
  */
 const bodyPartNameMap: Record<string, BodyPart> = {
+  // 核心部位
   躯干: BodyPart.Torso,
   颈部: BodyPart.Neck,
+  头: BodyPart.Head,
   头部: BodyPart.Head,
-  头骨: BodyPart.Skull,
+  腰: BodyPart.Waist,
+
+  // 头部子部位
   颅骨: BodyPart.Skull,
+  头骨: BodyPart.Skull,
   大脑: BodyPart.Brain,
-  眼睛: BodyPart.Eyes,
-  左眼: BodyPart.Eyes,
-  右眼: BodyPart.Eyes,
-  耳朵: BodyPart.Ears,
-  左耳: BodyPart.Ears,
-  右耳: BodyPart.Ears,
+  脑: BodyPart.Brain,
+  左眼: BodyPart.LeftEye,
+  右眼: BodyPart.RightEye,
+  眼: BodyPart.LeftEye, // 通用"眼"默认映射到左眼（CSV中通常会同时列出左右）
+  眼睛: BodyPart.LeftEye,
+  左耳: BodyPart.LeftEar,
+  右耳: BodyPart.RightEar,
+  耳: BodyPart.LeftEar, // 通用"耳"默认映射到左耳
+  耳朵: BodyPart.LeftEar,
+  鼻: BodyPart.Nose,
   鼻子: BodyPart.Nose,
-  舌头: BodyPart.Tongue,
   下颌: BodyPart.Jaw,
+  下颚: BodyPart.Jaw,
+  舌: BodyPart.Tongue,
+  舌头: BodyPart.Tongue,
+
+  // 躯干内部器官
+  脊椎: BodyPart.Spine,
   脊柱: BodyPart.Spine,
-  骨盆: BodyPart.Pelvis,
-  胸骨: BodyPart.Sternum,
   肋骨: BodyPart.Ribcage,
-  肺: BodyPart.Lung,
-  胃: BodyPart.Stomach,
-  肝脏: BodyPart.Liver,
+  胸骨: BodyPart.Sternum,
+  骨盆: BodyPart.Pelvis,
   心脏: BodyPart.Heart,
-  肾脏: BodyPart.Kidney,
-  肩部: BodyPart.Shoulder,
-  左肩: BodyPart.Shoulder,
-  右肩: BodyPart.Shoulder,
-  锁骨: BodyPart.Clavicle,
-  手臂: BodyPart.Arm,
-  左臂: BodyPart.Arm,
-  右臂: BodyPart.Arm,
-  肱骨: BodyPart.Humerus,
-  桡骨: BodyPart.Radius,
-  手: BodyPart.Hand,
-  左手: BodyPart.Hand,
-  右手: BodyPart.Hand,
-  手指: BodyPart.Fingers,
-  腿: BodyPart.Leg,
-  左腿: BodyPart.Leg,
-  右腿: BodyPart.Leg,
-  股骨: BodyPart.Femur,
-  胫骨: BodyPart.Tibia,
-  脚: BodyPart.Foot,
-  左脚: BodyPart.Foot,
-  右脚: BodyPart.Foot,
-  脚趾: BodyPart.Toes,
+  心: BodyPart.Heart,
+  左肺: BodyPart.LeftLung,
+  右肺: BodyPart.RightLung,
+  肺: BodyPart.LeftLung, // 通用"肺"默认映射到左肺
+  肝: BodyPart.Liver,
+  肝脏: BodyPart.Liver,
+  胃: BodyPart.Stomach,
+  左肾: BodyPart.LeftKidney,
+  右肾: BodyPart.RightKidney,
+  肾: BodyPart.LeftKidney, // 通用"肾"默认映射到左肾
+  肾脏: BodyPart.LeftKidney,
+
+  // 上肢
+  左肩: BodyPart.LeftShoulder,
+  右肩: BodyPart.RightShoulder,
+  肩: BodyPart.LeftShoulder,
+  肩部: BodyPart.LeftShoulder,
+  左锁骨: BodyPart.LeftClavicle,
+  右锁骨: BodyPart.RightClavicle,
+  锁骨: BodyPart.LeftClavicle,
+  左臂: BodyPart.LeftArm,
+  右臂: BodyPart.RightArm,
+  左手臂: BodyPart.LeftArm,
+  右手臂: BodyPart.RightArm,
+  手臂: BodyPart.LeftArm,
+  臂: BodyPart.LeftArm,
+  左肱骨: BodyPart.LeftHumerus,
+  右肱骨: BodyPart.RightHumerus,
+  肱骨: BodyPart.LeftHumerus,
+  左桡骨: BodyPart.LeftRadius,
+  右桡骨: BodyPart.RightRadius,
+  桡骨: BodyPart.LeftRadius,
+  左手: BodyPart.LeftHand,
+  右手: BodyPart.RightHand,
+  手: BodyPart.LeftHand,
+
+  // 手指（统称，映射到左右手指）
+  左手指: BodyPart.LeftFingers,
+  右手指: BodyPart.RightFingers,
+  手指: BodyPart.LeftFingers,
+  // 具体手指（都映射到对应侧的手指，因为枚举中没有细分）
+  尾指: BodyPart.LeftFingers,
+  小指: BodyPart.LeftFingers,
+  无名指: BodyPart.LeftFingers,
+  中指: BodyPart.LeftFingers,
+  食指: BodyPart.LeftFingers,
+  拇指: BodyPart.LeftFingers,
+
+  // 下肢
+  左腿: BodyPart.LeftLeg,
+  右腿: BodyPart.RightLeg,
+  腿: BodyPart.LeftLeg,
+  左股骨: BodyPart.LeftFemur,
+  右股骨: BodyPart.RightFemur,
+  股骨: BodyPart.LeftFemur,
+  左胫骨: BodyPart.LeftTibia,
+  右胫骨: BodyPart.RightTibia,
+  胫骨: BodyPart.LeftTibia,
+  左脚: BodyPart.LeftFoot,
+  右脚: BodyPart.RightFoot,
+  脚: BodyPart.LeftFoot,
+
+  // 脚趾（统称，映射到左右脚趾）
+  左脚趾: BodyPart.LeftToes,
+  右脚趾: BodyPart.RightToes,
+  脚趾: BodyPart.LeftToes,
+  // 具体脚趾（都映射到对应侧的脚趾，因为枚举中没有细分）
+  小趾: BodyPart.LeftToes,
+  次小趾: BodyPart.LeftToes,
+  三趾: BodyPart.LeftToes,
+  二趾: BodyPart.LeftToes,
+  大拇趾: BodyPart.LeftToes,
+  大趾: BodyPart.LeftToes,
 }
 
 /**
@@ -185,6 +247,11 @@ const apparelLayerNameMap: Record<string, ApparelLayer> = {
 }
 
 /**
+ * 缓存所有在CSV中见过的身体部位字符串
+ */
+const seenBodyPartStrings = new Set<string>()
+
+/**
  * 解析身体部位字符串为 BodyPart 枚举数组
  */
 function parseBodyParts(coverageStr: string): BodyPart[] {
@@ -195,6 +262,9 @@ function parseBodyParts(coverageStr: string): BodyPart[] {
 
   const bodyParts = new Set<BodyPart>()
   for (const partStr of parts) {
+    // 记录所有见过的部位字符串
+    seenBodyPartStrings.add(partStr)
+
     const bodyPart = bodyPartNameMap[partStr]
     if (bodyPart) {
       bodyParts.add(bodyPart)
@@ -247,6 +317,27 @@ export async function getClothingDataSources(): Promise<ClothingDataSource[]> {
       label: 'Vanilla',
       clothing: vanillaClothing,
     })
+
+    // 输出所有在CSV中见过的身体部位
+    if (seenBodyPartStrings.size > 0) {
+      console.log('CSV中出现的所有身体部位字符串：')
+      const sortedParts = Array.from(seenBodyPartStrings).sort()
+      sortedParts.forEach((part) => {
+        const mapped = bodyPartNameMap[part]
+        if (mapped) {
+          console.log(`  ✓ ${part} → ${mapped}`)
+        } else {
+          console.warn(`  ✗ ${part} → 未映射`)
+        }
+      })
+      console.log(`总计: ${seenBodyPartStrings.size} 个不同的身体部位字符串`)
+
+      // 统计未映射的部位
+      const unmappedParts = sortedParts.filter((part) => !bodyPartNameMap[part])
+      if (unmappedParts.length > 0) {
+        console.warn(`警告: 有 ${unmappedParts.length} 个身体部位未映射:`, unmappedParts)
+      }
+    }
   } catch (error) {
     console.error('Failed to load Vanilla clothing:', error)
   }
