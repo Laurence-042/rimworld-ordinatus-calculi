@@ -1,126 +1,17 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import {
-  calculateDPSCurve,
-  calculateDPSDistribution,
-  type WeaponParams,
-} from '@/utils/armorCalculations'
+import { computed, onMounted, ref } from 'vue'
+import { calculateDPSCurve, calculateDPSDistribution } from '@/utils/armorCalculations'
 import {
   calculateHitChance,
   calculateMaxDPS,
   getWeaponDataSources,
-  type WeaponDetailParams,
-  type WeaponDataSource,
 } from '@/utils/weaponCalculations'
+import type { Weapon, WeaponArmorParams, WeaponDataSource } from '@/types/weapon'
 import DPSChart from './DPSChart.vue'
 import DPSSurface3D from './DPSSurface3D.vue'
 
-// 武器接口定义
-interface Weapon {
-  id: number
-  name: string
-  selectedDataSourceId: string | null // 选择的数据源ID
-  selectedWeaponIndex: number | null // 该数据源下的武器索引
-  accuracyParams: {
-    touchAccuracy: number
-    shortAccuracy: number
-    mediumAccuracy: number
-    longAccuracy: number
-  }
-  weaponParams: {
-    damage: number
-    warmUp: number
-    cooldown: number
-    burstCount: number
-    burstTicks: number
-    range: number
-  }
-  armorPenetration: number
-  color: string
-}
-
-// 图表模式：2D曲线 或 3D曲面
-const chartMode = ref<'2d' | '3d'>('3d')
-
-// 目标距离（全局共享）
-const targetDistance = ref(25) // 目标距离（格）
-
-// 武器数据源
-const weaponDataSources = ref<WeaponDataSource[]>([])
-
-// 加载武器数据源
-onMounted(async () => {
-  weaponDataSources.value = await getWeaponDataSources()
-
-  // 初始化默认武器
-  if (weaponDataSources.value.length > 0) {
-    const vanillaSource = weaponDataSources.value.find((s) => s.id === 'vanilla')
-    if (vanillaSource && vanillaSource.weapons.length > 0) {
-      // 栓动步枪
-      const needleGunIndex = vanillaSource.weapons.findIndex((w) => w.name === '栓动步枪')
-      if (needleGunIndex >= 0) {
-        applyPreset(weapons.value[0]!, vanillaSource.id, needleGunIndex)
-      }
-      // 冲锋手枪
-      const machinePistolIndex = vanillaSource.weapons.findIndex((w) => w.name === '冲锋手枪')
-      if (machinePistolIndex >= 0) {
-        applyPreset(weapons.value[1]!, vanillaSource.id, machinePistolIndex)
-      }
-    }
-  }
-})
-
-// 武器列表
-let nextWeaponId = 1
-const weapons = ref<Weapon[]>([
-  {
-    id: nextWeaponId++,
-    name: '武器 1',
-    selectedDataSourceId: null,
-    selectedWeaponIndex: null,
-    accuracyParams: {
-      touchAccuracy: 60,
-      shortAccuracy: 80,
-      mediumAccuracy: 90,
-      longAccuracy: 85,
-    },
-    weaponParams: {
-      damage: 15,
-      warmUp: 2.5,
-      cooldown: 2.1,
-      burstCount: 1,
-      burstTicks: 0,
-      range: 44.9,
-    },
-    armorPenetration: 35,
-    color: '#409EFF',
-  },
-  {
-    id: nextWeaponId++,
-    name: '武器 2',
-    selectedDataSourceId: null,
-    selectedWeaponIndex: null,
-    accuracyParams: {
-      touchAccuracy: 90,
-      shortAccuracy: 65,
-      mediumAccuracy: 35,
-      longAccuracy: 15,
-    },
-    weaponParams: {
-      damage: 6,
-      warmUp: 0.5,
-      cooldown: 0.9,
-      burstCount: 3,
-      burstTicks: 7,
-      range: 19.9,
-    },
-    armorPenetration: 9,
-    color: '#67C23A',
-  },
-])
-
-// 预定义颜色列表
-const weaponColors = [
+// 常量
+const WEAPON_COLORS = [
   '#409EFF',
   '#67C23A',
   '#E6A23C',
@@ -131,107 +22,149 @@ const weaponColors = [
   '#FFD700',
 ]
 
-// 添加武器
-const addWeapon = () => {
-  const newWeapon: Weapon = {
+const DEFAULT_WEAPON_PARAMS = {
+  armorPenetration: 15,
+  burstCount: 3,
+  burstTicks: 8,
+  cooldown: 1.0,
+  damage: 12,
+  longAccuracy: 50,
+  mediumAccuracy: 70,
+  range: 50,
+  shortAccuracy: 85,
+  touchAccuracy: 95,
+  warmUp: 1.5,
+}
+
+// 状态
+const chartMode = ref<'2d' | '3d'>('3d')
+const targetDistance = ref(25)
+const weaponDataSources = ref<WeaponDataSource[]>([])
+
+let nextWeaponId = 1
+const weapons = ref<Weapon[]>([
+  createWeapon('武器 1', '#409EFF', {
+    armorPenetration: 35,
+    burstCount: 1,
+    burstTicks: 0,
+    cooldown: 2.1,
+    damage: 15,
+    longAccuracy: 85,
+    mediumAccuracy: 90,
+    range: 44.9,
+    shortAccuracy: 80,
+    touchAccuracy: 60,
+    warmUp: 2.5,
+  }),
+  createWeapon('武器 2', '#67C23A', {
+    armorPenetration: 9,
+    burstCount: 3,
+    burstTicks: 7,
+    cooldown: 0.9,
+    damage: 6,
+    longAccuracy: 15,
+    mediumAccuracy: 35,
+    range: 19.9,
+    shortAccuracy: 65,
+    touchAccuracy: 90,
+    warmUp: 0.5,
+  }),
+])
+
+// 辅助函数
+function createWeapon(name: string, color: string, params?: Partial<Weapon>): Weapon {
+  return {
+    ...DEFAULT_WEAPON_PARAMS,
+    ...params,
+    color,
     id: nextWeaponId++,
-    name: `武器 ${weapons.value.length + 1}`,
+    name,
     selectedDataSourceId: null,
     selectedWeaponIndex: null,
-    accuracyParams: {
-      touchAccuracy: 95,
-      shortAccuracy: 85,
-      mediumAccuracy: 70,
-      longAccuracy: 50,
-    },
-    weaponParams: {
-      damage: 12,
-      warmUp: 1.5,
-      cooldown: 1.0,
-      burstCount: 3,
-      burstTicks: 8,
-      range: 50,
-    },
-    armorPenetration: 15,
-    color: weaponColors[weapons.value.length % weaponColors.length] || '#409EFF',
   }
+}
+
+function toArmorCalculationParams(weapon: Weapon): WeaponArmorParams {
+  const hitChance = calculateHitChance(weapon, targetDistance.value)
+  const maxDPS = calculateMaxDPS(weapon)
+  return {
+    armorPenetration: weapon.armorPenetration / 100, // 转换为 0-1 范围
+    hitChance,
+    maxDPS,
+  }
+}
+
+// 方法
+const addWeapon = () => {
+  const colorIndex = weapons.value.length % WEAPON_COLORS.length
+  const newWeapon = createWeapon(`武器 ${weapons.value.length + 1}`, WEAPON_COLORS[colorIndex]!)
   weapons.value.push(newWeapon)
 }
 
-// 移除武器
-const removeWeapon = (id: number) => {
-  if (weapons.value.length > 1) {
-    weapons.value = weapons.value.filter((w) => w.id !== id)
-  }
-}
-
-// 应用武器预设
 const applyPreset = (weapon: Weapon, dataSourceId: string, weaponIndex: number) => {
-  weapon.selectedDataSourceId = dataSourceId
-  weapon.selectedWeaponIndex = weaponIndex
-
   const dataSource = weaponDataSources.value.find((s) => s.id === dataSourceId)
   if (!dataSource) return
 
   const preset = dataSource.weapons[weaponIndex]
   if (!preset) return
 
-  // 更新武器名称
+  weapon.selectedDataSourceId = dataSourceId
+  weapon.selectedWeaponIndex = weaponIndex
   weapon.name = preset.name
-
-  // 更新命中率参数
-  weapon.accuracyParams = {
-    touchAccuracy: preset.params.touchAccuracy,
-    shortAccuracy: preset.params.shortAccuracy,
-    mediumAccuracy: preset.params.mediumAccuracy,
-    longAccuracy: preset.params.longAccuracy,
-  }
-  // 更新武器属性
-  weapon.weaponParams = {
-    damage: preset.params.damage,
-    warmUp: preset.params.warmUp,
-    cooldown: preset.params.cooldown,
-    burstCount: preset.params.burstCount,
-    burstTicks: preset.params.burstTicks,
-    range: preset.params.range,
-  }
   weapon.armorPenetration = preset.params.armorPenetration
+  weapon.burstCount = preset.params.burstCount
+  weapon.burstTicks = preset.params.burstTicks
+  weapon.cooldown = preset.params.cooldown
+  weapon.damage = preset.params.damage
+  weapon.longAccuracy = preset.params.longAccuracy
+  weapon.mediumAccuracy = preset.params.mediumAccuracy
+  weapon.range = preset.params.range
+  weapon.shortAccuracy = preset.params.shortAccuracy
+  weapon.touchAccuracy = preset.params.touchAccuracy
+  weapon.warmUp = preset.params.warmUp
 }
 
-// 为每个武器计算命中率和最大DPS
-const calculateWeaponStats = (weapon: Weapon) => {
-  const detailParams: WeaponDetailParams = {
-    ...weapon.accuracyParams,
-    ...weapon.weaponParams,
-    armorPenetration: weapon.armorPenetration,
+const removeWeapon = (id: number) => {
+  if (weapons.value.length > 1) {
+    weapons.value = weapons.value.filter((w) => w.id !== id)
   }
-  const hitChance = calculateHitChance(detailParams, targetDistance.value)
-  const maxDPS = calculateMaxDPS(detailParams)
-  return { hitChance, maxDPS }
 }
 
-// 计算所有武器的DPS曲线数据
+// 计算属性
 const allWeaponsData = computed(() => {
   return weapons.value.map((weapon) => {
-    const { hitChance, maxDPS } = calculateWeaponStats(weapon)
-    const params: WeaponParams = {
-      hitChance,
-      maxDPS,
-      armorPenetration: weapon.armorPenetration / 100,
-    }
-    const dpsCurve = calculateDPSCurve(params)
+    const armorParams = toArmorCalculationParams(weapon)
+    const dpsCurve = calculateDPSCurve(armorParams)
     const distributions = dpsCurve.armorValues.map((armor) =>
-      calculateDPSDistribution(params, armor / 100),
+      calculateDPSDistribution(armorParams, armor / 100),
     )
 
     return {
-      weapon,
-      hitChance,
-      maxDPS,
-      dpsCurve,
       distributions,
+      dpsCurve,
+      hitChance: armorParams.hitChance,
+      maxDPS: armorParams.maxDPS,
+      weapon,
     }
   })
+})
+
+// 生命周期
+onMounted(async () => {
+  weaponDataSources.value = await getWeaponDataSources()
+
+  const vanillaSource = weaponDataSources.value.find((s) => s.id === 'vanilla')
+  if (!vanillaSource) return
+
+  const needleGunIndex = vanillaSource.weapons.findIndex((w) => w.name === '栓动步枪')
+  if (needleGunIndex >= 0) {
+    applyPreset(weapons.value[0]!, vanillaSource.id, needleGunIndex)
+  }
+
+  const machinePistolIndex = vanillaSource.weapons.findIndex((w) => w.name === '冲锋手枪')
+  if (machinePistolIndex >= 0) {
+    applyPreset(weapons.value[1]!, vanillaSource.id, machinePistolIndex)
+  }
 })
 </script>
 
@@ -336,14 +269,9 @@ const allWeaponsData = computed(() => {
 
             <el-form-item label="贴近 (≤3格)">
               <div class="slider-input-group">
-                <el-slider
-                  v-model="weapon.accuracyParams.touchAccuracy"
-                  :min="0"
-                  :max="100"
-                  :step="1"
-                />
+                <el-slider v-model="weapon.touchAccuracy" :min="0" :max="100" :step="1" />
                 <el-input-number
-                  v-model="weapon.accuracyParams.touchAccuracy"
+                  v-model="weapon.touchAccuracy"
                   :min="0"
                   :max="100"
                   :step="1"
@@ -356,14 +284,9 @@ const allWeaponsData = computed(() => {
 
             <el-form-item label="近 (≤12格)">
               <div class="slider-input-group">
-                <el-slider
-                  v-model="weapon.accuracyParams.shortAccuracy"
-                  :min="0"
-                  :max="100"
-                  :step="1"
-                />
+                <el-slider v-model="weapon.shortAccuracy" :min="0" :max="100" :step="1" />
                 <el-input-number
-                  v-model="weapon.accuracyParams.shortAccuracy"
+                  v-model="weapon.shortAccuracy"
                   :min="0"
                   :max="100"
                   :step="1"
@@ -376,14 +299,9 @@ const allWeaponsData = computed(() => {
 
             <el-form-item label="中 (≤25格)">
               <div class="slider-input-group">
-                <el-slider
-                  v-model="weapon.accuracyParams.mediumAccuracy"
-                  :min="0"
-                  :max="100"
-                  :step="1"
-                />
+                <el-slider v-model="weapon.mediumAccuracy" :min="0" :max="100" :step="1" />
                 <el-input-number
-                  v-model="weapon.accuracyParams.mediumAccuracy"
+                  v-model="weapon.mediumAccuracy"
                   :min="0"
                   :max="100"
                   :step="1"
@@ -396,14 +314,9 @@ const allWeaponsData = computed(() => {
 
             <el-form-item label="远 (≤40格)">
               <div class="slider-input-group">
-                <el-slider
-                  v-model="weapon.accuracyParams.longAccuracy"
-                  :min="0"
-                  :max="100"
-                  :step="1"
-                />
+                <el-slider v-model="weapon.longAccuracy" :min="0" :max="100" :step="1" />
                 <el-input-number
-                  v-model="weapon.accuracyParams.longAccuracy"
+                  v-model="weapon.longAccuracy"
                   :min="0"
                   :max="100"
                   :step="1"
@@ -419,9 +332,9 @@ const allWeaponsData = computed(() => {
 
             <el-form-item label="伤害">
               <div class="slider-input-group">
-                <el-slider v-model="weapon.weaponParams.damage" :min="1" :max="50" :step="1" />
+                <el-slider v-model="weapon.damage" :min="1" :max="50" :step="1" />
                 <el-input-number
-                  v-model="weapon.weaponParams.damage"
+                  v-model="weapon.damage"
                   :min="1"
                   :max="200"
                   :step="1"
@@ -434,9 +347,9 @@ const allWeaponsData = computed(() => {
 
             <el-form-item label="预热时间 (Warm-Up)">
               <div class="slider-input-group">
-                <el-slider v-model="weapon.weaponParams.warmUp" :min="0" :max="5" :step="0.1" />
+                <el-slider v-model="weapon.warmUp" :min="0" :max="5" :step="0.1" />
                 <el-input-number
-                  v-model="weapon.weaponParams.warmUp"
+                  v-model="weapon.warmUp"
                   :min="0"
                   :max="10"
                   :step="0.1"
@@ -450,9 +363,9 @@ const allWeaponsData = computed(() => {
 
             <el-form-item label="冷却时间 (Cooldown)">
               <div class="slider-input-group">
-                <el-slider v-model="weapon.weaponParams.cooldown" :min="0" :max="5" :step="0.1" />
+                <el-slider v-model="weapon.cooldown" :min="0" :max="5" :step="0.1" />
                 <el-input-number
-                  v-model="weapon.weaponParams.cooldown"
+                  v-model="weapon.cooldown"
                   :min="0"
                   :max="10"
                   :step="0.1"
@@ -466,9 +379,9 @@ const allWeaponsData = computed(() => {
 
             <el-form-item label="连发数量 (Burst Count)">
               <div class="slider-input-group">
-                <el-slider v-model="weapon.weaponParams.burstCount" :min="1" :max="10" :step="1" />
+                <el-slider v-model="weapon.burstCount" :min="1" :max="10" :step="1" />
                 <el-input-number
-                  v-model="weapon.weaponParams.burstCount"
+                  v-model="weapon.burstCount"
                   :min="1"
                   :max="20"
                   :step="1"
@@ -481,9 +394,9 @@ const allWeaponsData = computed(() => {
 
             <el-form-item label="连发间隔 (Burst Ticks)">
               <div class="slider-input-group">
-                <el-slider v-model="weapon.weaponParams.burstTicks" :min="0" :max="30" :step="1" />
+                <el-slider v-model="weapon.burstTicks" :min="0" :max="30" :step="1" />
                 <el-input-number
-                  v-model="weapon.weaponParams.burstTicks"
+                  v-model="weapon.burstTicks"
                   :min="0"
                   :max="60"
                   :step="1"
@@ -496,9 +409,9 @@ const allWeaponsData = computed(() => {
 
             <el-form-item label="射程 (Range)">
               <div class="slider-input-group">
-                <el-slider v-model="weapon.weaponParams.range" :min="0" :max="50" :step="0.5" />
+                <el-slider v-model="weapon.range" :min="0" :max="50" :step="0.5" />
                 <el-input-number
-                  v-model="weapon.weaponParams.range"
+                  v-model="weapon.range"
                   :min="0"
                   :max="50"
                   :step="1"
@@ -571,9 +484,9 @@ const allWeaponsData = computed(() => {
 }
 
 .main-title {
+  color: #303133;
   font-size: 1.5em;
   font-weight: 600;
-  color: #303133;
   margin: 0 0 20px 0;
   padding: 0;
 }
@@ -582,30 +495,28 @@ const allWeaponsData = computed(() => {
 .main-layout {
   display: flex;
   gap: 20px;
-  width: 100%;
   height: 100%;
   overflow: hidden;
+  width: 100%;
 }
 
 /* 左侧面板：可滚动 */
 .left-panel {
   flex: 0 0 500px;
   min-width: 500px;
-  overflow-y: auto;
   overflow-x: hidden;
-  padding: 20px;
-  padding-right: 10px;
+  overflow-y: auto;
+  padding: 20px 10px 20px 20px;
 }
 
 /* 右侧面板：固定，不滚动 */
 .right-panel {
-  flex: 1;
-  min-width: 600px;
   display: flex;
+  flex: 1;
   flex-direction: column;
+  min-width: 600px;
   overflow: hidden;
-  padding: 20px;
-  padding-left: 10px;
+  padding: 20px 20px 20px 10px;
 }
 
 /* 全局参数卡片 */
@@ -626,8 +537,8 @@ const allWeaponsData = computed(() => {
 }
 
 .weapon-header-top {
-  display: flex;
   align-items: center;
+  display: flex;
   gap: 10px;
 }
 
@@ -636,9 +547,9 @@ const allWeaponsData = computed(() => {
 }
 
 .weapon-name-input :deep(.el-input__inner) {
-  font-weight: 600;
-  font-size: 1.1em;
   color: var(--weapon-color);
+  font-size: 1.1em;
+  font-weight: 600;
 }
 
 .weapon-preset {
@@ -646,24 +557,24 @@ const allWeaponsData = computed(() => {
 }
 
 .chart-controls {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  display: flex;
   flex-shrink: 0;
+  justify-content: space-between;
+  margin-bottom: 15px;
 }
 
 .chart-hint {
-  font-size: 0.9em;
   color: #909399;
+  font-size: 0.9em;
   margin: 0;
 }
 
 .chart-container {
-  flex: 1;
-  overflow: hidden;
   display: flex;
+  flex: 1;
   flex-direction: column;
+  overflow: hidden;
 }
 
 /* 在小屏幕上垂直堆叠并允许整体滚动 */
@@ -681,9 +592,9 @@ const allWeaponsData = computed(() => {
 
   .left-panel,
   .right-panel {
-    width: 100%;
-    overflow: visible;
     height: auto;
+    overflow: visible;
+    width: 100%;
   }
 
   .right-panel {
@@ -691,15 +602,9 @@ const allWeaponsData = computed(() => {
   }
 }
 
-.input-section,
-.results-section,
-.distribution-section {
-  margin-bottom: 20px;
-}
-
 .slider-input-group {
-  display: flex;
   align-items: center;
+  display: flex;
   gap: 15px;
   width: 100%;
 }
@@ -713,16 +618,11 @@ const allWeaponsData = computed(() => {
 }
 
 .unit {
-  width: 20px;
   color: #909399;
+  width: 20px;
 }
 
 .unit-placeholder {
   width: 20px;
-}
-
-.dps-value {
-  margin-left: 15px;
-  color: #606266;
 }
 </style>

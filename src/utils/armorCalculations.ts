@@ -1,3 +1,5 @@
+import type { WeaponArmorParams } from '@/types/weapon'
+
 /**
  * RimWorld 护甲计算工具
  *
@@ -9,17 +11,8 @@
  * 5. 如果随机数 >= 剩余护甲值，则护甲无效（100%伤害）
  */
 
-/**
- * 武器参数接口
- */
-export interface WeaponParams {
-  /** 武器命中率 (0-1) */
-  hitChance: number
-  /** 命中率100%、目标无护甲时武器的最大DPS */
-  maxDPS: number
-  /** 武器的护甲穿透值 (0-1, 可选，默认为0) */
-  armorPenetration?: number
-}
+// 向后兼容的类型别名
+export type WeaponParams = WeaponArmorParams
 
 /**
  * 计算结果接口

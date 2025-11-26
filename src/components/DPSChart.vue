@@ -2,16 +2,17 @@
 import { computed } from 'vue'
 import { Line } from 'vue-chartjs'
 import {
-  Chart as ChartJS,
   CategoryScale,
+  Chart as ChartJS,
+  Filler,
+  Legend,
   LinearScale,
-  PointElement,
   LineElement,
+  PointElement,
   Title,
   Tooltip,
-  Legend,
-  Filler,
 } from 'chart.js'
+import type { WeaponWithCalculations } from '@/types/weapon'
 
 // 注册 Chart.js 组件
 ChartJS.register(
@@ -25,33 +26,8 @@ ChartJS.register(
   Filler,
 )
 
-interface DPSDistribution {
-  missProb: number
-  zeroDamageProb: number
-  halfDamageProb: number
-  fullDamageProb: number
-  halfDPS: number
-  fullDPS: number
-  expectedDPS: number
-}
-
-interface WeaponData {
-  weapon: {
-    id: number
-    name: string
-    color: string
-  }
-  hitChance: number
-  maxDPS: number
-  dpsCurve: {
-    armorValues: number[]
-    dpsValues: number[]
-  }
-  distributions: DPSDistribution[]
-}
-
 interface Props {
-  weaponsData: WeaponData[]
+  weaponsData: WeaponWithCalculations[]
 }
 
 const props = defineProps<Props>()

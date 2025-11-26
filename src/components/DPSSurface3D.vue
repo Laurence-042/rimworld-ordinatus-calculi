@@ -1,55 +1,13 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import Plotly from 'plotly.js-dist-min'
-import type { WeaponDetailParams } from '@/utils/weaponCalculations'
+import type { WeaponWithCalculations } from '@/types/weapon'
+import type { WeaponArmorParams } from '@/types/weapon'
 import { calculateHitChance, calculateMaxDPS } from '@/utils/weaponCalculations'
-import type { WeaponParams } from '@/utils/armorCalculations'
 import { calculateDPSDistribution } from '@/utils/armorCalculations'
 
-interface DPSDistribution {
-  missProb: number
-  zeroDamageProb: number
-  halfDamageProb: number
-  fullDamageProb: number
-  halfDPS: number
-  fullDPS: number
-  expectedDPS: number
-}
-
-interface WeaponData {
-  weapon: {
-    id: number
-    name: string
-    color: string
-    selectedDataSourceId: string | null
-    selectedWeaponIndex: number | null
-    accuracyParams: {
-      touchAccuracy: number
-      shortAccuracy: number
-      mediumAccuracy: number
-      longAccuracy: number
-    }
-    weaponParams: {
-      damage: number
-      warmUp: number
-      cooldown: number
-      burstCount: number
-      burstTicks: number
-      range: number
-    }
-    armorPenetration: number
-  }
-  hitChance: number
-  maxDPS: number
-  dpsCurve: {
-    armorValues: number[]
-    dpsValues: number[]
-  }
-  distributions: DPSDistribution[]
-}
-
 interface Props {
-  weaponsData: WeaponData[]
+  weaponsData: WeaponWithCalculations[]
 }
 
 const props = defineProps<Props>()
@@ -57,7 +15,7 @@ const props = defineProps<Props>()
 const chartContainer = ref<HTMLDivElement | null>(null)
 
 // 为单个武器生成3D曲面数据
-function generateWeaponSurfaceData(weaponData: WeaponData) {
+function generateWeaponSurfaceData(weaponData: WeaponWithCalculations) {
   // 目标距离范围：0-50格
   const distances = []
   for (let d = 0; d <= 50; d += 1) {
@@ -84,18 +42,13 @@ function generateWeaponSurfaceData(weaponData: WeaponData) {
       const armor = armorValues[j]! / 100
 
       // 计算该距离下的命中率
-      const detailParams: WeaponDetailParams = {
-        ...weaponData.weapon.accuracyParams,
-        ...weaponData.weapon.weaponParams,
-        armorPenetration: weaponData.weapon.armorPenetration,
-      }
-      const hitChance = calculateHitChance(detailParams, distance)
-      const maxDPS = calculateMaxDPS(detailParams)
+      const hitChance = calculateHitChance(weaponData.weapon, distance)
+      const maxDPS = calculateMaxDPS(weaponData.weapon)
 
-      const weaponParams: WeaponParams = {
+      const weaponParams: WeaponArmorParams = {
+        armorPenetration: weaponData.weapon.armorPenetration / 100,
         hitChance,
         maxDPS,
-        armorPenetration: weaponData.weapon.armorPenetration / 100,
       }
 
       const distribution = calculateDPSDistribution(weaponParams, armor)
