@@ -127,73 +127,76 @@ function generateWeaponSurfaceData(weaponData: WeaponData) {
   return { distances, armorValues, zData, hoverTexts }
 }
 
+// 查找两组DPS数组在相邻位置的交点
+function findIntersections(
+  dps1Array: number[],
+  dps2Array: number[],
+  axisValues: number[],
+): Array<{ index: number; t: number; dps: number }> {
+  const intersections: Array<{ index: number; t: number; dps: number }> = []
+
+  for (let i = 0; i < axisValues.length - 1; i++) {
+    const diff1 = dps1Array[i]! - dps2Array[i]!
+    const diff2 = dps1Array[i + 1]! - dps2Array[i + 1]!
+
+    // 如果符号改变，说明有交点
+    if (diff1 * diff2 < 0) {
+      // 线性插值找到精确的交点
+      const t = Math.abs(diff1) / (Math.abs(diff1) + Math.abs(diff2))
+      const dpsIntersect = dps1Array[i]! + t * (dps1Array[i + 1]! - dps1Array[i]!)
+
+      intersections.push({
+        index: i,
+        t,
+        dps: dpsIntersect,
+      })
+    }
+  }
+
+  return intersections
+}
+
 // 计算两个曲面的交线
 function calculateIntersectionLine(
-  weaponData1: WeaponData,
-  weaponData2: WeaponData,
+  zData1: number[][],
+  zData2: number[][],
   distances: number[],
   armorValues: number[],
 ) {
   const intersectionPoints: Array<{ x: number; y: number; z: number }> = []
 
-  // 对每个距离，找到DPS相等的护甲值
-  for (const distance of distances) {
-    // 计算两个武器在此距离下的DPS曲线
-    const dps1Array: number[] = []
-    const dps2Array: number[] = []
+  // 方法1：沿距离方向（固定护甲值），找到DPS相等的距离
+  for (let armorIndex = 0; armorIndex < armorValues.length; armorIndex++) {
+    const armor = armorValues[armorIndex]!
+    const dps1Array = zData1.map((row) => row[armorIndex]!)
+    const dps2Array = zData2.map((row) => row[armorIndex]!)
 
-    for (const armor of armorValues) {
-      // 武器1
-      const detailParams1: WeaponDetailParams = {
-        ...weaponData1.weapon.accuracyParams,
-        ...weaponData1.weapon.weaponParams,
-        armorPenetration: weaponData1.weapon.armorPenetration,
-      }
-      const hitChance1 = calculateHitChance(detailParams1, distance)
-      const maxDPS1 = calculateMaxDPS(detailParams1)
-      const weaponParams1: WeaponParams = {
-        hitChance: hitChance1,
-        maxDPS: maxDPS1,
-        armorPenetration: weaponData1.weapon.armorPenetration / 100,
-      }
-      const dist1 = calculateDPSDistribution(weaponParams1, armor / 100)
-      dps1Array.push(dist1.expectedDPS)
-
-      // 武器2
-      const detailParams2: WeaponDetailParams = {
-        ...weaponData2.weapon.accuracyParams,
-        ...weaponData2.weapon.weaponParams,
-        armorPenetration: weaponData2.weapon.armorPenetration,
-      }
-      const hitChance2 = calculateHitChance(detailParams2, distance)
-      const maxDPS2 = calculateMaxDPS(detailParams2)
-      const weaponParams2: WeaponParams = {
-        hitChance: hitChance2,
-        maxDPS: maxDPS2,
-        armorPenetration: weaponData2.weapon.armorPenetration / 100,
-      }
-      const dist2 = calculateDPSDistribution(weaponParams2, armor / 100)
-      dps2Array.push(dist2.expectedDPS)
+    const intersections = findIntersections(dps1Array, dps2Array, distances)
+    for (const { index, t, dps } of intersections) {
+      const distanceIntersect = distances[index]! + t * (distances[index + 1]! - distances[index]!)
+      intersectionPoints.push({
+        x: distanceIntersect,
+        y: armor,
+        z: dps,
+      })
     }
+  }
 
-    // 查找交点（DPS差值从正变负或从负变正的点）
-    for (let i = 0; i < armorValues.length - 1; i++) {
-      const diff1 = dps1Array[i]! - dps2Array[i]!
-      const diff2 = dps1Array[i + 1]! - dps2Array[i + 1]!
+  // 方法2：沿护甲方向（固定距离），找到DPS相等的护甲值
+  for (let distIndex = 0; distIndex < distances.length; distIndex++) {
+    const distance = distances[distIndex]!
+    const dps1Array = zData1[distIndex]!
+    const dps2Array = zData2[distIndex]!
 
-      // 如果符号改变，说明有交点
-      if (diff1 * diff2 < 0) {
-        // 线性插值找到精确的交点
-        const t = Math.abs(diff1) / (Math.abs(diff1) + Math.abs(diff2))
-        const armorIntersect = armorValues[i]! + t * (armorValues[i + 1]! - armorValues[i]!)
-        const dpsIntersect = dps1Array[i]! + t * (dps1Array[i + 1]! - dps1Array[i]!)
-
-        intersectionPoints.push({
-          x: distance,
-          y: armorIntersect,
-          z: dpsIntersect,
-        })
-      }
+    const intersections = findIntersections(dps1Array, dps2Array, armorValues)
+    for (const { index, t, dps } of intersections) {
+      const armorIntersect =
+        armorValues[index]! + t * (armorValues[index + 1]! - armorValues[index]!)
+      intersectionPoints.push({
+        x: distance,
+        y: armorIntersect,
+        z: dps,
+      })
     }
   }
 
@@ -232,7 +235,7 @@ function calculateIntersectionLine(
 
         // 如果最近的点距离太远，认为是不同的曲线段
         // 阈值：归一化距离 > 0.1 表示跳跃太大
-        if (minIndex >= 0 && minDist < 0.1) {
+        if (minIndex >= 0 && minDist < 0.2) {
           currentCurve.push(remaining[minIndex]!)
           remaining.splice(minIndex, 1)
         } else {
@@ -260,9 +263,15 @@ function plotSurface() {
 
   const plotData: Plotly.Data[] = []
 
+  // 先为所有武器生成曲面数据
+  const surfaceDataCache = props.weaponsData.map((weaponData) =>
+    generateWeaponSurfaceData(weaponData),
+  )
+
   // 为每个武器创建一个曲面
-  props.weaponsData.forEach((weaponData) => {
-    const { distances, armorValues, zData, hoverTexts } = generateWeaponSurfaceData(weaponData)
+  surfaceDataCache.forEach((surfaceData, index) => {
+    const { distances, armorValues, zData, hoverTexts } = surfaceData
+    const weaponData = props.weaponsData[index]!
 
     // 转置 zData
     const zDataTransposed: number[][] = []
@@ -302,19 +311,19 @@ function plotSurface() {
 
   // 如果有多个武器，绘制曲面相交线
   if (props.weaponsData.length >= 2) {
-    // 使用第一个武器的距离和护甲值范围
-    const { distances, armorValues } = generateWeaponSurfaceData(props.weaponsData[0]!)
-
     // 为每对武器计算交线
     for (let i = 0; i < props.weaponsData.length; i++) {
       for (let j = i + 1; j < props.weaponsData.length; j++) {
+        const surface1 = surfaceDataCache[i]!
+        const surface2 = surfaceDataCache[j]!
         const weaponData1 = props.weaponsData[i]!
         const weaponData2 = props.weaponsData[j]!
+
         const intersectionCurves = calculateIntersectionLine(
-          weaponData1,
-          weaponData2,
-          distances,
-          armorValues,
+          surface1.zData,
+          surface2.zData,
+          surface1.distances,
+          surface1.armorValues,
         )
 
         // 为每条独立的交线段添加一个轨迹
