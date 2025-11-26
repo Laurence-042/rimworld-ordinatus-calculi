@@ -9,10 +9,10 @@ const calculationMode = ref<'weapon' | 'armor'>('weapon')
 <template>
   <div class="app-container">
     <header class="app-header">
-      <h1 class="app-title">RimWorld DPS 计算器</h1>
+      <h1 class="app-title">RimWorld 计算仪典</h1>
       <el-radio-group v-model="calculationMode" size="default">
-        <el-radio-button value="weapon">矛式计算（以武器为核心）</el-radio-button>
-        <el-radio-button value="armor">盾式计算（以护甲为核心）</el-radio-button>
+        <el-radio-button value="weapon">破甲者之歌（计算武器DPS）</el-radio-button>
+        <el-radio-button value="armor">留命者之吟（计算护甲效果）</el-radio-button>
       </el-radio-group>
     </header>
     <main class="app-main">
