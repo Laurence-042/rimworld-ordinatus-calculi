@@ -66,30 +66,30 @@ const globalMaterials = ref<{
 }>({
   [MaterialTag.Metal]: {
     name: '钢铁',
-    armorSharp: 1.0,
-    armorBlunt: 0.36,
-    armorHeat: 0.27,
+    armorSharp: 100,
+    armorBlunt: 36,
+    armorHeat: 27,
     tags: [MaterialTag.Metal],
   },
   [MaterialTag.Wood]: {
     name: '木材',
-    armorSharp: 0.54,
-    armorBlunt: 0.18,
-    armorHeat: 0.09,
+    armorSharp: 54,
+    armorBlunt: 18,
+    armorHeat: 9,
     tags: [MaterialTag.Wood],
   },
   [MaterialTag.Leather]: {
     name: '普通皮革',
-    armorSharp: 1.12,
-    armorBlunt: 0.24,
-    armorHeat: 0.35,
+    armorSharp: 112,
+    armorBlunt: 24,
+    armorHeat: 35,
     tags: [MaterialTag.Leather],
   },
   [MaterialTag.Fabric]: {
     name: '合成纤维',
-    armorSharp: 0.81,
-    armorBlunt: 0.12,
-    armorHeat: 0.18,
+    armorSharp: 81,
+    armorBlunt: 12,
+    armorHeat: 18,
     tags: [MaterialTag.Fabric],
   },
 })
@@ -116,9 +116,9 @@ const armorSets = ref<ArmorSet[]>([
     layers: [
       {
         itemName: '防弹夹克',
-        armorSharp: 0.55,
-        armorBlunt: 0.08,
-        armorHeat: 0.1,
+        armorSharp: 55,
+        armorBlunt: 8,
+        armorHeat: 10,
         useMaterial: false,
         materialCoefficient: 1.0,
         selectedMaterial: MaterialTag.Fabric,
@@ -138,9 +138,9 @@ const armorSets = ref<ArmorSet[]>([
       },
       {
         itemName: '防弹背心',
-        armorSharp: 1.0,
-        armorBlunt: 0.36,
-        armorHeat: 0.27,
+        armorSharp: 100,
+        armorBlunt: 36,
+        armorHeat: 27,
         useMaterial: false,
         materialCoefficient: 1.0,
         selectedMaterial: MaterialTag.Fabric,
@@ -162,9 +162,9 @@ const armorSets = ref<ArmorSet[]>([
     layers: [
       {
         itemName: '海军装甲',
-        armorSharp: 1.06,
-        armorBlunt: 0.45,
-        armorHeat: 0.54,
+        armorSharp: 106,
+        armorBlunt: 45,
+        armorHeat: 54,
         useMaterial: false,
         materialCoefficient: 1.0,
         selectedMaterial: MaterialTag.Fabric,
@@ -200,9 +200,9 @@ const addArmorSet = () => {
     layers: [
       {
         itemName: '新护甲',
-        armorSharp: 0.5,
-        armorBlunt: 0.2,
-        armorHeat: 0.2,
+        armorSharp: 50,
+        armorBlunt: 20,
+        armorHeat: 20,
         useMaterial: false,
         materialCoefficient: 1.0,
         selectedMaterial: MaterialTag.Fabric,
@@ -229,9 +229,9 @@ const removeArmorSet = (id: number) => {
 const addLayer = (armorSet: ArmorSet) => {
   armorSet.layers.push({
     itemName: '新衣物',
-    armorSharp: 0.5,
-    armorBlunt: 0.2,
-    armorHeat: 0.2,
+    armorSharp: 50,
+    armorBlunt: 20,
+    armorHeat: 20,
     useMaterial: false,
     materialCoefficient: 1.0,
     selectedMaterial: MaterialTag.Fabric,
@@ -281,10 +281,16 @@ const getLayerActualArmor = (layer: ArmorSet['layers'][number]) => {
 const allArmorSetsData = computed(() => {
   return armorSets.value.map((armorSet) => {
     // 计算实际护甲值的层
-    const actualLayers = armorSet.layers.map((layer) => ({
-      ...layer,
-      ...getLayerActualArmor(layer),
-    }))
+    const actualLayers = armorSet.layers.map((layer) => {
+      const armor = getLayerActualArmor(layer)
+      return {
+        ...layer,
+        // 将百分比转换为0-1的小数供计算使用
+        armorSharp: armor.armorSharp / 100,
+        armorBlunt: armor.armorBlunt / 100,
+        armorHeat: armor.armorHeat / 100,
+      }
+    })
 
     // 过滤只覆盖选中身体部位的护甲层
     const filteredLayers = filterArmorLayersByBodyPart(actualLayers, selectedBodyPart.value)
@@ -358,7 +364,13 @@ const onMaterialValueChange = (materialType: MaterialTag) => {
 // 加载全局材料预设
 const loadMaterialPreset = (materialType: MaterialTag, material: MaterialData) => {
   startLoadingPreset()
-  globalMaterials.value[materialType] = { ...material }
+  // 将0-2的材料护甲值转换为0-200的百分比
+  globalMaterials.value[materialType] = {
+    ...material,
+    armorSharp: Math.round(material.armorSharp * 100),
+    armorBlunt: Math.round(material.armorBlunt * 100),
+    armorHeat: Math.round(material.armorHeat * 100),
+  }
 }
 
 // 从衣物预设加载到层
@@ -390,9 +402,9 @@ const loadClothingPreset = (layer: ArmorSet['layers'][number], clothing: Clothin
   } else {
     // 直接输入护甲值
     layer.useMaterial = false
-    layer.armorSharp = clothing.armorSharp || 0
-    layer.armorBlunt = clothing.armorBlunt || 0
-    layer.armorHeat = clothing.armorHeat || 0
+    layer.armorSharp = (clothing.armorSharp || 0) * 100
+    layer.armorBlunt = (clothing.armorBlunt || 0) * 100
+    layer.armorHeat = (clothing.armorHeat || 0) * 100
   }
 }
 
@@ -584,7 +596,7 @@ onMounted(async () => {
                     <el-option
                       v-for="material in currentMaterials.metal"
                       :key="material.name"
-                      :label="`${material.name} (利器${(material.armorSharp * 100).toFixed(0)}% 钝器${(material.armorBlunt * 100).toFixed(0)}% 热能${(material.armorHeat * 100).toFixed(0)}%)`"
+                      :label="`${material.name} (利器${Math.round(material.armorSharp * 100)}% 钝器${Math.round(material.armorBlunt * 100)}% 热能${Math.round(material.armorHeat * 100)}%)`"
                       :value="material"
                     />
                   </el-select>
@@ -595,22 +607,22 @@ onMounted(async () => {
                     <el-slider
                       v-model="globalMaterials.metal.armorSharp"
                       :min="0"
-                      :max="2"
-                      :step="0.01"
-                      :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
+                      :max="200"
+                      :step="1"
+                      :format-tooltip="(val: number) => `${val}%`"
                       @input="() => onMaterialValueChange(MaterialTag.Metal)"
                     />
                     <el-input-number
                       v-model="globalMaterials.metal.armorSharp"
                       :min="0"
-                      :max="2"
-                      :step="0.01"
-                      :precision="2"
+                      :max="200"
+                      :step="1"
+                      :precision="0"
                       controls-position="right"
                       class="input-number-fixed"
                       @change="() => onMaterialValueChange(MaterialTag.Metal)"
                     />
-                    <span class="unit-placeholder"></span>
+                    <span class="unit">%</span>
                   </div>
                 </el-form-item>
 
@@ -619,22 +631,22 @@ onMounted(async () => {
                     <el-slider
                       v-model="globalMaterials.metal.armorBlunt"
                       :min="0"
-                      :max="2"
-                      :step="0.01"
-                      :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
+                      :max="200"
+                      :step="1"
+                      :format-tooltip="(val: number) => `${val}%`"
                       @input="() => onMaterialValueChange(MaterialTag.Metal)"
                     />
                     <el-input-number
                       v-model="globalMaterials.metal.armorBlunt"
                       :min="0"
-                      :max="2"
-                      :step="0.01"
-                      :precision="2"
+                      :max="200"
+                      :step="1"
+                      :precision="0"
                       controls-position="right"
                       class="input-number-fixed"
                       @change="() => onMaterialValueChange(MaterialTag.Metal)"
                     />
-                    <span class="unit-placeholder"></span>
+                    <span class="unit">%</span>
                   </div>
                 </el-form-item>
 
@@ -643,22 +655,22 @@ onMounted(async () => {
                     <el-slider
                       v-model="globalMaterials.metal.armorHeat"
                       :min="0"
-                      :max="3"
-                      :step="0.01"
-                      :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
+                      :max="300"
+                      :step="1"
+                      :format-tooltip="(val: number) => `${val}%`"
                       @input="() => onMaterialValueChange(MaterialTag.Metal)"
                     />
                     <el-input-number
                       v-model="globalMaterials.metal.armorHeat"
                       :min="0"
-                      :max="3"
-                      :step="0.01"
-                      :precision="2"
+                      :max="300"
+                      :step="1"
+                      :precision="0"
                       controls-position="right"
                       class="input-number-fixed"
                       @change="() => onMaterialValueChange(MaterialTag.Metal)"
                     />
-                    <span class="unit-placeholder"></span>
+                    <span class="unit">%</span>
                   </div>
                 </el-form-item>
               </el-collapse-item>
@@ -692,22 +704,22 @@ onMounted(async () => {
                     <el-slider
                       v-model="globalMaterials.wood.armorSharp"
                       :min="0"
-                      :max="2"
-                      :step="0.01"
-                      :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
+                      :max="200"
+                      :step="1"
+                      :format-tooltip="(val: number) => `${val}%`"
                       @input="() => onMaterialValueChange(MaterialTag.Wood)"
                     />
                     <el-input-number
                       v-model="globalMaterials.wood.armorSharp"
                       :min="0"
-                      :max="2"
-                      :step="0.01"
-                      :precision="2"
+                      :max="200"
+                      :step="1"
+                      :precision="0"
                       controls-position="right"
                       class="input-number-fixed"
                       @change="() => onMaterialValueChange(MaterialTag.Wood)"
                     />
-                    <span class="unit-placeholder"></span>
+                    <span class="unit">%</span>
                   </div>
                 </el-form-item>
 
@@ -716,22 +728,22 @@ onMounted(async () => {
                     <el-slider
                       v-model="globalMaterials.wood.armorBlunt"
                       :min="0"
-                      :max="2"
-                      :step="0.01"
-                      :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
+                      :max="200"
+                      :step="1"
+                      :format-tooltip="(val: number) => `${val}%`"
                       @input="() => onMaterialValueChange(MaterialTag.Wood)"
                     />
                     <el-input-number
                       v-model="globalMaterials.wood.armorBlunt"
                       :min="0"
-                      :max="2"
-                      :step="0.01"
-                      :precision="2"
+                      :max="200"
+                      :step="1"
+                      :precision="0"
                       controls-position="right"
                       class="input-number-fixed"
                       @change="() => onMaterialValueChange(MaterialTag.Wood)"
                     />
-                    <span class="unit-placeholder"></span>
+                    <span class="unit">%</span>
                   </div>
                 </el-form-item>
 
@@ -740,22 +752,22 @@ onMounted(async () => {
                     <el-slider
                       v-model="globalMaterials.wood.armorHeat"
                       :min="0"
-                      :max="3"
-                      :step="0.01"
-                      :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
+                      :max="300"
+                      :step="1"
+                      :format-tooltip="(val: number) => `${val}%`"
                       @input="() => onMaterialValueChange(MaterialTag.Wood)"
                     />
                     <el-input-number
                       v-model="globalMaterials.wood.armorHeat"
                       :min="0"
-                      :max="3"
-                      :step="0.01"
-                      :precision="2"
+                      :max="300"
+                      :step="1"
+                      :precision="0"
                       controls-position="right"
                       class="input-number-fixed"
                       @change="() => onMaterialValueChange(MaterialTag.Wood)"
                     />
-                    <span class="unit-placeholder"></span>
+                    <span class="unit">%</span>
                   </div>
                 </el-form-item>
               </el-collapse-item>
@@ -789,22 +801,22 @@ onMounted(async () => {
                     <el-slider
                       v-model="globalMaterials.leather.armorSharp"
                       :min="0"
-                      :max="2"
-                      :step="0.01"
-                      :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
+                      :max="200"
+                      :step="1"
+                      :format-tooltip="(val: number) => `${val}%`"
                       @input="() => onMaterialValueChange(MaterialTag.Leather)"
                     />
                     <el-input-number
                       v-model="globalMaterials.leather.armorSharp"
                       :min="0"
-                      :max="2"
-                      :step="0.01"
-                      :precision="2"
+                      :max="200"
+                      :step="1"
+                      :precision="0"
                       controls-position="right"
                       class="input-number-fixed"
                       @change="() => onMaterialValueChange(MaterialTag.Leather)"
                     />
-                    <span class="unit-placeholder"></span>
+                    <span class="unit">%</span>
                   </div>
                 </el-form-item>
 
@@ -813,22 +825,22 @@ onMounted(async () => {
                     <el-slider
                       v-model="globalMaterials.leather.armorBlunt"
                       :min="0"
-                      :max="2"
-                      :step="0.01"
-                      :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
+                      :max="200"
+                      :step="1"
+                      :format-tooltip="(val: number) => `${val}%`"
                       @input="() => onMaterialValueChange(MaterialTag.Leather)"
                     />
                     <el-input-number
                       v-model="globalMaterials.leather.armorBlunt"
                       :min="0"
-                      :max="2"
-                      :step="0.01"
-                      :precision="2"
+                      :max="200"
+                      :step="1"
+                      :precision="0"
                       controls-position="right"
                       class="input-number-fixed"
                       @change="() => onMaterialValueChange(MaterialTag.Leather)"
                     />
-                    <span class="unit-placeholder"></span>
+                    <span class="unit">%</span>
                   </div>
                 </el-form-item>
 
@@ -837,22 +849,22 @@ onMounted(async () => {
                     <el-slider
                       v-model="globalMaterials.leather.armorHeat"
                       :min="0"
-                      :max="3"
-                      :step="0.01"
-                      :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
+                      :max="300"
+                      :step="1"
+                      :format-tooltip="(val: number) => `${val}%`"
                       @input="() => onMaterialValueChange(MaterialTag.Leather)"
                     />
                     <el-input-number
                       v-model="globalMaterials.leather.armorHeat"
                       :min="0"
-                      :max="3"
-                      :step="0.01"
-                      :precision="2"
+                      :max="300"
+                      :step="1"
+                      :precision="0"
                       controls-position="right"
                       class="input-number-fixed"
                       @change="() => onMaterialValueChange(MaterialTag.Leather)"
                     />
-                    <span class="unit-placeholder"></span>
+                    <span class="unit">%</span>
                   </div>
                 </el-form-item>
               </el-collapse-item>
@@ -886,22 +898,22 @@ onMounted(async () => {
                     <el-slider
                       v-model="globalMaterials.fabric.armorSharp"
                       :min="0"
-                      :max="2"
-                      :step="0.01"
-                      :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
+                      :max="200"
+                      :step="1"
+                      :format-tooltip="(val: number) => `${val}%`"
                       @input="() => onMaterialValueChange(MaterialTag.Fabric)"
                     />
                     <el-input-number
                       v-model="globalMaterials.fabric.armorSharp"
                       :min="0"
-                      :max="2"
-                      :step="0.01"
-                      :precision="2"
+                      :max="200"
+                      :step="1"
+                      :precision="0"
                       controls-position="right"
                       class="input-number-fixed"
                       @change="() => onMaterialValueChange(MaterialTag.Fabric)"
                     />
-                    <span class="unit-placeholder"></span>
+                    <span class="unit">%</span>
                   </div>
                 </el-form-item>
 
@@ -910,22 +922,22 @@ onMounted(async () => {
                     <el-slider
                       v-model="globalMaterials.fabric.armorBlunt"
                       :min="0"
-                      :max="2"
-                      :step="0.01"
-                      :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
+                      :max="200"
+                      :step="1"
+                      :format-tooltip="(val: number) => `${val}%`"
                       @input="() => onMaterialValueChange(MaterialTag.Fabric)"
                     />
                     <el-input-number
                       v-model="globalMaterials.fabric.armorBlunt"
                       :min="0"
-                      :max="2"
-                      :step="0.01"
-                      :precision="2"
+                      :max="200"
+                      :step="1"
+                      :precision="0"
                       controls-position="right"
                       class="input-number-fixed"
                       @change="() => onMaterialValueChange(MaterialTag.Fabric)"
                     />
-                    <span class="unit-placeholder"></span>
+                    <span class="unit">%</span>
                   </div>
                 </el-form-item>
 
@@ -934,22 +946,22 @@ onMounted(async () => {
                     <el-slider
                       v-model="globalMaterials.fabric.armorHeat"
                       :min="0"
-                      :max="3"
-                      :step="0.01"
-                      :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
+                      :max="300"
+                      :step="1"
+                      :format-tooltip="(val: number) => `${val}%`"
                       @input="() => onMaterialValueChange(MaterialTag.Fabric)"
                     />
                     <el-input-number
                       v-model="globalMaterials.fabric.armorHeat"
                       :min="0"
-                      :max="3"
-                      :step="0.01"
-                      :precision="2"
+                      :max="300"
+                      :step="1"
+                      :precision="0"
                       controls-position="right"
                       class="input-number-fixed"
                       @change="() => onMaterialValueChange(MaterialTag.Fabric)"
                     />
-                    <span class="unit-placeholder"></span>
+                    <span class="unit">%</span>
                   </div>
                 </el-form-item>
               </el-collapse-item>
@@ -1097,20 +1109,20 @@ onMounted(async () => {
                       <el-slider
                         v-model="layer.armorSharp"
                         :min="0"
-                        :max="2"
-                        :step="0.01"
-                        :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
+                        :max="200"
+                        :step="1"
+                        :format-tooltip="(val: number) => `${val}%`"
                       />
                       <el-input-number
                         v-model="layer.armorSharp"
                         :min="0"
-                        :max="2"
-                        :step="0.01"
-                        :precision="2"
+                        :max="200"
+                        :step="1"
+                        :precision="0"
                         controls-position="right"
                         class="input-number-fixed"
                       />
-                      <span class="unit-placeholder"></span>
+                      <span class="unit">%</span>
                     </div>
                   </el-form-item>
 
@@ -1119,20 +1131,20 @@ onMounted(async () => {
                       <el-slider
                         v-model="layer.armorBlunt"
                         :min="0"
-                        :max="2"
-                        :step="0.01"
-                        :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
+                        :max="200"
+                        :step="1"
+                        :format-tooltip="(val: number) => `${val}%`"
                       />
                       <el-input-number
                         v-model="layer.armorBlunt"
                         :min="0"
-                        :max="2"
-                        :step="0.01"
-                        :precision="2"
+                        :max="200"
+                        :step="1"
+                        :precision="0"
                         controls-position="right"
                         class="input-number-fixed"
                       />
-                      <span class="unit-placeholder"></span>
+                      <span class="unit">%</span>
                     </div>
                   </el-form-item>
 
@@ -1141,20 +1153,20 @@ onMounted(async () => {
                       <el-slider
                         v-model="layer.armorHeat"
                         :min="0"
-                        :max="3"
-                        :step="0.01"
-                        :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
+                        :max="300"
+                        :step="1"
+                        :format-tooltip="(val: number) => `${val}%`"
                       />
                       <el-input-number
                         v-model="layer.armorHeat"
                         :min="0"
-                        :max="3"
-                        :step="0.01"
-                        :precision="2"
+                        :max="300"
+                        :step="1"
+                        :precision="0"
                         controls-position="right"
                         class="input-number-fixed"
                       />
-                      <span class="unit-placeholder"></span>
+                      <span class="unit">%</span>
                     </div>
                   </el-form-item>
                 </template>
