@@ -180,12 +180,21 @@ src/utils/material_data/MyMod.csv
 
 ## 许可证
 
+### TL;DR
+
+关于数据起源的圣典誓约
+
+此计算仪典中一切数值皆溯源于 Tynan 所赐之官方 XML 典藏。  
+SMW 查询乃导航之仪，不为启示之源；  
+未触凡俗文献（CC-BY-SA），故不受其羁绊。  
+以 MIT 之契约，赐诸信徒自由修习。
+
+### 真正的许可证
+
 本项目使用的所有武器、护甲与材料数值均来自 RimWorld 官方游戏的 Defs/XML 文件（包括英文原始 Defs 与官方中文本地化 XML）。
 这些数值属于 事实性游戏数据（factual data），不受著作权保护。
 
 为便于数据整理，本项目曾使用 [RimWorld 灰机 Wiki](https://rimworld.huijiwiki.com) 的 Semantic MediaWiki (SMW) 查询接口 生成用于对照的数据表。
-
-> 注： [RimWorld 灰机 Wiki](https://rimworld.huijiwiki.com) 是国内优秀的 RimWorld 社区，其 SMW 查询接口极大方便了数据对照与验证。在本项目中仅用于辅助定位游戏原始数据，对此表示感谢。
 
 但：
 
@@ -195,6 +204,8 @@ src/utils/material_data/MyMod.csv
 - 因此 不受 CC BY-SA 协议约束
 
 本项目以 MIT 协议开源。
+
+> 注： [RimWorld 灰机 Wiki](https://rimworld.huijiwiki.com) 是国内优秀的 RimWorld 社区，其 SMW 查询接口极大方便了数据对照与验证。在本项目中仅用于辅助定位游戏原始数据，对此表示感谢。
 
 若您希望自行复现本项目的数据，可直接解析 RimWorld 的游戏 XML（RimWorld/Data/Defs/）。
 项目中的数据结构也允许以 CSV 的方式扩展或添加 Mod 数据。
