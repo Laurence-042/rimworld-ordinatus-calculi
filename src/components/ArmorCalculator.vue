@@ -268,7 +268,7 @@ onMounted(async () => {
           <el-form label-width="10em">
             <el-divider content-position="left">伤害类型</el-divider>
 
-            <el-form-item label="伤害类型">
+            <el-form-item>
               <el-radio-group v-model="damageType">
                 <el-radio-button value="sharp">利器</el-radio-button>
                 <el-radio-button value="blunt">钝器</el-radio-button>
@@ -317,7 +317,7 @@ onMounted(async () => {
               <el-collapse-item title="金属材料" name="metal">
                 <el-form-item label="加载预设">
                   <el-select
-                    :model-value="null"
+                    :model-value="globalMaterials.metal.name"
                     placeholder="选择金属材料预设"
                     style="width: 100%"
                     @change="
@@ -408,7 +408,7 @@ onMounted(async () => {
               <el-collapse-item title="木材材料" name="wood">
                 <el-form-item label="加载预设">
                   <el-select
-                    :model-value="null"
+                    :model-value="globalMaterials.wood.name"
                     placeholder="选择木材材料预设"
                     style="width: 100%"
                     @change="
@@ -499,7 +499,7 @@ onMounted(async () => {
               <el-collapse-item title="皮革材料" name="leather">
                 <el-form-item label="加载预设">
                   <el-select
-                    :model-value="null"
+                    :model-value="globalMaterials.leather.name"
                     placeholder="选择皮革材料预设"
                     style="width: 100%"
                     @change="
@@ -590,7 +590,7 @@ onMounted(async () => {
               <el-collapse-item title="织物材料" name="fabric">
                 <el-form-item label="加载预设">
                   <el-select
-                    :model-value="null"
+                    :model-value="globalMaterials.fabric.name"
                     placeholder="选择织物材料预设"
                     style="width: 100%"
                     @change="
