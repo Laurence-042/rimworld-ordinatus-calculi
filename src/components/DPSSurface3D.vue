@@ -126,6 +126,125 @@ function generateWeaponSurfaceData(weaponData: WeaponData) {
   return { distances, armorValues, zData, hoverTexts }
 }
 
+// 计算两个曲面的交线
+function calculateIntersectionLine(
+  weaponData1: WeaponData,
+  weaponData2: WeaponData,
+  distances: number[],
+  armorValues: number[],
+) {
+  const intersectionPoints: Array<{ x: number; y: number; z: number }> = []
+
+  // 对每个距离，找到DPS相等的护甲值
+  for (const distance of distances) {
+    // 计算两个武器在此距离下的DPS曲线
+    const dps1Array: number[] = []
+    const dps2Array: number[] = []
+
+    for (const armor of armorValues) {
+      // 武器1
+      const detailParams1: WeaponDetailParams = {
+        ...weaponData1.weapon.accuracyParams,
+        ...weaponData1.weapon.weaponParams,
+        armorPenetration: weaponData1.weapon.armorPenetration,
+      }
+      const hitChance1 = calculateHitChance(detailParams1, distance)
+      const maxDPS1 = calculateMaxDPS(detailParams1)
+      const weaponParams1: WeaponParams = {
+        hitChance: hitChance1,
+        maxDPS: maxDPS1,
+        armorPenetration: weaponData1.weapon.armorPenetration / 100,
+      }
+      const dist1 = calculateDPSDistribution(weaponParams1, armor / 100)
+      dps1Array.push(dist1.expectedDPS)
+
+      // 武器2
+      const detailParams2: WeaponDetailParams = {
+        ...weaponData2.weapon.accuracyParams,
+        ...weaponData2.weapon.weaponParams,
+        armorPenetration: weaponData2.weapon.armorPenetration,
+      }
+      const hitChance2 = calculateHitChance(detailParams2, distance)
+      const maxDPS2 = calculateMaxDPS(detailParams2)
+      const weaponParams2: WeaponParams = {
+        hitChance: hitChance2,
+        maxDPS: maxDPS2,
+        armorPenetration: weaponData2.weapon.armorPenetration / 100,
+      }
+      const dist2 = calculateDPSDistribution(weaponParams2, armor / 100)
+      dps2Array.push(dist2.expectedDPS)
+    }
+
+    // 查找交点（DPS差值从正变负或从负变正的点）
+    for (let i = 0; i < armorValues.length - 1; i++) {
+      const diff1 = dps1Array[i]! - dps2Array[i]!
+      const diff2 = dps1Array[i + 1]! - dps2Array[i + 1]!
+
+      // 如果符号改变，说明有交点
+      if (diff1 * diff2 < 0) {
+        // 线性插值找到精确的交点
+        const t = Math.abs(diff1) / (Math.abs(diff1) + Math.abs(diff2))
+        const armorIntersect = armorValues[i]! + t * (armorValues[i + 1]! - armorValues[i]!)
+        const dpsIntersect = dps1Array[i]! + t * (dps1Array[i + 1]! - dps1Array[i]!)
+
+        intersectionPoints.push({
+          x: distance,
+          y: armorIntersect,
+          z: dpsIntersect,
+        })
+      }
+    }
+  }
+
+  // 按距离(x)和护甲(y)排序，确保形成连续曲线
+  // 使用"最近邻"算法：每次选择离当前点最近的下一个点
+  if (intersectionPoints.length > 1) {
+    const sorted: typeof intersectionPoints = [intersectionPoints[0]!]
+    const remaining = intersectionPoints.slice(1)
+
+    while (remaining.length > 0) {
+      const last = sorted[sorted.length - 1]!
+      let minDist = Infinity
+      let minIndex = 0
+
+      // 找到离最后一个点最近的点
+      for (let i = 0; i < remaining.length; i++) {
+        const point = remaining[i]!
+        const dist = Math.sqrt(
+          Math.pow(point.x - last.x, 2) +
+            Math.pow(point.y - last.y, 2) +
+            Math.pow(point.z - last.z, 2),
+        )
+        if (dist < minDist) {
+          minDist = dist
+          minIndex = i
+        }
+      }
+
+      sorted.push(remaining[minIndex]!)
+      remaining.splice(minIndex, 1)
+    }
+
+    // 转换为三个数组
+    const result = {
+      x: sorted.map((p) => p.x),
+      y: sorted.map((p) => p.y),
+      z: sorted.map((p) => p.z),
+    }
+
+    return result
+  }
+
+  // 转换为三个数组
+  const result = {
+    x: intersectionPoints.map((p) => p.x),
+    y: intersectionPoints.map((p) => p.y),
+    z: intersectionPoints.map((p) => p.z),
+  }
+
+  return result
+}
+
 // 绘制3D图表
 function plotSurface() {
   if (!chartContainer.value || !props.weaponsData || props.weaponsData.length === 0) return
@@ -171,6 +290,48 @@ function plotSurface() {
           : undefined,
     } as unknown as Plotly.Data)
   })
+
+  // 如果有多个武器，绘制曲面相交线
+  if (props.weaponsData.length >= 2) {
+    // 使用第一个武器的距离和护甲值范围
+    const { distances, armorValues } = generateWeaponSurfaceData(props.weaponsData[0]!)
+
+    // 为每对武器计算交线
+    for (let i = 0; i < props.weaponsData.length; i++) {
+      for (let j = i + 1; j < props.weaponsData.length; j++) {
+        const weaponData1 = props.weaponsData[i]!
+        const weaponData2 = props.weaponsData[j]!
+        const intersectionPoints = calculateIntersectionLine(
+          weaponData1,
+          weaponData2,
+          distances,
+          armorValues,
+        )
+
+        if (intersectionPoints.x.length > 0) {
+          // 添加交线
+          plotData.push({
+            type: 'scatter3d',
+            mode: 'lines',
+            name: `${weaponData1.weapon.name} ∩ ${weaponData2.weapon.name}`,
+            x: intersectionPoints.x,
+            y: intersectionPoints.y,
+            z: intersectionPoints.z,
+            line: {
+              color: '#FF0000',
+              width: 6,
+            },
+            hovertemplate:
+              '<b>交线</b><br>' +
+              '距离: %{x} 格<br>' +
+              '护甲: %{y:.1f}%<br>' +
+              'DPS: %{z:.2f}<br>' +
+              '<extra></extra>',
+          } as unknown as Plotly.Data)
+        }
+      }
+    }
+  }
 
   const layout: Partial<Plotly.Layout> = {
     title: {
