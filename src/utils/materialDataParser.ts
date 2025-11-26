@@ -68,6 +68,10 @@ export async function parseMaterialDataFromCSV(csvContent: string): Promise<Mate
 
 /**
  * 将材料列表按标签分组
+ *
+ * 优先级规则：
+ * - 如果同时拥有皮革和织物标签，归类为皮革
+ * - 其他情况下，材料可以同时归入多个分类
  */
 function groupMaterialsByTags(materials: MaterialData[]): MaterialDataSource['materials'] {
   const grouped: MaterialDataSource['materials'] = {
@@ -78,7 +82,15 @@ function groupMaterialsByTags(materials: MaterialData[]): MaterialDataSource['ma
   }
 
   materials.forEach((material) => {
+    // 检查是否同时拥有皮革和织物标签
+    const hasLeather = material.tags.includes(MaterialTag.Leather)
+    const hasFabric = material.tags.includes(MaterialTag.Fabric)
+
     material.tags.forEach((tag) => {
+      // 如果同时拥有皮革和织物标签，跳过织物分类
+      if (hasLeather && hasFabric && tag === MaterialTag.Fabric) {
+        return
+      }
       grouped[tag].push(material)
     })
   })

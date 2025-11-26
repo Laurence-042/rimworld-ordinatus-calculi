@@ -585,6 +585,7 @@ onMounted(async () => {
                     :model-value="globalMaterials.metal.name"
                     placeholder="选择金属材料预设"
                     style="width: 100%"
+                    filterable
                     @change="
                       (value: any) => {
                         if (value) {
@@ -682,6 +683,7 @@ onMounted(async () => {
                     :model-value="globalMaterials.wood.name"
                     placeholder="选择木材材料预设"
                     style="width: 100%"
+                    filterable
                     @change="
                       (value: any) => {
                         if (value) {
@@ -779,6 +781,7 @@ onMounted(async () => {
                     :model-value="globalMaterials.leather.name"
                     placeholder="选择皮革材料预设"
                     style="width: 100%"
+                    filterable
                     @change="
                       (value: any) => {
                         if (value) {
@@ -876,6 +879,7 @@ onMounted(async () => {
                     :model-value="globalMaterials.fabric.name"
                     placeholder="选择织物材料预设"
                     style="width: 100%"
+                    filterable
                     @change="
                       (value: any) => {
                         if (value) {
@@ -1018,14 +1022,13 @@ onMounted(async () => {
               <div class="layer-header">
                 <span class="layer-title">第 {{ layerIndex + 1 }} 层 </span>
                 <el-button
-                  v-if="armorSet.layers.length > 1"
+                  v-if="armorSets.length > 1"
                   type="danger"
                   size="small"
-                  text
+                  :icon="Delete"
+                  circle
                   @click="removeLayer(armorSet, layerIndex)"
-                >
-                  删除
-                </el-button>
+                />
               </div>
 
               <!-- 覆盖冲突警告 -->
@@ -1052,6 +1055,7 @@ onMounted(async () => {
                     :model-value="layer.itemName"
                     placeholder="选择衣物预设"
                     style="width: 100%"
+                    filterable
                     @change="
                       (value: any) => {
                         if (value) {
@@ -1089,6 +1093,8 @@ onMounted(async () => {
                     clearable
                     collapse-tags
                     collapse-tags-tooltip
+                    :max-collapse-tags="10"
+                    check-strictly
                     placeholder="选择覆盖的身体部位"
                     style="width: 100%"
                     :props="{ label: 'label', value: 'value' }"

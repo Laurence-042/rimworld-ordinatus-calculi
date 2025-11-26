@@ -228,6 +228,7 @@ onMounted(async () => {
                   placeholder="选择数据源"
                   style="width: 100%; margin-bottom: 10px"
                   clearable
+                  filterable
                   @change="weapon.selectedWeaponIndex = null"
                 >
                   <el-option
@@ -242,6 +243,7 @@ onMounted(async () => {
                   placeholder="选择武器"
                   style="width: 100%"
                   clearable
+                  filterable
                   :disabled="!weapon.selectedDataSourceId"
                   @change="
                     weapon.selectedDataSourceId &&
