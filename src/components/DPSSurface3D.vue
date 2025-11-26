@@ -21,7 +21,8 @@ interface WeaponData {
     id: number
     name: string
     color: string
-    selectedPresetIndex: number | null
+    selectedDataSourceId: string | null
+    selectedWeaponIndex: number | null
     accuracyParams: {
       touchAccuracy: number
       shortAccuracy: number

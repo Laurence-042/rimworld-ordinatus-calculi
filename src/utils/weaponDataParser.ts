@@ -117,3 +117,72 @@ export function isValidWeapon(csvData: WeaponCSVData): boolean {
   // 必须有伤害值、有冷却时间、有精度数据
   return damage > 0 && cooldownSeconds > 0 && !!hasAccuracy
 }
+
+/**
+ * 武器参数类型
+ */
+export interface ParsedWeaponParams {
+  touchAccuracy: number
+  shortAccuracy: number
+  mediumAccuracy: number
+  longAccuracy: number
+  damage: number
+  armorPenetration: number
+  warmUp: number
+  cooldown: number
+  burstCount: number
+  burstTicks: number
+  range: number
+}
+
+/**
+ * 从 CSV 原始文本解析武器数据
+ */
+export async function parseWeaponDataFromCSV(
+  csvContent: string,
+): Promise<Array<{ name: string; params: ParsedWeaponParams }>> {
+  const Papa = await import('papaparse')
+
+  const parsed = Papa.parse<WeaponCSVData>(csvContent, {
+    header: true,
+    skipEmptyLines: true,
+  })
+
+  const weapons: Array<{ name: string; params: ParsedWeaponParams }> = []
+
+  for (const row of parsed.data) {
+    if (!isValidWeapon(row)) {
+      continue
+    }
+
+    const converted = convertCSVToWeaponParams(row)
+
+    // 确保所有必需的参数都存在
+    if (
+      converted.params.damage &&
+      converted.params.cooldown &&
+      (converted.params.shortAccuracy ||
+        converted.params.mediumAccuracy ||
+        converted.params.longAccuracy)
+    ) {
+      weapons.push({
+        name: converted.name,
+        params: {
+          touchAccuracy: converted.params.touchAccuracy || 0,
+          shortAccuracy: converted.params.shortAccuracy || 0,
+          mediumAccuracy: converted.params.mediumAccuracy || 0,
+          longAccuracy: converted.params.longAccuracy || 0,
+          damage: converted.params.damage || 0,
+          armorPenetration: converted.params.armorPenetration || 0,
+          warmUp: converted.params.warmUp || 0,
+          cooldown: converted.params.cooldown || 0,
+          burstCount: converted.params.burstCount || 1,
+          burstTicks: converted.params.burstTicks || 0,
+          range: converted.params.range || 50,
+        },
+      })
+    }
+  }
+
+  return weapons
+}

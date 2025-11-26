@@ -8,8 +8,9 @@ import {
 import {
   calculateHitChance,
   calculateMaxDPS,
-  weaponPresets,
+  getWeaponDataSources,
   type WeaponDetailParams,
+  type WeaponDataSource,
 } from '@/utils/weaponCalculations'
 import DPSChart from './DPSChart.vue'
 import DPSSurface3D from './DPSSurface3D.vue'
@@ -18,7 +19,8 @@ import DPSSurface3D from './DPSSurface3D.vue'
 interface Weapon {
   id: number
   name: string
-  selectedPresetIndex: number | null
+  selectedDataSourceId: string | null // 选择的数据源ID
+  selectedWeaponIndex: number | null // 该数据源下的武器索引
   accuracyParams: {
     touchAccuracy: number
     shortAccuracy: number
@@ -43,13 +45,39 @@ const chartMode = ref<'2d' | '3d'>('3d')
 // 目标距离（全局共享）
 const targetDistance = ref(25) // 目标距离（格）
 
+// 武器数据源
+const weaponDataSources = ref<WeaponDataSource[]>([])
+
+// 加载武器数据源
+onMounted(async () => {
+  weaponDataSources.value = await getWeaponDataSources()
+
+  // 初始化默认武器
+  if (weaponDataSources.value.length > 0) {
+    const vanillaSource = weaponDataSources.value.find((s) => s.id === 'vanilla')
+    if (vanillaSource && vanillaSource.weapons.length > 0) {
+      // 栓动步枪
+      const needleGunIndex = vanillaSource.weapons.findIndex((w) => w.name === '栓动步枪')
+      if (needleGunIndex >= 0) {
+        applyPreset(weapons.value[0]!, vanillaSource.id, needleGunIndex)
+      }
+      // 冲锋手枪
+      const machinePistolIndex = vanillaSource.weapons.findIndex((w) => w.name === '冲锋手枪')
+      if (machinePistolIndex >= 0) {
+        applyPreset(weapons.value[1]!, vanillaSource.id, machinePistolIndex)
+      }
+    }
+  }
+})
+
 // 武器列表
 let nextWeaponId = 1
 const weapons = ref<Weapon[]>([
   {
     id: nextWeaponId++,
     name: '武器 1',
-    selectedPresetIndex: null,
+    selectedDataSourceId: null,
+    selectedWeaponIndex: null,
     accuracyParams: {
       touchAccuracy: 60,
       shortAccuracy: 80,
@@ -70,7 +98,8 @@ const weapons = ref<Weapon[]>([
   {
     id: nextWeaponId++,
     name: '武器 2',
-    selectedPresetIndex: null,
+    selectedDataSourceId: null,
+    selectedWeaponIndex: null,
     accuracyParams: {
       touchAccuracy: 90,
       shortAccuracy: 65,
@@ -107,7 +136,8 @@ const addWeapon = () => {
   const newWeapon: Weapon = {
     id: nextWeaponId++,
     name: `武器 ${weapons.value.length + 1}`,
-    selectedPresetIndex: null,
+    selectedDataSourceId: null,
+    selectedWeaponIndex: null,
     accuracyParams: {
       touchAccuracy: 95,
       shortAccuracy: 85,
@@ -136,10 +166,14 @@ const removeWeapon = (id: number) => {
 }
 
 // 应用武器预设
-const applyPreset = (weapon: Weapon, presetIndex: number) => {
-  weapon.selectedPresetIndex = presetIndex
-  const preset = weaponPresets[presetIndex]
+const applyPreset = (weapon: Weapon, dataSourceId: string, weaponIndex: number) => {
+  weapon.selectedDataSourceId = dataSourceId
+  weapon.selectedWeaponIndex = weaponIndex
 
+  const dataSource = weaponDataSources.value.find((s) => s.id === dataSourceId)
+  if (!dataSource) return
+
+  const preset = dataSource.weapons[weaponIndex]
   if (!preset) return
 
   // 更新武器名称
@@ -198,22 +232,6 @@ const allWeaponsData = computed(() => {
       distributions,
     }
   })
-})
-
-// 初始化：应用默认预设
-onMounted(() => {
-  if (weaponPresets.length > 0) {
-    // 栓动步枪 - 高穿甲，长射程
-    const needleGunIndex = weaponPresets.findIndex((p) => p.name === '栓动步枪')
-    if (needleGunIndex >= 0) {
-      applyPreset(weapons.value[0]!, needleGunIndex)
-    }
-    // 冲锋手枪 - 低穿甲，短射程，连射
-    const machinePistolIndex = weaponPresets.findIndex((p) => p.name === '冲锋手枪')
-    if (machinePistolIndex >= 0) {
-      applyPreset(weapons.value[1]!, machinePistolIndex)
-    }
-  }
 })
 </script>
 
@@ -274,14 +292,35 @@ onMounted(() => {
               </div>
               <div class="weapon-preset">
                 <el-select
-                  v-model="weapon.selectedPresetIndex"
-                  placeholder="选择武器预设"
-                  @change="applyPreset(weapon, weapon.selectedPresetIndex!)"
-                  style="width: 100%"
+                  v-model="weapon.selectedDataSourceId"
+                  placeholder="选择数据源"
+                  style="width: 100%; margin-bottom: 10px"
                   clearable
+                  @change="weapon.selectedWeaponIndex = null"
                 >
                   <el-option
-                    v-for="(preset, presetIdx) in weaponPresets"
+                    v-for="source in weaponDataSources"
+                    :key="source.id"
+                    :label="source.label"
+                    :value="source.id"
+                  />
+                </el-select>
+                <el-select
+                  v-model="weapon.selectedWeaponIndex"
+                  placeholder="选择武器"
+                  style="width: 100%"
+                  clearable
+                  :disabled="!weapon.selectedDataSourceId"
+                  @change="
+                    weapon.selectedDataSourceId &&
+                    weapon.selectedWeaponIndex !== null &&
+                    applyPreset(weapon, weapon.selectedDataSourceId, weapon.selectedWeaponIndex)
+                  "
+                >
+                  <el-option
+                    v-for="(preset, presetIdx) in weaponDataSources.find(
+                      (s) => s.id === weapon.selectedDataSourceId,
+                    )?.weapons || []"
                     :key="presetIdx"
                     :label="preset.name"
                     :value="presetIdx"

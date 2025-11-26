@@ -1,6 +1,5 @@
-import Papa from 'papaparse'
-import { convertCSVToWeaponParams, isValidWeapon, type WeaponCSVData } from './weaponDataParser'
-import weaponCSV from './weapon_info.csv?raw'
+import { parseWeaponDataFromCSV } from './weaponDataParser'
+import vanillaCSV from './weapon_data/Vanilla.csv?raw'
 
 /**
  * 武器详细参数接口
@@ -94,54 +93,69 @@ export interface WeaponPreset {
 }
 
 /**
- * 从 CSV 加载武器预设
+ * 武器数据源分组
  */
-function loadWeaponPresetsFromCSV(): WeaponPreset[] {
-  const parsed = Papa.parse<WeaponCSVData>(weaponCSV, {
-    header: true,
-    skipEmptyLines: true,
-  })
-
-  const presets: WeaponPreset[] = []
-
-  for (const row of parsed.data) {
-    if (!isValidWeapon(row)) {
-      continue
-    }
-
-    const converted = convertCSVToWeaponParams(row)
-
-    // 确保所有必需的参数都存在
-    if (
-      converted.params.damage &&
-      converted.params.cooldown &&
-      (converted.params.shortAccuracy ||
-        converted.params.mediumAccuracy ||
-        converted.params.longAccuracy)
-    ) {
-      presets.push({
-        name: converted.name,
-        params: {
-          touchAccuracy: converted.params.touchAccuracy || 0,
-          shortAccuracy: converted.params.shortAccuracy || 0,
-          mediumAccuracy: converted.params.mediumAccuracy || 0,
-          longAccuracy: converted.params.longAccuracy || 0,
-          damage: converted.params.damage || 0,
-          armorPenetration: converted.params.armorPenetration || 0,
-          warmUp: converted.params.warmUp || 0,
-          cooldown: converted.params.cooldown || 0,
-          burstCount: converted.params.burstCount || 1,
-          burstTicks: converted.params.burstTicks || 0,
-          range: converted.params.range || 50, // 默认射程50格（如果CSV中没有数据）
-        },
-      })
-    }
-  }
-
-  return presets
+export interface WeaponDataSource {
+  id: string // 数据源ID，如 'vanilla', 'mod1'
+  label: string // 显示名称，如 'Vanilla', 'Mod 1'
+  weapons: WeaponPreset[]
 }
 
 /**
- * 武器预设列表（从 CSV 加载）
+ * 从 CSV 加载武器预设（内部使用）
  */
-export const weaponPresets: WeaponPreset[] = loadWeaponPresetsFromCSV()
+async function loadWeaponsFromCSV(csvContent: string): Promise<WeaponPreset[]> {
+  const parsedWeapons = await parseWeaponDataFromCSV(csvContent)
+
+  return parsedWeapons.map((weapon) => ({
+    name: weapon.name,
+    params: weapon.params as WeaponDetailParams,
+  }))
+}
+
+/**
+ * 加载所有武器数据源
+ */
+async function loadAllWeaponDataSources(): Promise<WeaponDataSource[]> {
+  const dataSources: WeaponDataSource[] = []
+
+  // 加载原版数据
+  try {
+    const vanillaWeapons = await loadWeaponsFromCSV(vanillaCSV)
+    dataSources.push({
+      id: 'vanilla',
+      label: 'Vanilla',
+      weapons: vanillaWeapons,
+    })
+  } catch (error) {
+    console.error('Failed to load Vanilla weapons:', error)
+  }
+
+  // 未来可以在这里添加 Mod 数据源
+  // 例如：
+  // try {
+  //   const mod1CSV = await import('./weapon_data/Mod1.csv?raw')
+  //   const mod1Weapons = await loadWeaponsFromCSV(mod1CSV.default)
+  //   dataSources.push({
+  //     id: 'mod1',
+  //     label: 'Mod 1',
+  //     weapons: mod1Weapons,
+  //   })
+  // } catch (error) {
+  //   console.error('Failed to load Mod1 weapons:', error)
+  // }
+
+  return dataSources
+}
+
+/**
+ * 武器数据源列表（异步加载，带缓存）
+ */
+let cachedDataSources: WeaponDataSource[] | null = null
+
+export async function getWeaponDataSources(): Promise<WeaponDataSource[]> {
+  if (!cachedDataSources) {
+    cachedDataSources = await loadAllWeaponDataSources()
+  }
+  return cachedDataSources
+}
