@@ -266,8 +266,9 @@ export function calculateMultiLayerDamage(
 
     // 对当前所有可能的状态，计算本层护甲的影响
     for (const state of currentStates) {
-      // 如果这个状态的伤害已经是0，说明已经被阻挡了，不会传递到下一层
+      // 如果这个状态的伤害已经是0，说明已经被阻挡了，不需要详细计算，直接传递到下一层提供概率
       if (state.damageMultiplier === 0) {
+        newStates.push(state)
         continue
       }
 
@@ -385,9 +386,47 @@ export function calculateMultiLayerDamage(
     0,
   )
 
+  // 验证：期望伤害不应超过单发伤害
+  if (expectedDamage > damagePerShot + 0.001) {
+    // 添加小误差容忍度
+    console.error('护甲计算错误：期望伤害超过单发伤害', {
+      expectedDamage,
+      damagePerShot,
+      armorPenetration,
+      damageType,
+      layerCount: uniqueLayers.length,
+      layers: uniqueLayers.map((l) => ({
+        name: l.itemName,
+        sharp: l.armorSharp,
+        blunt: l.armorBlunt,
+        heat: l.armorHeat,
+      })),
+      finalStates,
+    })
+  }
+
+  // 验证：所有概率之和应该等于1
+  const totalProbability = finalStates.reduce((sum, state) => sum + state.probability, 0)
+  if (Math.abs(totalProbability - 1.0) > 0.001) {
+    console.error('护甲计算错误：概率之和不等于1', {
+      totalProbability,
+      finalStates,
+    })
+  }
+
+  // 验证：所有伤害倍率应该在[0, 1]范围内
+  for (const state of finalStates) {
+    if (state.damageMultiplier < 0 || state.damageMultiplier > 1.0 + 0.001) {
+      console.error('护甲计算错误：伤害倍率超出范围', {
+        damageMultiplier: state.damageMultiplier,
+        state,
+      })
+    }
+  }
+
   return {
     damageStates: finalStates,
-    expectedDamage,
+    expectedDamage: Math.min(expectedDamage, damagePerShot), // 确保不超过单发伤害
     layerDetails,
   }
 }
@@ -430,6 +469,16 @@ export function calculateArmorDamageCurve(
       }
 
       const result = calculateMultiLayerDamage(armorLayers, attackParams)
+
+      // 验证：期望伤害不应超过单发伤害
+      if (result.expectedDamage > dmg + 0.001) {
+        console.error('曲面计算错误：期望伤害超过单发伤害', {
+          expectedDamage: result.expectedDamage,
+          damagePerShot: dmg,
+          penetration: pen,
+        })
+      }
+
       damageRow.push(result.expectedDamage)
     }
 

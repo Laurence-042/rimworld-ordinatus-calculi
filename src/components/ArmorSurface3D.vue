@@ -42,12 +42,21 @@ function renderChart() {
   const { armorSet, damageCurve } = currentArmorData.value
   const { penetrationValues, damageValues, expectedDamageGrid } = damageCurve
 
+  const zDataTransposed: number[][] = []
+  for (let i = 0; i < damageValues.length; i++) {
+    const zRow: number[] = []
+    for (let j = 0; j < penetrationValues.length; j++) {
+      zRow.push(expectedDamageGrid[j]![i]!)
+    }
+    zDataTransposed.push(zRow)
+  }
+
   const data = [
     {
       type: 'surface' as const,
       x: penetrationValues,
       y: damageValues,
-      z: expectedDamageGrid,
+      z: zDataTransposed,
       colorscale: 'Viridis' as const,
       name: armorSet.name,
       hovertemplate: '护甲穿透: %{x}%<br>单发伤害: %{y}<br>期望受伤: %{z:.2f}<extra></extra>',

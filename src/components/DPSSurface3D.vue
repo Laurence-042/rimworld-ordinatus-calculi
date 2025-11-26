@@ -227,7 +227,20 @@ function plotSurface() {
     const { distances, armorValues, zData, hoverTexts } = surfaceData
     const weaponData = props.weaponsData[index]!
 
-    // 转置 zData
+    // Plotly Surface 的坐标系统说明：
+    // 1. z数据：z[i][j] 对应 y[i] 和 x[j]（第一维=Y轴，第二维=X轴）
+    // 2. text数据：text[i][j] 对应 x[i] 和 y[j]（第一维=X轴，第二维=Y轴）
+    //
+    // 原始数据结构：
+    // - zData[距离索引][护甲索引] = zData[i][j] 其中 i对应distances, j对应armorValues
+    // - hoverTexts[距离索引][护甲索引] = 同上
+    //
+    // 需要的数据结构：
+    // - z需要：z[护甲索引][距离索引]（因为y=护甲，x=距离）
+    // - text需要：text[距离索引][护甲索引]（因为x=距离，y=护甲）
+    //
+    // 结论：只需要转置 zData，hoverTexts保持不变
+    // 我不懂，但我大受震撼
     const zDataTransposed: number[][] = []
     for (let i = 0; i < armorValues.length; i++) {
       const zRow: number[] = []
