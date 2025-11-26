@@ -53,8 +53,6 @@ export function getApparelLayerName(layer: ApparelLayer): string {
 }
 
 export interface ArmorLayer {
-  /** 层名称（贴身、夹层、外套等） */
-  layerName: string
   /** 衣物名称 */
   itemName: string
   /** 利器护甲值 (0-2) */
@@ -72,9 +70,9 @@ export interface ArmorLayer {
   /** 支持的材料类型（从预设加载） */
   supportedMaterials?: Array<'metal' | 'wood' | 'leather' | 'fabric'>
   /** 服装层级（从CSV加载，可能有多个） */
-  apparelLayers?: ApparelLayer[]
-  /** 覆盖的身体部位 */
-  coverage?: string[]
+  apparelLayers: ApparelLayer[]
+  /** 覆盖的身体部位（使用BodyPart枚举） */
+  bodyPartCoverage: string[] // BodyPart[] - 使用string[]以便与Element Plus TreeSelect兼容
 }
 
 export interface ArmorSet {

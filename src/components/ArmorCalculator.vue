@@ -14,6 +14,8 @@ import {
 } from '@/utils/materialDataParser'
 import { MaterialTag, parseAcceptedMaterials } from '@/types/material'
 import { type ArmorSet, ApparelLayer, ApparelLayerNames, getApparelLayerName } from '@/types/armor'
+import { BodyPart, buildBodyPartTree } from '@/types/bodyPart'
+import { buildCoverageTree, getApparelLayerOptions } from '@/utils/coverageUtils'
 import ArmorChart from './ArmorChart.vue'
 import ArmorSurface3D from './ArmorSurface3D.vue'
 
@@ -87,6 +89,12 @@ let loadingTimer: NodeJS.Timeout | null = null
 // 材料折叠面板
 const activeMaterialPanels = ref<MaterialTag[]>([])
 
+// 身体部位树数据
+const bodyPartTreeData = buildBodyPartTree()
+
+// 服装层级选项
+const apparelLayerOptions = getApparelLayerOptions()
+
 let nextArmorSetId = 1
 const armorSets = ref<ArmorSet[]>([
   {
@@ -95,7 +103,6 @@ const armorSets = ref<ArmorSet[]>([
     color: ARMOR_COLORS[0]!,
     layers: [
       {
-        layerName: '外套',
         itemName: '防弹夹克',
         armorSharp: 0.55,
         armorBlunt: 0.08,
@@ -110,10 +117,9 @@ const armorSets = ref<ArmorSet[]>([
           MaterialTag.Fabric,
         ],
         apparelLayers: [ApparelLayer.Shell],
-        coverage: ['躯干', '颈部', '左肩', '右肩'],
+        bodyPartCoverage: [BodyPart.Torso, BodyPart.Neck, BodyPart.Shoulder],
       },
       {
-        layerName: '夹层',
         itemName: '防弹背心',
         armorSharp: 1.0,
         armorBlunt: 0.36,
@@ -128,7 +134,7 @@ const armorSets = ref<ArmorSet[]>([
           MaterialTag.Fabric,
         ],
         apparelLayers: [ApparelLayer.Middle],
-        coverage: ['躯干', '左肩', '右肩'],
+        bodyPartCoverage: [BodyPart.Torso, BodyPart.Shoulder],
       },
     ],
   },
@@ -138,7 +144,6 @@ const armorSets = ref<ArmorSet[]>([
     color: ARMOR_COLORS[1]!,
     layers: [
       {
-        layerName: '外套+夹层',
         itemName: '海军装甲',
         armorSharp: 1.06,
         armorBlunt: 0.45,
@@ -153,7 +158,13 @@ const armorSets = ref<ArmorSet[]>([
           MaterialTag.Fabric,
         ],
         apparelLayers: [ApparelLayer.Shell, ApparelLayer.Middle],
-        coverage: ['躯干', '颈部', '左肩', '左臂', '右肩', '右臂', '左腿', '右腿'],
+        bodyPartCoverage: [
+          BodyPart.Torso,
+          BodyPart.Neck,
+          BodyPart.Shoulder,
+          BodyPart.Arm,
+          BodyPart.Leg,
+        ],
       },
     ],
   },
@@ -168,7 +179,6 @@ const addArmorSet = () => {
     color: ARMOR_COLORS[colorIndex]!,
     layers: [
       {
-        layerName: '外套',
         itemName: '新护甲',
         armorSharp: 0.5,
         armorBlunt: 0.2,
@@ -182,6 +192,8 @@ const addArmorSet = () => {
           MaterialTag.Leather,
           MaterialTag.Fabric,
         ],
+        apparelLayers: [ApparelLayer.Shell],
+        bodyPartCoverage: [BodyPart.Torso],
       },
     ],
   }
@@ -196,7 +208,6 @@ const removeArmorSet = (id: number) => {
 
 const addLayer = (armorSet: ArmorSet) => {
   armorSet.layers.push({
-    layerName: '新层',
     itemName: '新衣物',
     armorSharp: 0.5,
     armorBlunt: 0.2,
@@ -210,6 +221,8 @@ const addLayer = (armorSet: ArmorSet) => {
       MaterialTag.Leather,
       MaterialTag.Fabric,
     ],
+    apparelLayers: [ApparelLayer.Shell],
+    bodyPartCoverage: [BodyPart.Torso],
   })
 }
 
@@ -242,17 +255,6 @@ const getLayerActualArmor = (layer: ArmorSet['layers'][number]) => {
 
   // 如果没有材料，返回0
   return { armorSharp: 0, armorBlunt: 0, armorHeat: 0 }
-}
-
-// 获取层级的显示信息
-const getLayerDisplayInfo = (layer: ArmorSet['layers'][number]): string => {
-  if (!layer.apparelLayers || layer.apparelLayers.length === 0) {
-    return layer.layerName
-  }
-
-  const layerNames = layer.apparelLayers.map((l) => getApparelLayerName(l)).join('/')
-
-  return layerNames
 }
 
 // 计算属性
@@ -291,6 +293,23 @@ const currentMaterials = computed(() => {
 const currentClothing = computed(() => {
   const source = clothingDataSources.value.find((s) => s.id === selectedClothingDataSourceId.value)
   return source?.clothing || []
+})
+
+// 覆盖树（用于可视化哪些部位和层级被覆盖）
+const allCoverageTrees = computed(() => {
+  return armorSets.value.map((armorSet) => ({
+    armorSetId: armorSet.id,
+    coverageTree: buildCoverageTree(
+      new Map(
+        armorSet.layers.flatMap((layer) =>
+          layer.bodyPartCoverage.map((partStr) => [
+            partStr as BodyPart,
+            new Set(layer.apparelLayers),
+          ]),
+        ),
+      ),
+    ),
+  }))
 })
 
 // 开始加载预设（设置标志并启动计时器）
@@ -335,19 +354,44 @@ const loadClothingPreset = (layer: ArmorSet['layers'][number], clothing: Clothin
         return ApparelLayerNames[trimmed]
       })
       .filter((l): l is ApparelLayer => l !== undefined)
-
-    // 设置 layerName 为第一个层级的名称
-    if (layer.apparelLayers.length > 0) {
-      layer.layerName = getApparelLayerName(layer.apparelLayers[0]!)
-    }
+  } else {
+    layer.apparelLayers = [ApparelLayer.Shell] // 默认外套层
   }
 
-  // 解析覆盖部位信息
+  // 解析覆盖部位信息 - 将中文映射到BodyPart枚举
   if (clothing.coverage) {
-    layer.coverage = clothing.coverage
+    const coverageStrings = clothing.coverage
       .split(/[,，、]/)
       .map((part) => part.trim())
       .filter(Boolean)
+
+    // 简单映射（可以根据需要扩展）
+    const coverageMap: Record<string, BodyPart> = {
+      躯干: BodyPart.Torso,
+      颈部: BodyPart.Neck,
+      头部: BodyPart.Head,
+      肩部: BodyPart.Shoulder,
+      左肩: BodyPart.Shoulder,
+      右肩: BodyPart.Shoulder,
+      手臂: BodyPart.Arm,
+      左臂: BodyPart.Arm,
+      右臂: BodyPart.Arm,
+      腿: BodyPart.Leg,
+      左腿: BodyPart.Leg,
+      右腿: BodyPart.Leg,
+    }
+
+    const bodyParts = new Set<BodyPart>()
+    for (const coverageStr of coverageStrings) {
+      const bodyPart = coverageMap[coverageStr]
+      if (bodyPart) {
+        bodyParts.add(bodyPart)
+      }
+    }
+
+    layer.bodyPartCoverage = Array.from(bodyParts)
+  } else {
+    layer.bodyPartCoverage = [BodyPart.Torso] // 默认覆盖躯干
   }
 
   if (clothing.materialCoefficient !== undefined && clothing.materialCoefficient > 0) {
@@ -365,6 +409,54 @@ const loadClothingPreset = (layer: ArmorSet['layers'][number], clothing: Clothin
     layer.armorHeat = clothing.armorHeat || 0
   }
 }
+
+// 检查每个护甲套装中的覆盖冲突
+const armorSetConflicts = computed(() => {
+  return armorSets.value.map((armorSet) => {
+    const conflicts: Array<{
+      layerIndex: number
+      conflictingWith: number[]
+      message: string
+    }> = []
+
+    // 记录每个部位+层级的占用情况
+    const coverage = new Map<string, number>() // "BodyPart:Layer" -> layerIndex
+
+    armorSet.layers.forEach((layer, layerIndex) => {
+      const layerConflicts: number[] = []
+
+      for (const bodyPart of layer.bodyPartCoverage) {
+        for (const apparelLayer of layer.apparelLayers) {
+          const key = `${bodyPart}:${apparelLayer}`
+          const existingLayerIndex = coverage.get(key)
+
+          if (existingLayerIndex !== undefined && existingLayerIndex !== layerIndex) {
+            // 发现冲突
+            if (!layerConflicts.includes(existingLayerIndex)) {
+              layerConflicts.push(existingLayerIndex)
+            }
+          } else {
+            coverage.set(key, layerIndex)
+          }
+        }
+      }
+
+      if (layerConflicts.length > 0) {
+        conflicts.push({
+          layerIndex,
+          conflictingWith: layerConflicts,
+          message: `与第 ${layerConflicts.map((i) => i + 1).join('、')} 层存在覆盖冲突`,
+        })
+      }
+    })
+
+    return {
+      armorSetId: armorSet.id,
+      conflicts,
+      hasConflicts: conflicts.length > 0,
+    }
+  })
+})
 
 // 监听全局材料变化，重新计算护甲
 watch(
@@ -914,15 +1006,7 @@ onMounted(async () => {
               class="layer-item"
             >
               <div class="layer-header">
-                <span class="layer-title"
-                  >第 {{ layerIndex + 1 }} 层
-                  <span
-                    v-if="layer.apparelLayers && layer.apparelLayers.length > 0"
-                    class="layer-badge"
-                  >
-                    {{ getLayerDisplayInfo(layer) }}
-                  </span>
-                </span>
+                <span class="layer-title">第 {{ layerIndex + 1 }} 层 </span>
                 <el-button
                   v-if="armorSet.layers.length > 1"
                   type="danger"
@@ -933,6 +1017,24 @@ onMounted(async () => {
                   删除
                 </el-button>
               </div>
+
+              <!-- 覆盖冲突警告 -->
+              <el-alert
+                v-if="
+                  armorSetConflicts
+                    .find((c) => c.armorSetId === armorSet.id)
+                    ?.conflicts.find((conf) => conf.layerIndex === layerIndex)
+                "
+                type="warning"
+                :closable="false"
+                style="margin-bottom: 10px"
+              >
+                {{
+                  armorSetConflicts
+                    .find((c) => c.armorSetId === armorSet.id)
+                    ?.conflicts.find((conf) => conf.layerIndex === layerIndex)?.message
+                }}
+              </el-alert>
 
               <el-form label-width="10em" size="small">
                 <el-form-item label="衣物名称">
@@ -957,8 +1059,31 @@ onMounted(async () => {
                   </el-select>
                 </el-form-item>
 
-                <el-form-item label="层名称">
-                  <el-input v-model="layer.layerName" placeholder="如：外套、夹层" />
+                <el-form-item label="服装层级">
+                  <el-checkbox-group v-model="layer.apparelLayers">
+                    <el-checkbox-button
+                      v-for="option in apparelLayerOptions"
+                      :key="option.value"
+                      :value="option.value"
+                    >
+                      {{ option.label }}
+                    </el-checkbox-button>
+                  </el-checkbox-group>
+                </el-form-item>
+
+                <el-form-item label="覆盖部位">
+                  <el-tree-select
+                    v-model="layer.bodyPartCoverage"
+                    :data="bodyPartTreeData"
+                    multiple
+                    clearable
+                    collapse-tags
+                    collapse-tags-tooltip
+                    placeholder="选择覆盖的身体部位"
+                    style="width: 100%"
+                    :props="{ label: 'label', value: 'value' }"
+                    node-key="value"
+                  />
                 </el-form-item>
 
                 <el-form-item label="护甲来源">
@@ -1134,6 +1259,47 @@ onMounted(async () => {
         </el-button>
       </div>
 
+      <!-- 中间：覆盖范围可视化 -->
+      <div class="middle-panel">
+        <el-card>
+          <template #header>
+            <h3>覆盖范围可视化</h3>
+          </template>
+
+          <div
+            v-for="{ armorSetId, coverageTree } in allCoverageTrees"
+            :key="armorSetId"
+            class="coverage-tree-section"
+          >
+            <h4 class="coverage-tree-title">
+              {{ armorSets.find((s) => s.id === armorSetId)?.name }}
+            </h4>
+
+            <el-tree :data="coverageTree" default-expand-all node-key="value">
+              <template #default="{ node, data }">
+                <div class="tree-node-content">
+                  <span class="tree-node-label">{{ node.label }}</span>
+                  <div
+                    v-if="data.coveredLayers && data.coveredLayers.length > 0"
+                    class="layer-tags"
+                  >
+                    <el-tag
+                      v-for="layer in data.coveredLayers"
+                      :key="layer"
+                      size="small"
+                      type="info"
+                      disable-transitions
+                    >
+                      {{ getApparelLayerName(layer) }}
+                    </el-tag>
+                  </div>
+                </div>
+              </template>
+            </el-tree>
+          </div>
+        </el-card>
+      </div>
+
       <!-- 右侧：结果显示 -->
       <div class="right-panel">
         <div class="chart-controls">
@@ -1183,6 +1349,14 @@ onMounted(async () => {
   overflow-x: hidden;
   overflow-y: auto;
   padding: 20px 10px 20px 20px;
+}
+
+.middle-panel {
+  flex: 0 0 300px;
+  min-width: 300px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 20px 10px;
 }
 
 .right-panel {
@@ -1320,5 +1494,37 @@ onMounted(async () => {
 
 .unit-placeholder {
   width: 20px;
+}
+
+.coverage-tree-section {
+  margin-bottom: 20px;
+}
+
+.coverage-tree-section:last-child {
+  margin-bottom: 0;
+}
+
+.coverage-tree-title {
+  color: #303133;
+  font-size: 1em;
+  font-weight: 600;
+  margin: 0 0 10px 0;
+}
+
+.tree-node-content {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.tree-node-label {
+  flex-shrink: 0;
+}
+
+.layer-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 </style>

@@ -19,17 +19,8 @@ import { ApparelLayer } from '@/types/armor'
  */
 function getOutermostLayer(layer: ArmorLayer): ApparelLayer {
   if (!layer.apparelLayers || layer.apparelLayers.length === 0) {
-    // 如果没有明确的层级信息，根据layerName尝试推断
-    const layerName = layer.layerName.toLowerCase()
-    if (layerName.includes('皮肤')) return ApparelLayer.Skin
-    if (layerName.includes('贴身')) return ApparelLayer.OnSkin
-    if (layerName.includes('夹层')) return ApparelLayer.Middle
-    if (layerName.includes('外套')) return ApparelLayer.Shell
-    if (layerName.includes('配件') || layerName.includes('腰')) return ApparelLayer.Belt
-    if (layerName.includes('头饰')) return ApparelLayer.Overhead
-    if (layerName.includes('眼饰')) return ApparelLayer.EyeCover
-    // 默认为夹层
-    return ApparelLayer.Middle
+    // 如果没有明确的层级信息，默认为外套层
+    return ApparelLayer.Shell
   }
   // 返回最外层（数值最大）
   return Math.max(...layer.apparelLayers)
