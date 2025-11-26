@@ -60,6 +60,13 @@ function renderChart() {
       xaxis: { title: { text: '护甲穿透 (%)' } },
       yaxis: { title: { text: '单发伤害' } },
       zaxis: { title: { text: '期望受伤' } },
+      camera: {
+        eye: {
+          x: -2, // 负值表示从左侧（低穿甲）观察
+          y: -1, // 负值表示从前侧（低伤害）观察
+          z: 0.1, // 正值表示从上方观察
+        },
+      },
     },
     autosize: true,
     margin: { l: 0, r: 0, t: 40, b: 0 },
