@@ -174,8 +174,6 @@ onMounted(async () => {
     <div class="main-layout">
       <!-- 左侧：参数输入 -->
       <div class="left-panel">
-        <h2 class="main-title">RimWorld DPS 计算器</h2>
-
         <!-- 全局参数：目标距离 -->
         <el-card v-if="chartMode === '2d'" class="global-section">
           <template #header>
@@ -480,16 +478,8 @@ onMounted(async () => {
 <style scoped>
 .calculator {
   display: flex;
-  height: 100vh;
+  height: 100%;
   overflow: hidden;
-}
-
-.main-title {
-  color: #303133;
-  font-size: 1.5em;
-  font-weight: 600;
-  margin: 0 0 20px 0;
-  padding: 0;
 }
 
 /* 主布局：左右分栏，占满视口 */
