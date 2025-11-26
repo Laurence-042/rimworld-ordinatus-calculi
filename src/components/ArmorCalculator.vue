@@ -101,6 +101,14 @@ let loadingTimer: NodeJS.Timeout | null = null
 // 材料折叠面板
 const activeMaterialPanels = ref<MaterialTag[]>([])
 
+// 材料类型配置
+const materialTypes = [
+  { tag: MaterialTag.Metal, name: 'metal', label: '金属材料' },
+  { tag: MaterialTag.Wood, name: 'wood', label: '木材材料' },
+  { tag: MaterialTag.Leather, name: 'leather', label: '皮革材料' },
+  { tag: MaterialTag.Fabric, name: 'fabric', label: '织物材料' },
+] as const
+
 // 身体部位树数据
 const bodyPartTreeData = buildBodyPartTree()
 
@@ -578,24 +586,28 @@ onMounted(async () => {
             <el-divider content-position="left">全局材料预设</el-divider>
 
             <el-collapse v-model="activeMaterialPanels" accordion>
-              <!-- 金属 -->
-              <el-collapse-item title="金属材料" name="metal">
+              <el-collapse-item
+                v-for="materialType in materialTypes"
+                :key="materialType.tag"
+                :title="materialType.label"
+                :name="materialType.name"
+              >
                 <el-form-item label="加载预设">
                   <el-select
-                    :model-value="globalMaterials.metal.name"
-                    placeholder="选择金属材料预设"
+                    :model-value="globalMaterials[materialType.tag].name"
+                    :placeholder="`选择${materialType.label}预设`"
                     style="width: 100%"
                     filterable
                     @change="
                       (value: any) => {
                         if (value) {
-                          loadMaterialPreset(MaterialTag.Metal, value)
+                          loadMaterialPreset(materialType.tag, value)
                         }
                       }
                     "
                   >
                     <el-option
-                      v-for="material in currentMaterials.metal"
+                      v-for="material in currentMaterials[materialType.name]"
                       :key="material.name"
                       :label="`${material.name} (利器${Math.round(material.armorSharp * 100)}% 钝器${Math.round(material.armorBlunt * 100)}% 热能${Math.round(material.armorHeat * 100)}%)`"
                       :value="material"
@@ -606,22 +618,22 @@ onMounted(async () => {
                 <el-form-item label="利器护甲">
                   <div class="slider-input-group">
                     <el-slider
-                      v-model="globalMaterials.metal.armorSharp"
+                      v-model="globalMaterials[materialType.tag].armorSharp"
                       :min="0"
                       :max="200"
                       :step="1"
                       :format-tooltip="(val: number) => `${val}%`"
-                      @input="() => onMaterialValueChange(MaterialTag.Metal)"
+                      @input="() => onMaterialValueChange(materialType.tag)"
                     />
                     <el-input-number
-                      v-model="globalMaterials.metal.armorSharp"
+                      v-model="globalMaterials[materialType.tag].armorSharp"
                       :min="0"
                       :max="200"
                       :step="1"
                       :precision="0"
                       controls-position="right"
                       class="input-number-fixed"
-                      @change="() => onMaterialValueChange(MaterialTag.Metal)"
+                      @change="() => onMaterialValueChange(materialType.tag)"
                     />
                     <span class="unit">%</span>
                   </div>
@@ -630,22 +642,22 @@ onMounted(async () => {
                 <el-form-item label="钝器护甲">
                   <div class="slider-input-group">
                     <el-slider
-                      v-model="globalMaterials.metal.armorBlunt"
+                      v-model="globalMaterials[materialType.tag].armorBlunt"
                       :min="0"
                       :max="200"
                       :step="1"
                       :format-tooltip="(val: number) => `${val}%`"
-                      @input="() => onMaterialValueChange(MaterialTag.Metal)"
+                      @input="() => onMaterialValueChange(materialType.tag)"
                     />
                     <el-input-number
-                      v-model="globalMaterials.metal.armorBlunt"
+                      v-model="globalMaterials[materialType.tag].armorBlunt"
                       :min="0"
                       :max="200"
                       :step="1"
                       :precision="0"
                       controls-position="right"
                       class="input-number-fixed"
-                      @change="() => onMaterialValueChange(MaterialTag.Metal)"
+                      @change="() => onMaterialValueChange(materialType.tag)"
                     />
                     <span class="unit">%</span>
                   </div>
@@ -654,316 +666,22 @@ onMounted(async () => {
                 <el-form-item label="热能护甲">
                   <div class="slider-input-group">
                     <el-slider
-                      v-model="globalMaterials.metal.armorHeat"
+                      v-model="globalMaterials[materialType.tag].armorHeat"
                       :min="0"
                       :max="300"
                       :step="1"
                       :format-tooltip="(val: number) => `${val}%`"
-                      @input="() => onMaterialValueChange(MaterialTag.Metal)"
+                      @input="() => onMaterialValueChange(materialType.tag)"
                     />
                     <el-input-number
-                      v-model="globalMaterials.metal.armorHeat"
-                      :min="0"
-                      :max="300"
-                      :step="1"
-                      :precision="0"
-                      controls-position="right"
-                      class="input-number-fixed"
-                      @change="() => onMaterialValueChange(MaterialTag.Metal)"
-                    />
-                    <span class="unit">%</span>
-                  </div>
-                </el-form-item>
-              </el-collapse-item>
-
-              <!-- 木材 -->
-              <el-collapse-item title="木材材料" name="wood">
-                <el-form-item label="加载预设">
-                  <el-select
-                    :model-value="globalMaterials.wood.name"
-                    placeholder="选择木材材料预设"
-                    style="width: 100%"
-                    filterable
-                    @change="
-                      (value: any) => {
-                        if (value) {
-                          loadMaterialPreset(MaterialTag.Wood, value)
-                        }
-                      }
-                    "
-                  >
-                    <el-option
-                      v-for="material in currentMaterials.wood"
-                      :key="material.name"
-                      :label="`${material.name} (利器${(material.armorSharp * 100).toFixed(0)}% 钝器${(material.armorBlunt * 100).toFixed(0)}% 热能${(material.armorHeat * 100).toFixed(0)}%)`"
-                      :value="material"
-                    />
-                  </el-select>
-                </el-form-item>
-
-                <el-form-item label="利器护甲">
-                  <div class="slider-input-group">
-                    <el-slider
-                      v-model="globalMaterials.wood.armorSharp"
-                      :min="0"
-                      :max="200"
-                      :step="1"
-                      :format-tooltip="(val: number) => `${val}%`"
-                      @input="() => onMaterialValueChange(MaterialTag.Wood)"
-                    />
-                    <el-input-number
-                      v-model="globalMaterials.wood.armorSharp"
-                      :min="0"
-                      :max="200"
-                      :step="1"
-                      :precision="0"
-                      controls-position="right"
-                      class="input-number-fixed"
-                      @change="() => onMaterialValueChange(MaterialTag.Wood)"
-                    />
-                    <span class="unit">%</span>
-                  </div>
-                </el-form-item>
-
-                <el-form-item label="钝器护甲">
-                  <div class="slider-input-group">
-                    <el-slider
-                      v-model="globalMaterials.wood.armorBlunt"
-                      :min="0"
-                      :max="200"
-                      :step="1"
-                      :format-tooltip="(val: number) => `${val}%`"
-                      @input="() => onMaterialValueChange(MaterialTag.Wood)"
-                    />
-                    <el-input-number
-                      v-model="globalMaterials.wood.armorBlunt"
-                      :min="0"
-                      :max="200"
-                      :step="1"
-                      :precision="0"
-                      controls-position="right"
-                      class="input-number-fixed"
-                      @change="() => onMaterialValueChange(MaterialTag.Wood)"
-                    />
-                    <span class="unit">%</span>
-                  </div>
-                </el-form-item>
-
-                <el-form-item label="热能护甲">
-                  <div class="slider-input-group">
-                    <el-slider
-                      v-model="globalMaterials.wood.armorHeat"
-                      :min="0"
-                      :max="300"
-                      :step="1"
-                      :format-tooltip="(val: number) => `${val}%`"
-                      @input="() => onMaterialValueChange(MaterialTag.Wood)"
-                    />
-                    <el-input-number
-                      v-model="globalMaterials.wood.armorHeat"
+                      v-model="globalMaterials[materialType.tag].armorHeat"
                       :min="0"
                       :max="300"
                       :step="1"
                       :precision="0"
                       controls-position="right"
                       class="input-number-fixed"
-                      @change="() => onMaterialValueChange(MaterialTag.Wood)"
-                    />
-                    <span class="unit">%</span>
-                  </div>
-                </el-form-item>
-              </el-collapse-item>
-
-              <!-- 皮革 -->
-              <el-collapse-item title="皮革材料" name="leather">
-                <el-form-item label="加载预设">
-                  <el-select
-                    :model-value="globalMaterials.leather.name"
-                    placeholder="选择皮革材料预设"
-                    style="width: 100%"
-                    filterable
-                    @change="
-                      (value: any) => {
-                        if (value) {
-                          loadMaterialPreset(MaterialTag.Leather, value)
-                        }
-                      }
-                    "
-                  >
-                    <el-option
-                      v-for="material in currentMaterials.leather"
-                      :key="material.name"
-                      :label="`${material.name} (利器${(material.armorSharp * 100).toFixed(0)}% 钝器${(material.armorBlunt * 100).toFixed(0)}% 热能${(material.armorHeat * 100).toFixed(0)}%)`"
-                      :value="material"
-                    />
-                  </el-select>
-                </el-form-item>
-
-                <el-form-item label="利器护甲">
-                  <div class="slider-input-group">
-                    <el-slider
-                      v-model="globalMaterials.leather.armorSharp"
-                      :min="0"
-                      :max="200"
-                      :step="1"
-                      :format-tooltip="(val: number) => `${val}%`"
-                      @input="() => onMaterialValueChange(MaterialTag.Leather)"
-                    />
-                    <el-input-number
-                      v-model="globalMaterials.leather.armorSharp"
-                      :min="0"
-                      :max="200"
-                      :step="1"
-                      :precision="0"
-                      controls-position="right"
-                      class="input-number-fixed"
-                      @change="() => onMaterialValueChange(MaterialTag.Leather)"
-                    />
-                    <span class="unit">%</span>
-                  </div>
-                </el-form-item>
-
-                <el-form-item label="钝器护甲">
-                  <div class="slider-input-group">
-                    <el-slider
-                      v-model="globalMaterials.leather.armorBlunt"
-                      :min="0"
-                      :max="200"
-                      :step="1"
-                      :format-tooltip="(val: number) => `${val}%`"
-                      @input="() => onMaterialValueChange(MaterialTag.Leather)"
-                    />
-                    <el-input-number
-                      v-model="globalMaterials.leather.armorBlunt"
-                      :min="0"
-                      :max="200"
-                      :step="1"
-                      :precision="0"
-                      controls-position="right"
-                      class="input-number-fixed"
-                      @change="() => onMaterialValueChange(MaterialTag.Leather)"
-                    />
-                    <span class="unit">%</span>
-                  </div>
-                </el-form-item>
-
-                <el-form-item label="热能护甲">
-                  <div class="slider-input-group">
-                    <el-slider
-                      v-model="globalMaterials.leather.armorHeat"
-                      :min="0"
-                      :max="300"
-                      :step="1"
-                      :format-tooltip="(val: number) => `${val}%`"
-                      @input="() => onMaterialValueChange(MaterialTag.Leather)"
-                    />
-                    <el-input-number
-                      v-model="globalMaterials.leather.armorHeat"
-                      :min="0"
-                      :max="300"
-                      :step="1"
-                      :precision="0"
-                      controls-position="right"
-                      class="input-number-fixed"
-                      @change="() => onMaterialValueChange(MaterialTag.Leather)"
-                    />
-                    <span class="unit">%</span>
-                  </div>
-                </el-form-item>
-              </el-collapse-item>
-
-              <!-- 织物 -->
-              <el-collapse-item title="织物材料" name="fabric">
-                <el-form-item label="加载预设">
-                  <el-select
-                    :model-value="globalMaterials.fabric.name"
-                    placeholder="选择织物材料预设"
-                    style="width: 100%"
-                    filterable
-                    @change="
-                      (value: any) => {
-                        if (value) {
-                          loadMaterialPreset(MaterialTag.Fabric, value)
-                        }
-                      }
-                    "
-                  >
-                    <el-option
-                      v-for="material in currentMaterials.fabric"
-                      :key="material.name"
-                      :label="`${material.name} (利器${(material.armorSharp * 100).toFixed(0)}% 钝器${(material.armorBlunt * 100).toFixed(0)}% 热能${(material.armorHeat * 100).toFixed(0)}%)`"
-                      :value="material"
-                    />
-                  </el-select>
-                </el-form-item>
-
-                <el-form-item label="利器护甲">
-                  <div class="slider-input-group">
-                    <el-slider
-                      v-model="globalMaterials.fabric.armorSharp"
-                      :min="0"
-                      :max="200"
-                      :step="1"
-                      :format-tooltip="(val: number) => `${val}%`"
-                      @input="() => onMaterialValueChange(MaterialTag.Fabric)"
-                    />
-                    <el-input-number
-                      v-model="globalMaterials.fabric.armorSharp"
-                      :min="0"
-                      :max="200"
-                      :step="1"
-                      :precision="0"
-                      controls-position="right"
-                      class="input-number-fixed"
-                      @change="() => onMaterialValueChange(MaterialTag.Fabric)"
-                    />
-                    <span class="unit">%</span>
-                  </div>
-                </el-form-item>
-
-                <el-form-item label="钝器护甲">
-                  <div class="slider-input-group">
-                    <el-slider
-                      v-model="globalMaterials.fabric.armorBlunt"
-                      :min="0"
-                      :max="200"
-                      :step="1"
-                      :format-tooltip="(val: number) => `${val}%`"
-                      @input="() => onMaterialValueChange(MaterialTag.Fabric)"
-                    />
-                    <el-input-number
-                      v-model="globalMaterials.fabric.armorBlunt"
-                      :min="0"
-                      :max="200"
-                      :step="1"
-                      :precision="0"
-                      controls-position="right"
-                      class="input-number-fixed"
-                      @change="() => onMaterialValueChange(MaterialTag.Fabric)"
-                    />
-                    <span class="unit">%</span>
-                  </div>
-                </el-form-item>
-
-                <el-form-item label="热能护甲">
-                  <div class="slider-input-group">
-                    <el-slider
-                      v-model="globalMaterials.fabric.armorHeat"
-                      :min="0"
-                      :max="300"
-                      :step="1"
-                      :format-tooltip="(val: number) => `${val}%`"
-                      @input="() => onMaterialValueChange(MaterialTag.Fabric)"
-                    />
-                    <el-input-number
-                      v-model="globalMaterials.fabric.armorHeat"
-                      :min="0"
-                      :max="300"
-                      :step="1"
-                      :precision="0"
-                      controls-position="right"
-                      class="input-number-fixed"
-                      @change="() => onMaterialValueChange(MaterialTag.Fabric)"
+                      @change="() => onMaterialValueChange(materialType.tag)"
                     />
                     <span class="unit">%</span>
                   </div>
