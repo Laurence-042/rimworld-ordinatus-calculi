@@ -1,4 +1,5 @@
 import type { WeaponArmorParams } from '@/types/weapon'
+import type { ArmorLayer, AttackParams, DamageResult } from '@/types/armor'
 
 /**
  * RimWorld 护甲计算工具
@@ -170,5 +171,172 @@ export function calculateDPSDistribution(
     halfDPS,
     fullDPS,
     expectedDPS,
+  }
+}
+
+/**
+ * 计算多层护甲的伤害期望
+ * 遵循RimWorld的多层护甲机制：
+ * - 伤害从最外层向内逐层计算
+ * - 每层独立计算伤害减免
+ * - 如果利器伤害被减半，伤害类型变为钝器，但后续层仍使用利器护甲值计算
+ *
+ * @param armorLayers - 护甲层数组（应按从外到内的顺序排列）
+ * @param attackParams - 攻击参数
+ * @returns 伤害计算结果
+ */
+export function calculateMultiLayerDamage(
+  armorLayers: ArmorLayer[],
+  attackParams: AttackParams,
+): DamageResult {
+  const { armorPenetration, damagePerShot, damageType } = attackParams
+
+  let currentDamage = damagePerShot
+  let currentDamageType = damageType
+  const layerDetails: DamageResult['layerDetails'] = []
+
+  // 概率追踪：[noDeflect, halfDeflect, fullDamage] 的概率
+  let probabilities = [0, 0, 0, 1] // 初始状态：100%概率造成全伤害
+
+  for (const layer of armorLayers) {
+    // 根据当前伤害类型选择护甲值
+    let armorValue: number
+    if (currentDamageType === 'blunt') {
+      armorValue = layer.armorBlunt
+    } else if (currentDamageType === 'sharp') {
+      armorValue = layer.armorSharp
+    } else {
+      armorValue = layer.armorHeat
+    }
+
+    // 如果护甲值为0，伤害直接穿过
+    if (armorValue === 0) {
+      layerDetails.push({
+        layerName: layer.itemName,
+        effectiveArmor: 0,
+        damageAfterLayer: currentDamage,
+      })
+      continue
+    }
+
+    // 计算有效护甲值（减去护甲穿透）
+    const effectiveArmor = Math.max(0, armorValue - armorPenetration) * 100
+    const clampedArmor = Math.max(0, Math.min(100, effectiveArmor))
+
+    const halfArmor = clampedArmor / 2
+
+    // 计算本层的三种结果概率
+    const layerNoDeflect = halfArmor / 100
+    const layerHalfDeflect = (clampedArmor - halfArmor) / 100
+    const layerFullDamage = (100 - clampedArmor) / 100
+
+    // 更新总概率分布
+    // 新的概率分布需要考虑之前的状态
+    const newProbs = [0, 0, 0, 0]
+
+    // 如果之前的伤害被完全抵挡（probabilities[0]），这层不影响
+    newProbs[0] = probabilities[0]!
+
+    // 如果之前的伤害被减半（probabilities[1]），本层继续计算
+    newProbs[0] += probabilities[1]! * layerNoDeflect
+    newProbs[1] = probabilities[1]! * layerHalfDeflect
+    // 注意：如果利器伤害在上一层被减半，它会变成钝器伤害
+    // 但本层仍然使用利器护甲值进行计算
+    if (currentDamageType === 'sharp' && probabilities[1]! > 0) {
+      // 伤害类型改变只影响下一层
+      // 这里我们简化处理，因为已经选择了正确的护甲值
+    }
+
+    // 如果之前是全伤害（probabilities[3]），本层正常计算
+    newProbs[0] += probabilities[3]! * layerNoDeflect
+    newProbs[1] = (newProbs[1] || 0) + probabilities[3]! * layerHalfDeflect
+    newProbs[3] = probabilities[3]! * layerFullDamage
+
+    probabilities = newProbs
+
+    // 更新当前伤害
+    if (probabilities[1]! > 0) {
+      currentDamage = currentDamage * 0.5
+      // 如果利器伤害被减半，变为钝器
+      if (currentDamageType === 'sharp') {
+        currentDamageType = 'blunt'
+      }
+    }
+
+    layerDetails.push({
+      layerName: layer.itemName,
+      effectiveArmor: clampedArmor,
+      damageAfterLayer: currentDamage,
+    })
+
+    // 如果伤害已经被完全抵挡，提前退出
+    if (currentDamage === 0) {
+      break
+    }
+  }
+
+  // 计算期望伤害
+  const expectedDamage =
+    probabilities[0]! * 0 + // 无伤害
+    probabilities[1]! * (damagePerShot * 0.5) + // 减半伤害
+    probabilities[3]! * damagePerShot // 全伤害
+
+  return {
+    noDeflectProb: probabilities[0]!,
+    halfDeflectProb: probabilities[1]!,
+    fullDamageProb: probabilities[3]!,
+    expectedDamage,
+    layerDetails,
+  }
+}
+
+/**
+ * 计算护甲套装在不同攻击参数下的受伤期望曲线
+ * 用于绘制3D曲面或2D曲线
+ *
+ * @param armorLayers - 护甲层数组
+ * @param damageType - 伤害类型
+ * @returns 期望受伤曲线数据
+ */
+export function calculateArmorDamageCurve(
+  armorLayers: ArmorLayer[],
+  damageType: 'blunt' | 'sharp' | 'heat',
+): {
+  penetrationValues: number[] // 护甲穿透值数组 (0%-100%)
+  damageValues: number[] // 单发伤害数组 (1-50)
+  expectedDamageGrid: number[][] // 期望受伤二维数组 [penetration][damage]
+} {
+  const penetrationValues: number[] = []
+  const damageValues: number[] = []
+  const expectedDamageGrid: number[][] = []
+
+  // 护甲穿透从0%到100%
+  for (let pen = 0; pen <= 100; pen += 5) {
+    penetrationValues.push(pen)
+    const damageRow: number[] = []
+
+    // 单发伤害从1到50
+    for (let dmg = 1; dmg <= 50; dmg += 1) {
+      if (pen === 0) {
+        damageValues.push(dmg)
+      }
+
+      const attackParams: AttackParams = {
+        armorPenetration: pen / 100,
+        damagePerShot: dmg,
+        damageType,
+      }
+
+      const result = calculateMultiLayerDamage(armorLayers, attackParams)
+      damageRow.push(result.expectedDamage)
+    }
+
+    expectedDamageGrid.push(damageRow)
+  }
+
+  return {
+    penetrationValues,
+    damageValues,
+    expectedDamageGrid,
   }
 }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import DPSCalculator from './components/DPSCalculator.vue'
+import ArmorCalculator from './components/ArmorCalculator.vue'
 
 const calculationMode = ref<'weapon' | 'armor'>('weapon')
 </script>
@@ -11,13 +12,13 @@ const calculationMode = ref<'weapon' | 'armor'>('weapon')
       <h1 class="app-title">RimWorld DPS 计算器</h1>
       <el-radio-group v-model="calculationMode" size="default">
         <el-radio-button value="weapon">矛式计算（以武器为核心）</el-radio-button>
-        <el-radio-button value="armor" disabled>盾式计算（以护甲为核心）</el-radio-button>
+        <el-radio-button value="armor">盾式计算（以护甲为核心）</el-radio-button>
       </el-radio-group>
     </header>
     <main class="app-main">
       <DPSCalculator v-if="calculationMode === 'weapon'" />
-      <!-- 未来在这里添加护甲计算器组件 -->
-      <div v-else class="placeholder">护甲计算器功能开发中...</div>
+      <ArmorCalculator v-else-if="calculationMode === 'armor'" />
+      <div v-else class="placeholder">如果你看到了这个，那就说明这个应用出bug了...</div>
     </main>
   </div>
 </template>
