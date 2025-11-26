@@ -6,7 +6,7 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/projects/rimworld-ordinatus-calculi/demo/',
+  base: '/project/rimworld-ordinatus-calculi/demo/',
   plugins: [vue(), vueDevTools()],
   resolve: {
     alias: {
