@@ -61,6 +61,7 @@ export function convertCSVToWeaponParams(csvData: WeaponCSVData): {
     cooldown: number
     burstCount: number
     burstTicks: number
+    range: number
   }>
 } {
   const warmupTimeSeconds = parseTime(csvData.瞄准时间)
@@ -69,6 +70,7 @@ export function convertCSVToWeaponParams(csvData: WeaponCSVData): {
   const burstTicks = parseNumber(csvData['连发间隔(ticks)']) || 0
   const damage = parseNumber(csvData.弹药伤害)
   const armorPenetration = parsePercentage(csvData.护甲穿透)
+  const range = parseNumber(csvData['射程(tiles)']) || 0
 
   // 精度数据：近、中、远
   const touchAccuracy = parsePercentage(csvData['精度（贴近）'])
@@ -89,6 +91,7 @@ export function convertCSVToWeaponParams(csvData: WeaponCSVData): {
       cooldown: cooldownTimeSeconds, // 保持秒
       burstCount,
       burstTicks,
+      range,
     },
   }
 }

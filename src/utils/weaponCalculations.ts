@@ -19,13 +19,20 @@ export interface WeaponDetailParams {
   cooldown: number // 冷却时间 (秒)
   burstCount: number // 连发数量
   burstTicks: number // 连发间隔 (ticks)
+  range: number // 射程 (格/tiles)
 }
 
 /**
  * 计算命中率
  * 根据目标距离选择对应的命中率档位，并在范围之间进行线性插值
+ * 如果超出武器射程，返回0
  */
 export function calculateHitChance(params: WeaponDetailParams, targetDistance: number): number {
+  // 超出射程时，无法开火，命中率为0
+  if (targetDistance > params.range) {
+    return 0
+  }
+
   const { touchAccuracy, shortAccuracy, mediumAccuracy, longAccuracy } = params
 
   // 转换为 0-1 范围
@@ -125,6 +132,7 @@ function loadWeaponPresetsFromCSV(): WeaponPreset[] {
           cooldown: converted.params.cooldown || 0,
           burstCount: converted.params.burstCount || 1,
           burstTicks: converted.params.burstTicks || 0,
+          range: converted.params.range || 50, // 默认射程50格（如果CSV中没有数据）
         },
       })
     }

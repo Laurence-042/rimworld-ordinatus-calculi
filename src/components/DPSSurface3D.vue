@@ -34,6 +34,7 @@ interface WeaponData {
       cooldown: number
       burstCount: number
       burstTicks: number
+      range: number
     }
     armorPenetration: number
   }

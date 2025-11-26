@@ -31,6 +31,7 @@ interface Weapon {
     cooldown: number
     burstCount: number
     burstTicks: number
+    range: number
   }
   armorPenetration: number
   color: string
@@ -61,6 +62,7 @@ const weapons = ref<Weapon[]>([
       cooldown: 1.0,
       burstCount: 3,
       burstTicks: 8,
+      range: 50,
     },
     armorPenetration: 15,
     color: '#409EFF',
@@ -97,6 +99,7 @@ const addWeapon = () => {
       cooldown: 1.0,
       burstCount: 3,
       burstTicks: 8,
+      range: 50,
     },
     armorPenetration: 15,
     color: weaponColors[weapons.value.length % weaponColors.length] || '#409EFF',
@@ -135,6 +138,7 @@ const applyPreset = (weapon: Weapon, presetIndex: number) => {
     cooldown: preset.params.cooldown,
     burstCount: preset.params.burstCount,
     burstTicks: preset.params.burstTicks,
+    range: preset.params.range,
   }
   weapon.armorPenetration = preset.params.armorPenetration
 }
@@ -411,6 +415,21 @@ const allWeaponsData = computed(() => {
                   class="input-number-fixed"
                 />
                 <span class="unit">ticks</span>
+              </div>
+            </el-form-item>
+
+            <el-form-item label="射程 (Range)">
+              <div class="slider-input-group">
+                <el-slider v-model="weapon.weaponParams.range" :min="0" :max="50" :step="0.5" />
+                <el-input-number
+                  v-model="weapon.weaponParams.range"
+                  :min="0"
+                  :max="50"
+                  :step="1"
+                  controls-position="right"
+                  class="input-number-fixed"
+                />
+                <span class="unit">格</span>
               </div>
             </el-form-item>
 
