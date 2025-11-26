@@ -39,6 +39,16 @@ export function sortArmorLayersOuterToInner(layers: ArmorLayer[]): ArmorLayer[] 
   })
 }
 
+/**
+ * 过滤只覆盖指定身体部位的护甲层
+ * @param layers - 护甲层数组
+ * @param bodyPart - 身体部位
+ * @returns 过滤后的护甲层数组
+ */
+export function filterArmorLayersByBodyPart(layers: ArmorLayer[], bodyPart: string): ArmorLayer[] {
+  return layers.filter((layer) => layer.bodyPartCoverage.includes(bodyPart))
+}
+
 // 向后兼容的类型别名
 export type WeaponParams = WeaponArmorParams
 

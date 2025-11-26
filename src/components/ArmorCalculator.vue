@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { Delete } from '@element-plus/icons-vue'
-import { calculateArmorDamageCurve, calculateMultiLayerDamage } from '@/utils/armorCalculations'
+import {
+  calculateArmorDamageCurve,
+  calculateMultiLayerDamage,
+  filterArmorLayersByBodyPart,
+} from '@/utils/armorCalculations'
 import {
   getClothingDataSources,
   type ClothingData,
@@ -14,8 +18,13 @@ import {
 } from '@/utils/materialDataParser'
 import { MaterialTag, parseAcceptedMaterials } from '@/types/material'
 import { type ArmorSet, ApparelLayer, getApparelLayerName } from '@/types/armor'
-import { BodyPart, buildBodyPartTree } from '@/types/bodyPart'
-import { buildCoverageMap, buildCoverageTree, getApparelLayerOptions } from '@/utils/coverageUtils'
+import { BodyPart, BodyPartNames, buildBodyPartTree } from '@/types/bodyPart'
+import {
+  buildCoverageMap,
+  buildCoverageTree,
+  getApparelLayerOptions,
+  type CoverageTreeNode,
+} from '@/utils/coverageUtils'
 import ArmorChart from './ArmorChart.vue'
 import ArmorSurface3D from './ArmorSurface3D.vue'
 
@@ -36,6 +45,9 @@ const chartMode = ref<'2d' | '3d'>('3d')
 const damageType = ref<'blunt' | 'sharp' | 'heat'>('sharp')
 const fixedPenetration = ref(35) // 用于2D模式
 const fixedDamage = ref(15) // 用于2D模式
+
+// 选中的身体部位（用于计算该部位的护甲）
+const selectedBodyPart = ref<BodyPart>(BodyPart.Torso)
 
 // 材料数据源
 const materialDataSources = ref<MaterialDataSource[]>([])
@@ -274,10 +286,13 @@ const allArmorSetsData = computed(() => {
       ...getLayerActualArmor(layer),
     }))
 
-    const damageCurve = calculateArmorDamageCurve(actualLayers, damageType.value)
+    // 过滤只覆盖选中身体部位的护甲层
+    const filteredLayers = filterArmorLayersByBodyPart(actualLayers, selectedBodyPart.value)
+
+    const damageCurve = calculateArmorDamageCurve(filteredLayers, damageType.value)
 
     // 计算在固定条件下的伤害分布（用于2D模式）
-    const result = calculateMultiLayerDamage(actualLayers, {
+    const result = calculateMultiLayerDamage(filteredLayers, {
       armorPenetration: fixedPenetration.value / 100,
       damagePerShot: fixedDamage.value,
       damageType: damageType.value,
@@ -427,6 +442,18 @@ const armorSetConflicts = computed(() => {
       hasConflicts: conflicts.length > 0,
     }
   })
+})
+
+// 处理覆盖树节点点击
+const handleTreeNodeClick = (data: CoverageTreeNode) => {
+  if (data.value) {
+    selectedBodyPart.value = data.value as BodyPart
+  }
+}
+
+// 选中部位的名称（用于显示）
+const selectedBodyPartName = computed(() => {
+  return BodyPartNames[selectedBodyPart.value]
 })
 
 // 监听全局材料变化，重新计算护甲
@@ -1235,6 +1262,7 @@ onMounted(async () => {
         <el-card>
           <template #header>
             <h3>覆盖范围</h3>
+            <p class="coverage-hint">点击身体部位查看该部位的护甲计算结果</p>
           </template>
 
           <div
@@ -1246,7 +1274,14 @@ onMounted(async () => {
               {{ armorSets.find((s) => s.id === armorSetId)?.name }}
             </h4>
 
-            <el-tree :data="coverageTree" default-expand-all node-key="value">
+            <el-tree
+              :data="coverageTree"
+              default-expand-all
+              node-key="value"
+              :highlight-current="true"
+              :current-node-key="selectedBodyPart"
+              @node-click="handleTreeNodeClick"
+            >
               <template #default="{ node, data }">
                 <div class="tree-node-content">
                   <span class="tree-node-label">{{ node.label }}</span>
@@ -1274,10 +1309,16 @@ onMounted(async () => {
       <!-- 右侧：结果显示 -->
       <div class="right-panel">
         <div class="chart-controls">
-          <el-radio-group v-model="chartMode" size="default">
-            <el-radio-button value="2d">2D曲线</el-radio-button>
-            <el-radio-button value="3d">3D曲面</el-radio-button>
-          </el-radio-group>
+          <div>
+            <el-radio-group v-model="chartMode" size="default">
+              <el-radio-button value="2d">2D曲线</el-radio-button>
+              <el-radio-button value="3d">3D曲面</el-radio-button>
+            </el-radio-group>
+            <div class="selected-body-part">
+              <span class="body-part-label">计算部位：</span>
+              <el-tag type="success" size="large">{{ selectedBodyPartName }}</el-tag>
+            </div>
+          </div>
           <p class="chart-hint">
             <template v-if="chartMode === '2d'">
               对比不同护甲套装在固定攻击条件下的受伤期望
@@ -1407,6 +1448,25 @@ onMounted(async () => {
   margin-bottom: 15px;
 }
 
+.selected-body-part {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.body-part-label {
+  color: #606266;
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+.coverage-hint {
+  color: #909399;
+  font-size: 0.85em;
+  margin: 5px 0 0 0;
+}
+
 .chart-hint {
   color: #909399;
   font-size: 0.9em;
@@ -1498,5 +1558,19 @@ onMounted(async () => {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+}
+
+/* 使树节点可点击样式更明显 */
+:deep(.el-tree-node__content) {
+  cursor: pointer;
+}
+
+:deep(.el-tree-node__content:hover) {
+  background-color: #f5f7fa;
+}
+
+:deep(.el-tree-node.is-current > .el-tree-node__content) {
+  background-color: #e6f7ff;
+  font-weight: 600;
 }
 </style>
