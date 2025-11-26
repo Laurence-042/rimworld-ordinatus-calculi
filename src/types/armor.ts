@@ -2,6 +2,56 @@
  * 护甲类型定义
  */
 
+/**
+ * 服装层级枚举（按从内到外的顺序）
+ */
+export enum ApparelLayer {
+  /** 皮肤层（最内层，通常不显示） */
+  Skin = 0,
+  /** 贴身层 */
+  OnSkin = 1,
+  /** 夹层 */
+  Middle = 2,
+  /** 外套层 */
+  Shell = 3,
+  /** 配件层 */
+  Belt = 4,
+  /** 头饰层 */
+  Overhead = 5,
+  /** 眼饰层（最外层） */
+  EyeCover = 6,
+}
+
+/**
+ * 服装层级名称映射
+ */
+export const ApparelLayerNames: Record<string, ApparelLayer> = {
+  皮肤: ApparelLayer.Skin,
+  贴身: ApparelLayer.OnSkin,
+  夹层: ApparelLayer.Middle,
+  外套: ApparelLayer.Shell,
+  腰: ApparelLayer.Belt,
+  配件: ApparelLayer.Belt,
+  头饰: ApparelLayer.Overhead,
+  眼饰: ApparelLayer.EyeCover,
+}
+
+/**
+ * 获取层级的显示名称
+ */
+export function getApparelLayerName(layer: ApparelLayer): string {
+  const names: Record<ApparelLayer, string> = {
+    [ApparelLayer.Skin]: '皮肤',
+    [ApparelLayer.OnSkin]: '贴身',
+    [ApparelLayer.Middle]: '夹层',
+    [ApparelLayer.Shell]: '外套',
+    [ApparelLayer.Belt]: '配件',
+    [ApparelLayer.Overhead]: '头饰',
+    [ApparelLayer.EyeCover]: '眼饰',
+  }
+  return names[layer] || '未知'
+}
+
 export interface ArmorLayer {
   /** 层名称（贴身、夹层、外套等） */
   layerName: string
@@ -21,6 +71,10 @@ export interface ArmorLayer {
   selectedMaterial?: 'metal' | 'wood' | 'leather' | 'fabric'
   /** 支持的材料类型（从预设加载） */
   supportedMaterials?: Array<'metal' | 'wood' | 'leather' | 'fabric'>
+  /** 服装层级（从CSV加载，可能有多个） */
+  apparelLayers?: ApparelLayer[]
+  /** 覆盖的身体部位 */
+  coverage?: string[]
 }
 
 export interface ArmorSet {

@@ -1,5 +1,6 @@
 import type { WeaponArmorParams } from '@/types/weapon'
 import type { ArmorLayer, AttackParams, DamageResult } from '@/types/armor'
+import { ApparelLayer } from '@/types/armor'
 
 /**
  * RimWorld 护甲计算工具
@@ -11,6 +12,41 @@ import type { ArmorLayer, AttackParams, DamageResult } from '@/types/armor'
  * 4. 如果随机数 >= 剩余护甲值的一半 且 < 剩余护甲值，则伤害减半（50%伤害）
  * 5. 如果随机数 >= 剩余护甲值，则护甲无效（100%伤害）
  */
+
+/**
+ * 获取护甲层的最高层级
+ * 如果一件衣物有多个层级，返回最外层（数值最大的层级）
+ */
+function getOutermostLayer(layer: ArmorLayer): ApparelLayer {
+  if (!layer.apparelLayers || layer.apparelLayers.length === 0) {
+    // 如果没有明确的层级信息，根据layerName尝试推断
+    const layerName = layer.layerName.toLowerCase()
+    if (layerName.includes('皮肤')) return ApparelLayer.Skin
+    if (layerName.includes('贴身')) return ApparelLayer.OnSkin
+    if (layerName.includes('夹层')) return ApparelLayer.Middle
+    if (layerName.includes('外套')) return ApparelLayer.Shell
+    if (layerName.includes('配件') || layerName.includes('腰')) return ApparelLayer.Belt
+    if (layerName.includes('头饰')) return ApparelLayer.Overhead
+    if (layerName.includes('眼饰')) return ApparelLayer.EyeCover
+    // 默认为夹层
+    return ApparelLayer.Middle
+  }
+  // 返回最外层（数值最大）
+  return Math.max(...layer.apparelLayers)
+}
+
+/**
+ * 对护甲层进行排序：从外层到内层
+ * RimWorld的伤害计算顺序是从最外层开始，逐层向内计算
+ */
+export function sortArmorLayersOuterToInner(layers: ArmorLayer[]): ArmorLayer[] {
+  return [...layers].sort((a, b) => {
+    const layerA = getOutermostLayer(a)
+    const layerB = getOutermostLayer(b)
+    // 降序排序：外层（数值大）在前
+    return layerB - layerA
+  })
+}
 
 // 向后兼容的类型别名
 export type WeaponParams = WeaponArmorParams
@@ -181,7 +217,7 @@ export function calculateDPSDistribution(
  * - 每层独立计算伤害减免
  * - 如果利器伤害被减半，伤害类型变为钝器，但后续层仍使用利器护甲值计算
  *
- * @param armorLayers - 护甲层数组（应按从外到内的顺序排列）
+ * @param armorLayers - 护甲层数组（会自动按从外到内排序）
  * @param attackParams - 攻击参数
  * @returns 伤害计算结果
  */
@@ -191,6 +227,9 @@ export function calculateMultiLayerDamage(
 ): DamageResult {
   const { armorPenetration, damagePerShot, damageType } = attackParams
 
+  // 自动排序：从外层到内层
+  const sortedLayers = sortArmorLayersOuterToInner(armorLayers)
+
   let currentDamage = damagePerShot
   let currentDamageType = damageType
   const layerDetails: DamageResult['layerDetails'] = []
@@ -198,7 +237,7 @@ export function calculateMultiLayerDamage(
   // 概率追踪：[noDeflect, halfDeflect, fullDamage] 的概率
   let probabilities = [0, 0, 0, 1] // 初始状态：100%概率造成全伤害
 
-  for (const layer of armorLayers) {
+  for (const layer of sortedLayers) {
     // 根据当前伤害类型选择护甲值
     let armorValue: number
     if (currentDamageType === 'blunt') {

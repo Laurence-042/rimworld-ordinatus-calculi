@@ -4,14 +4,16 @@ import { Delete } from '@element-plus/icons-vue'
 import { calculateArmorDamageCurve, calculateMultiLayerDamage } from '@/utils/armorCalculations'
 import {
   getClothingDataSources,
-  getMaterialDataSources,
   type ClothingData,
   type ClothingDataSource,
+} from '@/utils/clothingDataParser'
+import {
+  getMaterialDataSources,
   type MaterialData,
   type MaterialDataSource,
-  type MaterialTag,
-} from '@/utils/clothingDataParser'
-import type { ArmorSet } from '@/types/armor'
+} from '@/utils/materialDataParser'
+import { MaterialTag, parseAcceptedMaterials } from '@/types/material'
+import { type ArmorSet, ApparelLayer, ApparelLayerNames, getApparelLayerName } from '@/types/armor'
 import ArmorChart from './ArmorChart.vue'
 import ArmorSurface3D from './ArmorSurface3D.vue'
 
@@ -43,26 +45,38 @@ const selectedClothingDataSourceId = ref<string>('vanilla')
 
 // 全局材料 - 使用 MaterialData 类型
 const globalMaterials = ref<{
-  metal: MaterialData
-  wood: MaterialData
-  leather: MaterialData
-  fabric: MaterialData
+  [MaterialTag.Metal]: MaterialData
+  [MaterialTag.Wood]: MaterialData
+  [MaterialTag.Leather]: MaterialData
+  [MaterialTag.Fabric]: MaterialData
 }>({
-  metal: { name: '钢铁', armorSharp: 1.0, armorBlunt: 0.36, armorHeat: 0.27, tags: ['metal'] },
-  wood: { name: '木材', armorSharp: 0.54, armorBlunt: 0.18, armorHeat: 0.09, tags: ['wood'] },
-  leather: {
+  [MaterialTag.Metal]: {
+    name: '钢铁',
+    armorSharp: 1.0,
+    armorBlunt: 0.36,
+    armorHeat: 0.27,
+    tags: [MaterialTag.Metal],
+  },
+  [MaterialTag.Wood]: {
+    name: '木材',
+    armorSharp: 0.54,
+    armorBlunt: 0.18,
+    armorHeat: 0.09,
+    tags: [MaterialTag.Wood],
+  },
+  [MaterialTag.Leather]: {
     name: '普通皮革',
     armorSharp: 1.12,
     armorBlunt: 0.24,
     armorHeat: 0.35,
-    tags: ['leather'],
+    tags: [MaterialTag.Leather],
   },
-  fabric: {
+  [MaterialTag.Fabric]: {
     name: '合成纤维',
     armorSharp: 0.81,
     armorBlunt: 0.12,
     armorHeat: 0.18,
-    tags: ['fabric'],
+    tags: [MaterialTag.Fabric],
   },
 })
 
@@ -88,8 +102,15 @@ const armorSets = ref<ArmorSet[]>([
         armorHeat: 0.1,
         useMaterial: false,
         materialCoefficient: 1.0,
-        selectedMaterial: 'fabric',
-        supportedMaterials: ['metal', 'wood', 'leather', 'fabric'],
+        selectedMaterial: MaterialTag.Fabric,
+        supportedMaterials: [
+          MaterialTag.Metal,
+          MaterialTag.Wood,
+          MaterialTag.Leather,
+          MaterialTag.Fabric,
+        ],
+        apparelLayers: [ApparelLayer.Shell],
+        coverage: ['躯干', '颈部', '左肩', '右肩'],
       },
       {
         layerName: '夹层',
@@ -99,8 +120,15 @@ const armorSets = ref<ArmorSet[]>([
         armorHeat: 0.27,
         useMaterial: false,
         materialCoefficient: 1.0,
-        selectedMaterial: 'fabric',
-        supportedMaterials: ['metal', 'wood', 'leather', 'fabric'],
+        selectedMaterial: MaterialTag.Fabric,
+        supportedMaterials: [
+          MaterialTag.Metal,
+          MaterialTag.Wood,
+          MaterialTag.Leather,
+          MaterialTag.Fabric,
+        ],
+        apparelLayers: [ApparelLayer.Middle],
+        coverage: ['躯干', '左肩', '右肩'],
       },
     ],
   },
@@ -117,8 +145,15 @@ const armorSets = ref<ArmorSet[]>([
         armorHeat: 0.54,
         useMaterial: false,
         materialCoefficient: 1.0,
-        selectedMaterial: 'fabric',
-        supportedMaterials: ['metal', 'wood', 'leather', 'fabric'],
+        selectedMaterial: MaterialTag.Fabric,
+        supportedMaterials: [
+          MaterialTag.Metal,
+          MaterialTag.Wood,
+          MaterialTag.Leather,
+          MaterialTag.Fabric,
+        ],
+        apparelLayers: [ApparelLayer.Shell, ApparelLayer.Middle],
+        coverage: ['躯干', '颈部', '左肩', '左臂', '右肩', '右臂', '左腿', '右腿'],
       },
     ],
   },
@@ -140,8 +175,13 @@ const addArmorSet = () => {
         armorHeat: 0.2,
         useMaterial: false,
         materialCoefficient: 1.0,
-        selectedMaterial: 'fabric',
-        supportedMaterials: ['metal', 'wood', 'leather', 'fabric'],
+        selectedMaterial: MaterialTag.Fabric,
+        supportedMaterials: [
+          MaterialTag.Metal,
+          MaterialTag.Wood,
+          MaterialTag.Leather,
+          MaterialTag.Fabric,
+        ],
       },
     ],
   }
@@ -163,8 +203,13 @@ const addLayer = (armorSet: ArmorSet) => {
     armorHeat: 0.2,
     useMaterial: false,
     materialCoefficient: 1.0,
-    selectedMaterial: 'fabric',
-    supportedMaterials: ['metal', 'wood', 'leather', 'fabric'],
+    selectedMaterial: MaterialTag.Fabric,
+    supportedMaterials: [
+      MaterialTag.Metal,
+      MaterialTag.Wood,
+      MaterialTag.Leather,
+      MaterialTag.Fabric,
+    ],
   })
 }
 
@@ -197,6 +242,17 @@ const getLayerActualArmor = (layer: ArmorSet['layers'][number]) => {
 
   // 如果没有材料，返回0
   return { armorSharp: 0, armorBlunt: 0, armorHeat: 0 }
+}
+
+// 获取层级的显示信息
+const getLayerDisplayInfo = (layer: ArmorSet['layers'][number]): string => {
+  if (!layer.apparelLayers || layer.apparelLayers.length === 0) {
+    return layer.layerName
+  }
+
+  const layerNames = layer.apparelLayers.map((l) => getApparelLayerName(l)).join('/')
+
+  return layerNames
 }
 
 // 计算属性
@@ -259,25 +315,6 @@ const onMaterialValueChange = (materialType: MaterialTag) => {
   }
 }
 
-// 解析支持的材料标签
-const parseSupportedMaterials = (acceptedMaterials?: string[]): MaterialTag[] => {
-  if (!acceptedMaterials || acceptedMaterials.length === 0) {
-    return ['metal', 'wood', 'leather', 'fabric']
-  }
-
-  const tags: MaterialTag[] = []
-  acceptedMaterials.forEach((material) => {
-    const lower = material.toLowerCase()
-    if (lower.includes('金属') || lower.includes('metal')) tags.push('metal')
-    if (lower.includes('木') || lower.includes('wood')) tags.push('wood')
-    if (lower.includes('皮革') || lower.includes('leather')) tags.push('leather')
-    if (lower.includes('织物') || lower.includes('纤维') || lower.includes('fabric'))
-      tags.push('fabric')
-  })
-
-  return tags.length > 0 ? tags : ['metal', 'wood', 'leather', 'fabric']
-}
-
 // 加载全局材料预设
 const loadMaterialPreset = (materialType: MaterialTag, material: MaterialData) => {
   startLoadingPreset()
@@ -289,11 +326,35 @@ const loadClothingPreset = (layer: ArmorSet['layers'][number], clothing: Clothin
   startLoadingPreset()
   layer.itemName = clothing.name
 
+  // 解析层级信息
+  if (clothing.layers && clothing.layers.length > 0) {
+    layer.apparelLayers = clothing.layers
+      .map((layerName) => {
+        const trimmed = layerName.trim()
+        // 在 ApparelLayerNames 映射中查找
+        return ApparelLayerNames[trimmed]
+      })
+      .filter((l): l is ApparelLayer => l !== undefined)
+
+    // 设置 layerName 为第一个层级的名称
+    if (layer.apparelLayers.length > 0) {
+      layer.layerName = getApparelLayerName(layer.apparelLayers[0]!)
+    }
+  }
+
+  // 解析覆盖部位信息
+  if (clothing.coverage) {
+    layer.coverage = clothing.coverage
+      .split(/[,，、]/)
+      .map((part) => part.trim())
+      .filter(Boolean)
+  }
+
   if (clothing.materialCoefficient !== undefined && clothing.materialCoefficient > 0) {
     // 使用材料计算
     layer.useMaterial = true
     layer.materialCoefficient = clothing.materialCoefficient
-    layer.supportedMaterials = parseSupportedMaterials(clothing.acceptedMaterials)
+    layer.supportedMaterials = parseAcceptedMaterials(clothing.acceptedMaterials)
     // 选择第一个支持的材料
     layer.selectedMaterial = layer.supportedMaterials[0]
   } else {
@@ -425,7 +486,7 @@ onMounted(async () => {
                     @change="
                       (value: any) => {
                         if (value) {
-                          loadMaterialPreset('metal', value)
+                          loadMaterialPreset(MaterialTag.Metal, value)
                         }
                       }
                     "
@@ -447,7 +508,7 @@ onMounted(async () => {
                       :max="2"
                       :step="0.01"
                       :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
-                      @input="() => onMaterialValueChange('metal')"
+                      @input="() => onMaterialValueChange(MaterialTag.Metal)"
                     />
                     <el-input-number
                       v-model="globalMaterials.metal.armorSharp"
@@ -457,7 +518,7 @@ onMounted(async () => {
                       :precision="2"
                       controls-position="right"
                       class="input-number-fixed"
-                      @change="() => onMaterialValueChange('metal')"
+                      @change="() => onMaterialValueChange(MaterialTag.Metal)"
                     />
                     <span class="unit-placeholder"></span>
                   </div>
@@ -471,7 +532,7 @@ onMounted(async () => {
                       :max="2"
                       :step="0.01"
                       :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
-                      @input="() => onMaterialValueChange('metal')"
+                      @input="() => onMaterialValueChange(MaterialTag.Metal)"
                     />
                     <el-input-number
                       v-model="globalMaterials.metal.armorBlunt"
@@ -481,7 +542,7 @@ onMounted(async () => {
                       :precision="2"
                       controls-position="right"
                       class="input-number-fixed"
-                      @change="() => onMaterialValueChange('metal')"
+                      @change="() => onMaterialValueChange(MaterialTag.Metal)"
                     />
                     <span class="unit-placeholder"></span>
                   </div>
@@ -495,7 +556,7 @@ onMounted(async () => {
                       :max="3"
                       :step="0.01"
                       :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
-                      @input="() => onMaterialValueChange('metal')"
+                      @input="() => onMaterialValueChange(MaterialTag.Metal)"
                     />
                     <el-input-number
                       v-model="globalMaterials.metal.armorHeat"
@@ -505,7 +566,7 @@ onMounted(async () => {
                       :precision="2"
                       controls-position="right"
                       class="input-number-fixed"
-                      @change="() => onMaterialValueChange('metal')"
+                      @change="() => onMaterialValueChange(MaterialTag.Metal)"
                     />
                     <span class="unit-placeholder"></span>
                   </div>
@@ -522,7 +583,7 @@ onMounted(async () => {
                     @change="
                       (value: any) => {
                         if (value) {
-                          loadMaterialPreset('wood', value)
+                          loadMaterialPreset(MaterialTag.Wood, value)
                         }
                       }
                     "
@@ -544,7 +605,7 @@ onMounted(async () => {
                       :max="2"
                       :step="0.01"
                       :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
-                      @input="() => onMaterialValueChange('wood')"
+                      @input="() => onMaterialValueChange(MaterialTag.Wood)"
                     />
                     <el-input-number
                       v-model="globalMaterials.wood.armorSharp"
@@ -554,7 +615,7 @@ onMounted(async () => {
                       :precision="2"
                       controls-position="right"
                       class="input-number-fixed"
-                      @change="() => onMaterialValueChange('wood')"
+                      @change="() => onMaterialValueChange(MaterialTag.Wood)"
                     />
                     <span class="unit-placeholder"></span>
                   </div>
@@ -568,7 +629,7 @@ onMounted(async () => {
                       :max="2"
                       :step="0.01"
                       :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
-                      @input="() => onMaterialValueChange('wood')"
+                      @input="() => onMaterialValueChange(MaterialTag.Wood)"
                     />
                     <el-input-number
                       v-model="globalMaterials.wood.armorBlunt"
@@ -578,7 +639,7 @@ onMounted(async () => {
                       :precision="2"
                       controls-position="right"
                       class="input-number-fixed"
-                      @change="() => onMaterialValueChange('wood')"
+                      @change="() => onMaterialValueChange(MaterialTag.Wood)"
                     />
                     <span class="unit-placeholder"></span>
                   </div>
@@ -592,7 +653,7 @@ onMounted(async () => {
                       :max="3"
                       :step="0.01"
                       :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
-                      @input="() => onMaterialValueChange('wood')"
+                      @input="() => onMaterialValueChange(MaterialTag.Wood)"
                     />
                     <el-input-number
                       v-model="globalMaterials.wood.armorHeat"
@@ -602,7 +663,7 @@ onMounted(async () => {
                       :precision="2"
                       controls-position="right"
                       class="input-number-fixed"
-                      @change="() => onMaterialValueChange('wood')"
+                      @change="() => onMaterialValueChange(MaterialTag.Wood)"
                     />
                     <span class="unit-placeholder"></span>
                   </div>
@@ -619,7 +680,7 @@ onMounted(async () => {
                     @change="
                       (value: any) => {
                         if (value) {
-                          loadMaterialPreset('leather', value)
+                          loadMaterialPreset(MaterialTag.Leather, value)
                         }
                       }
                     "
@@ -641,7 +702,7 @@ onMounted(async () => {
                       :max="2"
                       :step="0.01"
                       :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
-                      @input="() => onMaterialValueChange('leather')"
+                      @input="() => onMaterialValueChange(MaterialTag.Leather)"
                     />
                     <el-input-number
                       v-model="globalMaterials.leather.armorSharp"
@@ -651,7 +712,7 @@ onMounted(async () => {
                       :precision="2"
                       controls-position="right"
                       class="input-number-fixed"
-                      @change="() => onMaterialValueChange('leather')"
+                      @change="() => onMaterialValueChange(MaterialTag.Leather)"
                     />
                     <span class="unit-placeholder"></span>
                   </div>
@@ -665,7 +726,7 @@ onMounted(async () => {
                       :max="2"
                       :step="0.01"
                       :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
-                      @input="() => onMaterialValueChange('leather')"
+                      @input="() => onMaterialValueChange(MaterialTag.Leather)"
                     />
                     <el-input-number
                       v-model="globalMaterials.leather.armorBlunt"
@@ -675,7 +736,7 @@ onMounted(async () => {
                       :precision="2"
                       controls-position="right"
                       class="input-number-fixed"
-                      @change="() => onMaterialValueChange('leather')"
+                      @change="() => onMaterialValueChange(MaterialTag.Leather)"
                     />
                     <span class="unit-placeholder"></span>
                   </div>
@@ -689,7 +750,7 @@ onMounted(async () => {
                       :max="3"
                       :step="0.01"
                       :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
-                      @input="() => onMaterialValueChange('leather')"
+                      @input="() => onMaterialValueChange(MaterialTag.Leather)"
                     />
                     <el-input-number
                       v-model="globalMaterials.leather.armorHeat"
@@ -699,7 +760,7 @@ onMounted(async () => {
                       :precision="2"
                       controls-position="right"
                       class="input-number-fixed"
-                      @change="() => onMaterialValueChange('leather')"
+                      @change="() => onMaterialValueChange(MaterialTag.Leather)"
                     />
                     <span class="unit-placeholder"></span>
                   </div>
@@ -716,7 +777,7 @@ onMounted(async () => {
                     @change="
                       (value: any) => {
                         if (value) {
-                          loadMaterialPreset('fabric', value)
+                          loadMaterialPreset(MaterialTag.Fabric, value)
                         }
                       }
                     "
@@ -738,7 +799,7 @@ onMounted(async () => {
                       :max="2"
                       :step="0.01"
                       :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
-                      @input="() => onMaterialValueChange('fabric')"
+                      @input="() => onMaterialValueChange(MaterialTag.Fabric)"
                     />
                     <el-input-number
                       v-model="globalMaterials.fabric.armorSharp"
@@ -748,7 +809,7 @@ onMounted(async () => {
                       :precision="2"
                       controls-position="right"
                       class="input-number-fixed"
-                      @change="() => onMaterialValueChange('fabric')"
+                      @change="() => onMaterialValueChange(MaterialTag.Fabric)"
                     />
                     <span class="unit-placeholder"></span>
                   </div>
@@ -762,7 +823,7 @@ onMounted(async () => {
                       :max="2"
                       :step="0.01"
                       :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
-                      @input="() => onMaterialValueChange('fabric')"
+                      @input="() => onMaterialValueChange(MaterialTag.Fabric)"
                     />
                     <el-input-number
                       v-model="globalMaterials.fabric.armorBlunt"
@@ -772,7 +833,7 @@ onMounted(async () => {
                       :precision="2"
                       controls-position="right"
                       class="input-number-fixed"
-                      @change="() => onMaterialValueChange('fabric')"
+                      @change="() => onMaterialValueChange(MaterialTag.Fabric)"
                     />
                     <span class="unit-placeholder"></span>
                   </div>
@@ -786,7 +847,7 @@ onMounted(async () => {
                       :max="3"
                       :step="0.01"
                       :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
-                      @input="() => onMaterialValueChange('fabric')"
+                      @input="() => onMaterialValueChange(MaterialTag.Fabric)"
                     />
                     <el-input-number
                       v-model="globalMaterials.fabric.armorHeat"
@@ -796,7 +857,7 @@ onMounted(async () => {
                       :precision="2"
                       controls-position="right"
                       class="input-number-fixed"
-                      @change="() => onMaterialValueChange('fabric')"
+                      @change="() => onMaterialValueChange(MaterialTag.Fabric)"
                     />
                     <span class="unit-placeholder"></span>
                   </div>
@@ -834,13 +895,34 @@ onMounted(async () => {
 
           <!-- 护甲层列表 -->
           <div class="layers-section">
+            <el-alert
+              v-if="armorSet.layers.length > 1"
+              :closable="false"
+              type="info"
+              style="margin-bottom: 10px"
+            >
+              <template #title>
+                <span style="font-size: 0.9em"
+                  >伤害计算顺序：自动按从外层到内层排序（眼饰→头饰→配件→外套→夹层→贴身→皮肤）</span
+                >
+              </template>
+            </el-alert>
+
             <div
               v-for="(layer, layerIndex) in armorSet.layers"
               :key="layerIndex"
               class="layer-item"
             >
               <div class="layer-header">
-                <span class="layer-title">第 {{ layerIndex + 1 }} 层</span>
+                <span class="layer-title"
+                  >第 {{ layerIndex + 1 }} 层
+                  <span
+                    v-if="layer.apparelLayers && layer.apparelLayers.length > 0"
+                    class="layer-badge"
+                  >
+                    {{ getLayerDisplayInfo(layer) }}
+                  </span>
+                </span>
                 <el-button
                   v-if="armorSet.layers.length > 1"
                   type="danger"
@@ -982,7 +1064,8 @@ onMounted(async () => {
                       <el-radio-button
                         value="metal"
                         :disabled="
-                          layer.supportedMaterials && !layer.supportedMaterials.includes('metal')
+                          layer.supportedMaterials &&
+                          !layer.supportedMaterials.includes(MaterialTag.Metal)
                         "
                       >
                         金属
@@ -990,7 +1073,8 @@ onMounted(async () => {
                       <el-radio-button
                         value="wood"
                         :disabled="
-                          layer.supportedMaterials && !layer.supportedMaterials.includes('wood')
+                          layer.supportedMaterials &&
+                          !layer.supportedMaterials.includes(MaterialTag.Wood)
                         "
                       >
                         木材
@@ -998,7 +1082,8 @@ onMounted(async () => {
                       <el-radio-button
                         value="leather"
                         :disabled="
-                          layer.supportedMaterials && !layer.supportedMaterials.includes('leather')
+                          layer.supportedMaterials &&
+                          !layer.supportedMaterials.includes(MaterialTag.Leather)
                         "
                       >
                         皮革
@@ -1006,7 +1091,8 @@ onMounted(async () => {
                       <el-radio-button
                         value="fabric"
                         :disabled="
-                          layer.supportedMaterials && !layer.supportedMaterials.includes('fabric')
+                          layer.supportedMaterials &&
+                          !layer.supportedMaterials.includes(MaterialTag.Fabric)
                         "
                       >
                         织物
@@ -1155,6 +1241,16 @@ onMounted(async () => {
   color: #303133;
   font-size: 0.95em;
   font-weight: 600;
+}
+
+.layer-badge {
+  background: #e1f3d8;
+  border-radius: 4px;
+  color: #67c23a;
+  font-size: 0.85em;
+  font-weight: 500;
+  margin-left: 8px;
+  padding: 2px 8px;
 }
 
 .chart-controls {
