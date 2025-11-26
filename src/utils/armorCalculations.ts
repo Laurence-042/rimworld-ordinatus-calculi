@@ -286,8 +286,8 @@ export function calculateMultiLayerDamage(
 
       // 三种随机判定结果及其概率
       const deflectProb = Math.min(halfArmor / 100, 100) // 随机数 < 护甲/2：完全偏转
-      const halfDamageProb = Math.min((effectiveArmor - halfArmor) / 100, 100) // 护甲/2 <= 随机数 < 护甲：伤害减半
-      const noPenetrationProb = (100 - Math.min(effectiveArmor, 100)) / 100 // 随机数 >= 护甲：护甲无效
+      const halfDamageProb = Math.min((Math.min(effectiveArmor, 100) - halfArmor) / 100, 100) // 护甲/2 <= 随机数 < 护甲：伤害减半
+      const noPenetrationProb = 1 - (deflectProb + halfDamageProb) // 随机数 >= 护甲：护甲无效
 
       // 情况1：伤害被完全偏转（0伤害）
       if (deflectProb > 0) {
