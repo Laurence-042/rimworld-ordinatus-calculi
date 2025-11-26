@@ -121,7 +121,7 @@ function parsePercentage(value: string): number {
 
 /**
  * 中文身体部位名称到 BodyPart 枚举的映射
- * 基于 RimWorld 官方中文部位名称
+ * 仅映射16个常用部位
  */
 const bodyPartNameMap: Record<string, BodyPart> = {
   // 核心部位
@@ -131,109 +131,37 @@ const bodyPartNameMap: Record<string, BodyPart> = {
   头部: BodyPart.Head,
   腰: BodyPart.Waist,
 
-  // 头部子部位
-  颅骨: BodyPart.Skull,
-  头骨: BodyPart.Skull,
-  大脑: BodyPart.Brain,
-  脑: BodyPart.Brain,
+  // 眼耳鼻颌
   左眼: BodyPart.LeftEye,
   右眼: BodyPart.RightEye,
-  眼: BodyPart.LeftEye, // 通用"眼"默认映射到左眼（CSV中通常会同时列出左右）
+  眼: BodyPart.LeftEye, // 通用"眼"映射到左眼（CSV通常同时列出左右）
   眼睛: BodyPart.LeftEye,
   左耳: BodyPart.LeftEar,
   右耳: BodyPart.RightEar,
-  耳: BodyPart.LeftEar, // 通用"耳"默认映射到左耳
+  耳: BodyPart.LeftEar,
   耳朵: BodyPart.LeftEar,
   鼻: BodyPart.Nose,
   鼻子: BodyPart.Nose,
   下颌: BodyPart.Jaw,
   下颚: BodyPart.Jaw,
-  舌: BodyPart.Tongue,
-  舌头: BodyPart.Tongue,
-
-  // 躯干内部器官
-  脊椎: BodyPart.Spine,
-  脊柱: BodyPart.Spine,
-  肋骨: BodyPart.Ribcage,
-  胸骨: BodyPart.Sternum,
-  骨盆: BodyPart.Pelvis,
-  心脏: BodyPart.Heart,
-  心: BodyPart.Heart,
-  左肺: BodyPart.LeftLung,
-  右肺: BodyPart.RightLung,
-  肺: BodyPart.LeftLung, // 通用"肺"默认映射到左肺
-  肝: BodyPart.Liver,
-  肝脏: BodyPart.Liver,
-  胃: BodyPart.Stomach,
-  左肾: BodyPart.LeftKidney,
-  右肾: BodyPart.RightKidney,
-  肾: BodyPart.LeftKidney, // 通用"肾"默认映射到左肾
-  肾脏: BodyPart.LeftKidney,
 
   // 上肢
   左肩: BodyPart.LeftShoulder,
   右肩: BodyPart.RightShoulder,
   肩: BodyPart.LeftShoulder,
   肩部: BodyPart.LeftShoulder,
-  左锁骨: BodyPart.LeftClavicle,
-  右锁骨: BodyPart.RightClavicle,
-  锁骨: BodyPart.LeftClavicle,
   左臂: BodyPart.LeftArm,
   右臂: BodyPart.RightArm,
   左手臂: BodyPart.LeftArm,
   右手臂: BodyPart.RightArm,
   手臂: BodyPart.LeftArm,
   臂: BodyPart.LeftArm,
-  左肱骨: BodyPart.LeftHumerus,
-  右肱骨: BodyPart.RightHumerus,
-  肱骨: BodyPart.LeftHumerus,
-  左桡骨: BodyPart.LeftRadius,
-  右桡骨: BodyPart.RightRadius,
-  桡骨: BodyPart.LeftRadius,
-  左手: BodyPart.LeftHand,
-  右手: BodyPart.RightHand,
-  手: BodyPart.LeftHand,
-
-  // 手指（统称，映射到左右手指）
-  左手指: BodyPart.LeftFingers,
-  右手指: BodyPart.RightFingers,
-  手指: BodyPart.LeftFingers,
-  // 具体手指（都映射到对应侧的手指，因为枚举中没有细分）
-  尾指: BodyPart.LeftFingers,
-  小指: BodyPart.LeftFingers,
-  无名指: BodyPart.LeftFingers,
-  中指: BodyPart.LeftFingers,
-  食指: BodyPart.LeftFingers,
-  拇指: BodyPart.LeftFingers,
 
   // 下肢
   左腿: BodyPart.LeftLeg,
   右腿: BodyPart.RightLeg,
   腿: BodyPart.LeftLeg,
-  左股骨: BodyPart.LeftFemur,
-  右股骨: BodyPart.RightFemur,
-  股骨: BodyPart.LeftFemur,
-  左胫骨: BodyPart.LeftTibia,
-  右胫骨: BodyPart.RightTibia,
-  胫骨: BodyPart.LeftTibia,
-  左脚: BodyPart.LeftFoot,
-  右脚: BodyPart.RightFoot,
-  脚: BodyPart.LeftFoot,
-
-  // 脚趾（统称，映射到左右脚趾）
-  左脚趾: BodyPart.LeftToes,
-  右脚趾: BodyPart.RightToes,
-  脚趾: BodyPart.LeftToes,
-  // 具体脚趾（都映射到对应侧的脚趾，因为枚举中没有细分）
-  小趾: BodyPart.LeftToes,
-  次小趾: BodyPart.LeftToes,
-  三趾: BodyPart.LeftToes,
-  二趾: BodyPart.LeftToes,
-  大拇趾: BodyPart.LeftToes,
-  大趾: BodyPart.LeftToes,
-}
-
-/**
+} /**
  * 中文层级名称到 ApparelLayer 枚举的映射
  */
 const apparelLayerNameMap: Record<string, ApparelLayer> = {
