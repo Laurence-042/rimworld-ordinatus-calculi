@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import {
   calculateDPSCurve,
   calculateDPSDistribution,
@@ -38,7 +38,7 @@ interface Weapon {
 }
 
 // 图表模式：2D曲线 或 3D曲面
-const chartMode = ref<'2d' | '3d'>('2d')
+const chartMode = ref<'2d' | '3d'>('3d')
 
 // 目标距离（全局共享）
 const targetDistance = ref(25) // 目标距离（格）
@@ -51,21 +51,42 @@ const weapons = ref<Weapon[]>([
     name: '武器 1',
     selectedPresetIndex: null,
     accuracyParams: {
-      touchAccuracy: 95,
-      shortAccuracy: 85,
-      mediumAccuracy: 70,
-      longAccuracy: 50,
+      touchAccuracy: 60,
+      shortAccuracy: 80,
+      mediumAccuracy: 90,
+      longAccuracy: 85,
     },
     weaponParams: {
-      damage: 12,
-      warmUp: 1.5,
-      cooldown: 1.0,
-      burstCount: 3,
-      burstTicks: 8,
-      range: 50,
+      damage: 15,
+      warmUp: 2.5,
+      cooldown: 2.1,
+      burstCount: 1,
+      burstTicks: 0,
+      range: 44.9,
     },
-    armorPenetration: 15,
+    armorPenetration: 35,
     color: '#409EFF',
+  },
+  {
+    id: nextWeaponId++,
+    name: '武器 2',
+    selectedPresetIndex: null,
+    accuracyParams: {
+      touchAccuracy: 90,
+      shortAccuracy: 65,
+      mediumAccuracy: 35,
+      longAccuracy: 15,
+    },
+    weaponParams: {
+      damage: 6,
+      warmUp: 0.5,
+      cooldown: 0.9,
+      burstCount: 3,
+      burstTicks: 7,
+      range: 19.9,
+    },
+    armorPenetration: 9,
+    color: '#67C23A',
   },
 ])
 
@@ -177,6 +198,22 @@ const allWeaponsData = computed(() => {
       distributions,
     }
   })
+})
+
+// 初始化：应用默认预设
+onMounted(() => {
+  if (weaponPresets.length > 0) {
+    // 栓动步枪 - 高穿甲，长射程
+    const needleGunIndex = weaponPresets.findIndex((p) => p.name === '栓动步枪')
+    if (needleGunIndex >= 0) {
+      applyPreset(weapons.value[0]!, needleGunIndex)
+    }
+    // 冲锋手枪 - 低穿甲，短射程，连射
+    const machinePistolIndex = weaponPresets.findIndex((p) => p.name === '冲锋手枪')
+    if (machinePistolIndex >= 0) {
+      applyPreset(weapons.value[1]!, machinePistolIndex)
+    }
+  }
 })
 </script>
 
