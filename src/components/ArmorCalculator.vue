@@ -24,7 +24,7 @@ import {
 import { QualityCategory, getQualityOptions } from '@/types/quality'
 import { getActualArmorValue } from '@/utils/armorCalculations'
 import ArmorChart from './ArmorChart.vue'
-import ArmorSurface3D from './ArmorSurface3D.vue'
+import ArmorReductionCurve from './ArmorReductionCurve.vue'
 import SliderInput from './SliderInput.vue'
 
 // 常量
@@ -43,10 +43,9 @@ const ARMOR_COLORS = [
 const qualityOptions = getQualityOptions()
 
 // 状态
-const chartMode = ref<'2d' | '3d'>('3d')
+const chartMode = ref<'distribution' | 'curve'>('curve')
 const damageType = ref<DamageType>(DamageType.Sharp)
-const fixedPenetration = ref(35) // 用于2D模式
-const fixedDamage = ref(15) // 用于2D模式
+const fixedPenetration = ref(35) // 用于减伤概率分布模式
 
 // 选中的身体部位（用于计算该部位的护甲）
 const selectedBodyPart = ref<BodyPart>(BodyPart.Torso)
@@ -534,15 +533,11 @@ onMounted(async () => {
               </el-radio-group>
             </el-form-item>
 
-            <template v-if="chartMode === '2d'">
+            <template v-if="chartMode === 'distribution'">
               <el-divider content-position="left">固定攻击参数</el-divider>
 
               <el-form-item label="固定穿甲">
                 <SliderInput v-model="fixedPenetration" :min="0" :max="100" :step="1" unit="%" />
-              </el-form-item>
-
-              <el-form-item label="固定单发伤害">
-                <SliderInput v-model="fixedDamage" :min="1" :max="100" :step="1" />
               </el-form-item>
             </template>
 
@@ -968,29 +963,32 @@ onMounted(async () => {
         <div class="chart-controls">
           <div>
             <el-radio-group v-model="chartMode" size="default">
-              <el-radio-button value="2d">2D曲线 - {{ selectedBodyPartName }}</el-radio-button>
-              <el-radio-button value="3d">3D曲面 - {{ selectedBodyPartName }}</el-radio-button>
+              <el-radio-button value="distribution"
+                >减伤概率分布 - {{ selectedBodyPartName }}</el-radio-button
+              >
+              <el-radio-button value="curve"
+                >减伤期望曲线 - {{ selectedBodyPartName }}</el-radio-button
+              >
             </el-radio-group>
           </div>
           <p class="chart-hint">
-            <template v-if="chartMode === '2d'">
-              对比不同护甲套装在固定攻击条件下的受伤期望
+            <template v-if="chartMode === 'distribution'">
+              在固定穿甲条件下，不同护甲套装的减伤比例概率分布
             </template>
-            <template v-else> 交互式3D曲面：护甲穿透 × 单发伤害 → 受伤期望 </template>
+            <template v-else> 护甲穿透 vs 减伤比例的2D曲线对比 </template>
           </p>
         </div>
 
         <div class="chart-container">
           <ArmorChart
-            v-if="chartMode === '2d'"
+            v-if="chartMode === 'distribution'"
             :armor-sets="armorSets"
             :damage-type="damageType"
             :fixed-penetration="fixedPenetration"
-            :fixed-damage="fixedDamage"
             :selected-body-part="selectedBodyPart"
             :get-layer-actual-armor="getLayerActualArmor"
           />
-          <ArmorSurface3D
+          <ArmorReductionCurve
             v-else
             :armor-sets="armorSets"
             :damage-type="damageType"

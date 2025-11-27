@@ -4,13 +4,15 @@ import Plotly from 'plotly.js-dist-min'
 import { useResizeObserver } from '@vueuse/core'
 import type { ArmorSet, ArmorLayer, DamageType } from '@/types/armor'
 import { BodyPart } from '@/types/bodyPart'
-import { calculateMultiLayerDamage, filterArmorLayersByBodyPart } from '@/utils/armorCalculations'
+import {
+  calculateMultiLayerDamageReduction,
+  filterArmorLayersByBodyPart,
+} from '@/utils/armorCalculations'
 
 const props = defineProps<{
   armorSets: ArmorSet[]
   damageType: DamageType
   fixedPenetration: number
-  fixedDamage: number
   selectedBodyPart: BodyPart
   getLayerActualArmor: (layer: ArmorLayer) => {
     armorSharp: number
@@ -48,17 +50,16 @@ const armorSetsData = computed(() => {
     // 过滤只覆盖选中身体部位的护甲层
     const filteredLayers = filterArmorLayersByBodyPart(actualLayers, props.selectedBodyPart)
 
-    // 计算在固定条件下的伤害分布
-    const result = calculateMultiLayerDamage(filteredLayers, {
+    // 计算在固定穿甲条件下的伤害分布
+    const result = calculateMultiLayerDamageReduction(filteredLayers, {
       armorPenetration: props.fixedPenetration / 100,
-      damagePerShot: props.fixedDamage,
       damageType: props.damageType,
     })
 
     return {
       armorSet,
       fixedDamageResult: {
-        expectedDamage: result.expectedDamage,
+        damageReduction: result.damageReduction,
         damageStates: result.damageStates,
       },
     }
@@ -104,11 +105,11 @@ function renderChart() {
       cumulativeProbabilities.push(cumulative)
     }
 
-    // 准备hover文本
+    // 准备hover文本（显示减伤比例）
     const hoverTexts = sortedMultipliers.map((multiplier, index) => {
-      const percent = (multiplier * 100).toFixed(0)
+      const damageReduction = ((1 - multiplier) * 100).toFixed(1)
       const prob = probabilities[index] ?? 0
-      return `${percent}%伤害<br>概率: ${prob.toFixed(2)}%`
+      return `减伤${damageReduction}%<br>概率: ${prob.toFixed(2)}%`
     })
 
     // 柱状图（概率）
@@ -139,10 +140,8 @@ function renderChart() {
     // 准备累积概率的hover文本
     const cumulativeHoverTexts = sortedMultipliers.map((multiplier, index) => {
       const cumulativeProb = cumulativeProbabilities[index] ?? 0
-      const damageValue = props.fixedDamage ?? 0
-      const actualDamage = (damageValue * multiplier).toFixed(1)
-      const multiplierPercent = (multiplier * 100).toFixed(0)
-      return `有 ${cumulativeProb.toFixed(2)}% 的概率<br>受伤不大于 ${damageValue} × ${multiplierPercent}% = ${actualDamage}`
+      const damageReduction = ((1 - multiplier) * 100).toFixed(1)
+      return `有 ${cumulativeProb.toFixed(2)}% 的概率<br>减伤至少 ${damageReduction}%`
     })
 
     // 折线图（累积概率）
@@ -166,7 +165,7 @@ function renderChart() {
 
   const layout: Partial<Plotly.Layout> = {
     title: {
-      text: `护甲伤害分布累积图 - ${damageTypeLabel.value}伤害`,
+      text: `减伤概率分布 - ${damageTypeLabel.value}伤害 (穿甲${props.fixedPenetration}%)`,
     },
     xaxis: {
       title: { text: '伤害倍率 (从低到高)' },
@@ -203,13 +202,7 @@ function renderChart() {
 }
 
 watch(
-  () => [
-    props.armorSets,
-    props.damageType,
-    props.fixedDamage,
-    props.fixedPenetration,
-    props.selectedBodyPart,
-  ],
+  () => [props.armorSets, props.damageType, props.fixedPenetration, props.selectedBodyPart],
   renderChart,
   { deep: true },
 )

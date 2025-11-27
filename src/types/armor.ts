@@ -99,8 +99,6 @@ export enum DamageType {
 export interface AttackParams {
   /** 武器护甲穿透 (0-1) */
   armorPenetration: number
-  /** 武器单发伤害 */
-  damagePerShot: number
   /** 伤害类型 */
   damageType: DamageType
 }
@@ -115,12 +113,14 @@ export interface DamageState {
 export interface DamageResult {
   /** 各种伤害状态及其概率 */
   damageStates: DamageState[]
-  /** 期望伤害值 */
-  expectedDamage: number
+  /** 减伤比例 (0-100) */
+  damageReduction: number
+  /** 期望伤害倍率 (0-1) */
+  expectedDamageMultiplier: number
   /** 各层伤害详情 */
   layerDetails: Array<{
     layerName: string
     effectiveArmor: number
-    damageAfterLayer: number
+    damageMultiplierAfterLayer: number
   }>
 }

@@ -267,7 +267,7 @@ export function calculateDPSDistribution(
 }
 
 /**
- * 计算多层护甲的伤害期望
+ * 计算多层护甲的减伤比例
  *
  * **RimWorld 多层护甲机制详解：**
  *
@@ -322,15 +322,15 @@ export function calculateDPSDistribution(
  * @param attackParams - 攻击参数（护甲穿透、单发伤害、伤害类型）
  * @returns 伤害计算结果，包含所有可能的伤害状态及其概率
  */
-export function calculateMultiLayerDamage(
+export function calculateMultiLayerDamageReduction(
   armorLayers: ArmorLayer[],
   attackParams: AttackParams,
 ): DamageResult {
-  const { armorPenetration, damagePerShot, damageType } = attackParams
+  const { armorPenetration, damageType } = attackParams
 
   // 验证输入参数
   if (!armorLayers || armorLayers.length === 0) {
-    // 无护甲时，100% 概率造成全伤害
+    // 无护甲时，100% 概率造成全伤害，0% 减伤
     return {
       damageStates: [
         {
@@ -339,14 +339,14 @@ export function calculateMultiLayerDamage(
           damageType: damageType,
         },
       ],
-      expectedDamage: damagePerShot,
+      damageReduction: 0,
+      expectedDamageMultiplier: 1.0,
       layerDetails: [],
     }
   }
 
   // 确保参数在有效范围内
   const validArmorPenetration = Math.max(0, Math.min(1, armorPenetration))
-  const validDamagePerShot = Math.max(0, damagePerShot)
 
   // 自动排序：从外层到内层
   const sortedLayers = sortArmorLayersOuterToInner(armorLayers)
@@ -451,15 +451,16 @@ export function calculateMultiLayerDamage(
     currentStates = Array.from(mergedStates.values())
 
     // 记录本层的详细信息（用于调试和展示）
-    const avgDamageAfterLayer =
-      currentStates.reduce((sum, s) => sum + s.damageMultiplier * s.probability, 0) *
-      validDamagePerShot
+    const avgDamageMultiplierAfterLayer = currentStates.reduce(
+      (sum, s) => sum + s.damageMultiplier * s.probability,
+      0,
+    )
 
     layerDetails.push({
       layerName: layer.itemName,
       effectiveArmor:
         Math.max(0, getActualArmorValue(layer, damageType) - validArmorPenetration) * 100,
-      damageAfterLayer: avgDamageAfterLayer,
+      damageMultiplierAfterLayer: avgDamageMultiplierAfterLayer,
     })
   }
 
@@ -482,18 +483,17 @@ export function calculateMultiLayerDamage(
     (a, b) => b.probability - a.probability,
   )
 
-  // 计算期望伤害
-  const expectedDamage = finalStates.reduce(
-    (sum, state) => sum + state.damageMultiplier * state.probability * validDamagePerShot,
+  // 计算期望伤害倍率
+  const expectedDamageMultiplier = finalStates.reduce(
+    (sum, state) => sum + state.damageMultiplier * state.probability,
     0,
   )
 
-  // 验证：期望伤害不应超过单发伤害
-  if (expectedDamage > validDamagePerShot + 0.001) {
+  // 验证：期望伤害倍率不应超过 1.0
+  if (expectedDamageMultiplier > 1.0 + 0.001) {
     // 添加小误差容忍度
-    console.error('护甲计算错误：期望伤害超过单发伤害', {
-      expectedDamage,
-      damagePerShot: validDamagePerShot,
+    console.error('护甲计算错误：期望伤害倍率超过 1.0', {
+      expectedDamageMultiplier,
       armorPenetration: validArmorPenetration,
       damageType,
       layerCount: uniqueLayers.length,
@@ -526,9 +526,13 @@ export function calculateMultiLayerDamage(
     }
   }
 
+  // 计算减伤比例：(1 - 期望伤害倍率) × 100%
+  const damageReduction = (1 - Math.min(expectedDamageMultiplier, 1.0)) * 100
+
   return {
     damageStates: finalStates,
-    expectedDamage: Math.min(expectedDamage, validDamagePerShot), // 确保不超过单发伤害
+    damageReduction,
+    expectedDamageMultiplier: Math.min(expectedDamageMultiplier, 1.0),
     layerDetails,
   }
 }
