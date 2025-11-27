@@ -3,43 +3,67 @@ import { computed, onMounted, ref, watch } from 'vue'
 import Plotly from 'plotly.js-dist-min'
 import { useResizeObserver } from '@vueuse/core'
 import { transposeMatrix, calculateSurfaceIntersection } from '@/utils/plotlyUtils'
-
-interface ArmorSetData {
-  armorSet: {
-    id: number
-    name: string
-    color: string
-  }
-  damageCurve: {
-    penetrationValues: number[]
-    damageValues: number[]
-    expectedDamageGrid: number[][]
-  }
-}
+import type { ArmorSet, ArmorLayer, DamageType } from '@/types/armor'
+import { BodyPart } from '@/types/bodyPart'
+import { calculateArmorDamageCurve, filterArmorLayersByBodyPart } from '@/utils/armorCalculations'
 
 const props = defineProps<{
-  armorSetsData: ArmorSetData[]
-  damageType: 'blunt' | 'sharp' | 'heat'
+  armorSets: ArmorSet[]
+  damageType: DamageType
+  selectedBodyPart: BodyPart
+  getLayerActualArmor: (layer: ArmorLayer) => {
+    armorSharp: number
+    armorBlunt: number
+    armorHeat: number
+  }
 }>()
 
 const chartContainer = ref<HTMLElement | null>(null)
 
 const damageTypeLabel = computed(() => {
   const labels = {
-    blunt: '钝器',
+    blunt: '钓器',
     sharp: '利器',
     heat: '热能',
   }
   return labels[props.damageType]
 })
 
+// 在组件内部计算所有护甲套装的伤害曲线数据
+const armorSetsData = computed(() => {
+  return props.armorSets.map((armorSet) => {
+    // 计算实际护甲值的层
+    const actualLayers = armorSet.layers.map((layer) => {
+      const armor = props.getLayerActualArmor(layer)
+      return {
+        ...layer,
+        // 将百分比转换为0-1的小数供计算使用
+        armorSharp: armor.armorSharp / 100,
+        armorBlunt: armor.armorBlunt / 100,
+        armorHeat: armor.armorHeat / 100,
+      }
+    })
+
+    // 过滤只覆盖选中身体部位的护甲层
+    const filteredLayers = filterArmorLayersByBodyPart(actualLayers, props.selectedBodyPart)
+
+    // 计算伤害曲线（穿透 vs 伤害 的网格）
+    const damageCurve = calculateArmorDamageCurve(filteredLayers, props.damageType)
+
+    return {
+      armorSet,
+      damageCurve,
+    }
+  })
+})
+
 function renderChart() {
-  if (!chartContainer.value || props.armorSetsData.length === 0) return
+  if (!chartContainer.value || armorSetsData.value.length === 0) return
 
   const plotData: Plotly.Data[] = []
 
   // 显示最多2个护甲套装的曲面
-  const displayedSets = props.armorSetsData.slice(0, 2)
+  const displayedSets = armorSetsData.value.slice(0, 2)
 
   displayedSets.forEach((setData, index) => {
     const { armorSet, damageCurve } = setData
@@ -170,7 +194,7 @@ function renderChart() {
   })
 }
 
-watch(() => [props.armorSetsData, props.damageType], renderChart, {
+watch(() => [props.armorSets, props.damageType, props.selectedBodyPart], renderChart, {
   deep: true,
 })
 

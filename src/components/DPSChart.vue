@@ -12,7 +12,9 @@ import {
   Title,
   Tooltip,
 } from 'chart.js'
-import type { WeaponWithCalculations } from '@/types/weapon'
+import type { Weapon } from '@/types/weapon'
+import { calculateHitChance, calculateMaxDPS } from '@/utils/weaponCalculations'
+import { calculateDPSCurve, calculateDPSDistribution } from '@/utils/armorCalculations'
 
 // 注册 Chart.js 组件
 ChartJS.register(
@@ -27,13 +29,39 @@ ChartJS.register(
 )
 
 interface Props {
-  weaponsData: WeaponWithCalculations[]
+  weapons: Weapon[]
+  targetDistance: number
 }
 
 const props = defineProps<Props>()
 
+// 在组件内部计算所有武器的 DPS 数据
+const weaponsData = computed(() => {
+  return props.weapons.map((weapon) => {
+    const hitChance = calculateHitChance(weapon, props.targetDistance)
+    const maxDPS = calculateMaxDPS(weapon)
+    const armorParams = {
+      armorPenetration: weapon.armorPenetration / 100,
+      hitChance,
+      maxDPS,
+    }
+    const dpsCurve = calculateDPSCurve(armorParams)
+    const distributions = dpsCurve.armorValues.map((armor) =>
+      calculateDPSDistribution(armorParams, armor / 100),
+    )
+
+    return {
+      weapon,
+      hitChance,
+      maxDPS,
+      dpsCurve,
+      distributions,
+    }
+  })
+})
+
 const chartData = computed(() => {
-  if (!props.weaponsData || props.weaponsData.length === 0) {
+  if (!weaponsData.value || weaponsData.value.length === 0) {
     return {
       labels: [],
       datasets: [],
@@ -41,9 +69,9 @@ const chartData = computed(() => {
   }
 
   // 使用第一个武器的护甲值作为标签（假设所有武器使用相同的护甲值范围）
-  const labels = props.weaponsData[0]!.dpsCurve.armorValues.map((v) => `${v}%`)
+  const labels = weaponsData.value[0]!.dpsCurve.armorValues.map((v) => `${v}%`)
 
-  const datasets = props.weaponsData.map((weaponData) => ({
+  const datasets = weaponsData.value.map((weaponData) => ({
     label: weaponData.weapon.name,
     data: weaponData.dpsCurve.dpsValues,
     borderColor: weaponData.weapon.color,
@@ -81,13 +109,13 @@ const chartOptions = computed(() => ({
           const y = context.parsed.y
           if (y === null) return ''
 
-          const weaponData = props.weaponsData[context.datasetIndex]
+          const weaponData = weaponsData.value[context.datasetIndex]
           if (!weaponData) return ''
           return `${weaponData.weapon.name} - 期望DPS: ${y.toFixed(3)}`
         },
         afterLabel: (context: { dataIndex: number; datasetIndex: number }) => {
           const index = context.dataIndex
-          const weaponData = props.weaponsData[context.datasetIndex]
+          const weaponData = weaponsData.value[context.datasetIndex]
           if (!weaponData) return []
           const dist = weaponData.distributions[index]
           if (!dist) return []

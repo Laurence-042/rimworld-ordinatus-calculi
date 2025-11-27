@@ -2,24 +2,21 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import Plotly from 'plotly.js-dist-min'
 import { useResizeObserver } from '@vueuse/core'
-import type { DamageType, DamageState } from '@/types/armor'
-
-interface ArmorSetData {
-  armorSet: {
-    id: number
-    name: string
-    color: string
-  }
-  fixedDamageResult: {
-    expectedDamage: number
-    damageStates: DamageState[]
-  }
-}
+import type { ArmorSet, ArmorLayer, DamageType } from '@/types/armor'
+import { BodyPart } from '@/types/bodyPart'
+import { calculateMultiLayerDamage, filterArmorLayersByBodyPart } from '@/utils/armorCalculations'
 
 const props = defineProps<{
-  armorSetsData: ArmorSetData[]
+  armorSets: ArmorSet[]
   damageType: DamageType
+  fixedPenetration: number
   fixedDamage: number
+  selectedBodyPart: BodyPart
+  getLayerActualArmor: (layer: ArmorLayer) => {
+    armorSharp: number
+    armorBlunt: number
+    armorHeat: number
+  }
 }>()
 
 const chartContainer = ref<HTMLElement | null>(null)
@@ -33,12 +30,47 @@ const damageTypeLabel = computed(() => {
   return labels[props.damageType]
 })
 
+// 在组件内部计算所有护甲套装的伤害分布数据
+const armorSetsData = computed(() => {
+  return props.armorSets.map((armorSet) => {
+    // 计算实际护甲值的层
+    const actualLayers = armorSet.layers.map((layer) => {
+      const armor = props.getLayerActualArmor(layer)
+      return {
+        ...layer,
+        // 将百分比转换为0-1的小数供计算使用
+        armorSharp: armor.armorSharp / 100,
+        armorBlunt: armor.armorBlunt / 100,
+        armorHeat: armor.armorHeat / 100,
+      }
+    })
+
+    // 过滤只覆盖选中身体部位的护甲层
+    const filteredLayers = filterArmorLayersByBodyPart(actualLayers, props.selectedBodyPart)
+
+    // 计算在固定条件下的伤害分布
+    const result = calculateMultiLayerDamage(filteredLayers, {
+      armorPenetration: props.fixedPenetration / 100,
+      damagePerShot: props.fixedDamage,
+      damageType: props.damageType,
+    })
+
+    return {
+      armorSet,
+      fixedDamageResult: {
+        expectedDamage: result.expectedDamage,
+        damageStates: result.damageStates,
+      },
+    }
+  })
+})
+
 function renderChart() {
-  if (!chartContainer.value || props.armorSetsData.length === 0) return
+  if (!chartContainer.value || armorSetsData.value.length === 0) return
 
   // 1. 汇总所有套装的 damageMultiplier，去重后从低到高排序
   const allMultipliers = new Set<number>()
-  props.armorSetsData.forEach((setData) => {
+  armorSetsData.value.forEach((setData) => {
     setData.fixedDamageResult.damageStates.forEach((state) => {
       allMultipliers.add(state.damageMultiplier)
     })
@@ -48,7 +80,7 @@ function renderChart() {
   // 为每个护甲套装创建帕累托图数据
   const traces: Array<Partial<Plotly.PlotData>> = []
 
-  props.armorSetsData.forEach((setData) => {
+  armorSetsData.value.forEach((setData) => {
     const { armorSet, fixedDamageResult } = setData
     const { damageStates } = fixedDamageResult
 
@@ -170,7 +202,17 @@ function renderChart() {
   })
 }
 
-watch(() => [props.armorSetsData, props.damageType, props.fixedDamage], renderChart, { deep: true })
+watch(
+  () => [
+    props.armorSets,
+    props.damageType,
+    props.fixedDamage,
+    props.fixedPenetration,
+    props.selectedBodyPart,
+  ],
+  renderChart,
+  { deep: true },
+)
 
 // 监听容器尺寸变化（包括 splitter 拖动）
 useResizeObserver(chartContainer, () => {

@@ -1,13 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { Delete } from '@element-plus/icons-vue'
-import { calculateDPSCurve, calculateDPSDistribution } from '@/utils/armorCalculations'
 import {
   calculateHitChance,
   calculateMaxDPS,
   getWeaponDataSources,
 } from '@/utils/weaponCalculations'
-import type { Weapon, SimplifiedWeaponParams, WeaponDataSource } from '@/types/weapon'
+import type { Weapon, WeaponDataSource } from '@/types/weapon'
 import DPSChart from './DPSChart.vue'
 import DPSSurface3D from './DPSSurface3D.vue'
 import SliderInput from './SliderInput.vue'
@@ -86,16 +85,6 @@ function createWeapon(name: string, color: string, params?: Partial<Weapon>): We
   }
 }
 
-function toArmorCalculationParams(weapon: Weapon): SimplifiedWeaponParams {
-  const hitChance = calculateHitChance(weapon, targetDistance.value)
-  const maxDPS = calculateMaxDPS(weapon)
-  return {
-    armorPenetration: weapon.armorPenetration / 100, // 转换为 0-1 范围
-    hitChance,
-    maxDPS,
-  }
-}
-
 // 方法
 const addWeapon = () => {
   const colorIndex = weapons.value.length % WEAPON_COLORS.length
@@ -132,24 +121,12 @@ const removeWeapon = (id: number) => {
   }
 }
 
-// 计算属性
-const allWeaponsData = computed(() => {
-  return weapons.value.map((weapon) => {
-    const armorParams = toArmorCalculationParams(weapon)
-    const dpsCurve = calculateDPSCurve(armorParams)
-    const distributions = dpsCurve.armorValues.map((armor) =>
-      calculateDPSDistribution(armorParams, armor / 100),
-    )
-
-    return {
-      distributions,
-      dpsCurve,
-      hitChance: armorParams.hitChance,
-      maxDPS: armorParams.maxDPS,
-      weapon,
-    }
-  })
-})
+// 计算辅助函数
+const getWeaponStats = (weapon: Weapon) => {
+  const hitChance = calculateHitChance(weapon, targetDistance.value)
+  const maxDPS = calculateMaxDPS(weapon)
+  return { hitChance, maxDPS }
+}
 
 // 生命周期
 onMounted(async () => {
@@ -189,7 +166,7 @@ onMounted(async () => {
 
         <!-- 武器卡片列表 -->
         <el-card
-          v-for="(weapon, index) in weapons"
+          v-for="weapon in weapons"
           :key="weapon.id"
           class="weapon-card"
           :style="{ borderLeft: `4px solid ${weapon.color}` }"
@@ -339,7 +316,7 @@ onMounted(async () => {
               title="计算结果"
               type="success"
               :closable="false"
-              :description="`命中率: ${((allWeaponsData[index]?.hitChance ?? 0) * 100).toFixed(2)}% | 最大DPS: ${(allWeaponsData[index]?.maxDPS ?? 0).toFixed(2)} | 护甲穿透: ${weapon.armorPenetration.toFixed(0)}%`"
+              :description="`命中率: ${(getWeaponStats(weapon).hitChance * 100).toFixed(2)}% | 最大DPS: ${getWeaponStats(weapon).maxDPS.toFixed(2)} | 护甲穿透: ${weapon.armorPenetration.toFixed(0)}%`"
             />
           </el-form>
         </el-card>
@@ -376,8 +353,12 @@ onMounted(async () => {
         </div>
 
         <div class="chart-container">
-          <DPSChart v-if="chartMode === '2d'" :weapons-data="allWeaponsData" />
-          <DPSSurface3D v-else :weapons-data="allWeaponsData" />
+          <DPSChart
+            v-if="chartMode === '2d'"
+            :weapons="weapons"
+            :target-distance="targetDistance"
+          />
+          <DPSSurface3D v-else :weapons="weapons" />
         </div>
       </el-splitter-panel>
     </el-splitter>

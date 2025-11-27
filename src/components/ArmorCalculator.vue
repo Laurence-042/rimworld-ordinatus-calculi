@@ -3,11 +3,6 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { Delete } from '@element-plus/icons-vue'
 import { useTimeoutFn } from '@vueuse/core'
 import {
-  calculateArmorDamageCurve,
-  calculateMultiLayerDamage,
-  filterArmorLayersByBodyPart,
-} from '@/utils/armorCalculations'
-import {
   getClothingDataSources,
   type ClothingData,
   type ClothingDataSource,
@@ -288,44 +283,6 @@ const getLayerActualArmor = (layer: ArmorSet['layers'][number]) => {
   // 如果没有材料，返回0
   return { armorSharp: 0, armorBlunt: 0, armorHeat: 0 }
 }
-
-// 计算属性
-const allArmorSetsData = computed(() => {
-  return armorSets.value.map((armorSet) => {
-    // 计算实际护甲值的层
-    const actualLayers = armorSet.layers.map((layer) => {
-      const armor = getLayerActualArmor(layer)
-      return {
-        ...layer,
-        // 将百分比转换为0-1的小数供计算使用
-        armorSharp: armor.armorSharp / 100,
-        armorBlunt: armor.armorBlunt / 100,
-        armorHeat: armor.armorHeat / 100,
-      }
-    })
-
-    // 过滤只覆盖选中身体部位的护甲层
-    const filteredLayers = filterArmorLayersByBodyPart(actualLayers, selectedBodyPart.value)
-
-    const damageCurve = calculateArmorDamageCurve(filteredLayers, damageType.value)
-
-    // 计算在固定条件下的伤害分布（用于2D模式）
-    const result = calculateMultiLayerDamage(filteredLayers, {
-      armorPenetration: fixedPenetration.value / 100,
-      damagePerShot: fixedDamage.value,
-      damageType: damageType.value,
-    })
-
-    return {
-      armorSet,
-      damageCurve,
-      fixedDamageResult: {
-        expectedDamage: result.expectedDamage,
-        damageStates: result.damageStates,
-      },
-    }
-  })
-})
 
 // 当前数据源的材料
 const currentMaterials = computed(() => {
@@ -969,11 +926,20 @@ onMounted(async () => {
         <div class="chart-container">
           <ArmorChart
             v-if="chartMode === '2d'"
-            :armor-sets-data="allArmorSetsData"
+            :armor-sets="armorSets"
             :damage-type="damageType"
+            :fixed-penetration="fixedPenetration"
             :fixed-damage="fixedDamage"
+            :selected-body-part="selectedBodyPart"
+            :get-layer-actual-armor="getLayerActualArmor"
           />
-          <ArmorSurface3D v-else :armor-sets-data="allArmorSetsData" :damage-type="damageType" />
+          <ArmorSurface3D
+            v-else
+            :armor-sets="armorSets"
+            :damage-type="damageType"
+            :selected-body-part="selectedBodyPart"
+            :get-layer-actual-armor="getLayerActualArmor"
+          />
         </div>
       </el-splitter-panel>
     </el-splitter>
