@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import Plotly from 'plotly.js-dist-min'
+import { useResizeObserver } from '@vueuse/core'
 import { transposeMatrix } from '@/utils/plotlyUtils'
 
 interface ArmorSetData {
@@ -89,13 +90,15 @@ watch(() => [props.armorSetsData, props.damageType, selectedArmorIndex.value], r
   deep: true,
 })
 
-onMounted(() => {
-  renderChart()
-  window.addEventListener('resize', renderChart)
+// 监听容器尺寸变化（包括 splitter 拖动）
+useResizeObserver(chartContainer, () => {
+  if (chartContainer.value) {
+    Plotly.Plots.resize(chartContainer.value)
+  }
 })
 
-onUnmounted(() => {
-  window.removeEventListener('resize', renderChart)
+onMounted(() => {
+  renderChart()
 })
 </script>
 

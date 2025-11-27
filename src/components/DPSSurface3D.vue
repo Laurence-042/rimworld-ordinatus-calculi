@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 import Plotly from 'plotly.js-dist-min'
+import { useResizeObserver } from '@vueuse/core'
 import type { WeaponWithCalculations } from '@/types/weapon'
 import type { SimplifiedWeaponParams } from '@/types/weapon'
 import { calculateHitChance, calculateMaxDPS } from '@/utils/weaponCalculations'
@@ -370,6 +371,13 @@ watch(
   },
   { deep: true },
 )
+
+// 监听容器尺寸变化（包括 splitter 拖动）
+useResizeObserver(chartContainer, () => {
+  if (chartContainer.value) {
+    Plotly.Plots.resize(chartContainer.value)
+  }
+})
 
 onMounted(() => {
   plotSurface()
