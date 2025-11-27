@@ -5,20 +5,21 @@ import { QualityCategory } from '@/types/quality'
  * CSV 武器数据接口（对应 weapon_info.csv 的列）
  */
 export interface WeaponCSVData {
-  名称: string
-  弹药伤害: string
-  护甲穿透: string
-  '射程(tiles)': string
-  '精度（贴近）': string
-  '精度（近）': string
-  '精度（中）': string
-  '精度（远）': string
-  冷却时间: string
-  市场价值: string
-  抑止能力: string
-  瞄准时间: string
-  连发数量: string
-  '连发间隔(ticks)': string
+  defName: string
+  label: string
+  damage: string
+  armorPenetration: string
+  range: string
+  accuracyTouch: string
+  accuracyShort: string
+  accuracyMedium: string
+  accuracyLong: string
+  cooldown: string
+  marketValue: string
+  stoppingPower: string
+  warmupTime: string
+  burstShotCount: string
+  ticksBetweenBurstShots: string
 }
 
 /**
@@ -52,20 +53,21 @@ export function convertCSVToWeaponParams(csvData: WeaponCSVData): {
   params: WeaponParams
 } {
   return {
-    name: csvData.名称,
+    name: csvData.label,
     params: {
-      armorPenetration: parsePercentage(csvData.护甲穿透),
-      burstCount: parseNumber(csvData.连发数量) || 1,
-      burstTicks: parseNumber(csvData['连发间隔(ticks)']),
-      cooldown: parseTime(csvData.冷却时间),
-      damage: parseNumber(csvData.弹药伤害),
-      accuracyLong: parsePercentage(csvData['精度（远）']),
-      accuracyMedium: parsePercentage(csvData['精度（中）']),
+      defName: csvData.defName,
+      armorPenetration: parsePercentage(csvData.armorPenetration),
+      burstCount: parseNumber(csvData.burstShotCount) || 1,
+      burstTicks: parseNumber(csvData.ticksBetweenBurstShots),
+      cooldown: parseTime(csvData.cooldown),
+      damage: parseNumber(csvData.damage),
+      accuracyLong: parsePercentage(csvData.accuracyLong),
+      accuracyMedium: parsePercentage(csvData.accuracyMedium),
       quality: QualityCategory.Masterwork, // 预设默认为大师品质，因为这是玩家后期能量产的最高品质，而在前中期基本是有啥用啥没得比
-      range: parseNumber(csvData['射程(tiles)']),
-      accuracyShort: parsePercentage(csvData['精度（近）']),
-      accuracyTouch: parsePercentage(csvData['精度（贴近）']),
-      warmUp: parseTime(csvData.瞄准时间),
+      range: parseNumber(csvData.range),
+      accuracyShort: parsePercentage(csvData.accuracyShort),
+      accuracyTouch: parsePercentage(csvData.accuracyTouch),
+      warmUp: parseTime(csvData.warmupTime),
     },
   }
 }
@@ -75,11 +77,11 @@ export function convertCSVToWeaponParams(csvData: WeaponCSVData): {
  * 排除：特化武器、无伤害/冷却时间/精度数据的武器
  */
 export function isValidWeapon(csvData: WeaponCSVData): boolean {
-  if (csvData.名称.startsWith('特化')) return false
+  if (csvData.defName.startsWith('特化')) return false
 
-  const damage = parseNumber(csvData.弹药伤害)
-  const cooldown = parseTime(csvData.冷却时间)
-  const hasAccuracy = csvData['精度（近）'] || csvData['精度（中）'] || csvData['精度（远）']
+  const damage = parseNumber(csvData.damage)
+  const cooldown = parseTime(csvData.cooldown)
+  const hasAccuracy = csvData.accuracyShort || csvData.accuracyMedium || csvData.accuracyLong
 
   return damage > 0 && cooldown > 0 && !!hasAccuracy
 }

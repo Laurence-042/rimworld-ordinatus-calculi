@@ -24,7 +24,7 @@ export interface ModConfig {
  */
 export const MOD_CONFIGS: ModConfig[] = [
   {
-    path: 'D:\\SteamLibrary\\steamapps\\workshop\\content\\294100\\3588393755',
+    path: 'D:\\SteamLibrary\\steamapps\\common\\RimWorld\\Data',
     enabled: true,
   },
   // 添加更多MOD配置...
