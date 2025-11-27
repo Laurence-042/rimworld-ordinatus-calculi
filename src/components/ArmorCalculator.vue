@@ -465,6 +465,16 @@ watch(
   { deep: true },
 )
 
+// 辅助函数：将材料数据从0-2范围转换为0-200%范围
+const convertMaterialToPercentage = (material: MaterialData): MaterialData => {
+  return {
+    ...material,
+    armorSharp: Math.round(material.armorSharp * 100),
+    armorBlunt: Math.round(material.armorBlunt * 100),
+    armorHeat: Math.round(material.armorHeat * 100),
+  }
+}
+
 // 生命周期
 onMounted(async () => {
   // 加载材料数据
@@ -477,32 +487,27 @@ onMounted(async () => {
   const vanillaSource = materialDataSources.value.find((s) => s.id === 'vanilla')
   if (vanillaSource) {
     // 钢铁
-    if (vanillaSource.materials.metal.length > 0) {
-      const steel = vanillaSource.materials.metal.find((m) => m.name === '钢铁')
-      if (steel) {
-        globalMaterials.value.metal = { ...steel }
-      }
+    const steel = vanillaSource.materials.metal.find((m) => m.name === '钢铁')
+    if (steel) {
+      globalMaterials.value.metal = convertMaterialToPercentage(steel)
     }
+
     // 合成纤维
-    if (vanillaSource.materials.fabric.length > 0) {
-      const synthread = vanillaSource.materials.fabric.find((m) => m.name === '合成纤维')
-      if (synthread) {
-        globalMaterials.value.fabric = { ...synthread }
-      }
+    const synthread = vanillaSource.materials.fabric.find((m) => m.name === '合成纤维')
+    if (synthread) {
+      globalMaterials.value.fabric = convertMaterialToPercentage(synthread)
     }
+
     // 普通皮革
-    if (vanillaSource.materials.leather.length > 0) {
-      const plainLeather = vanillaSource.materials.leather.find((m) => m.name === '普通皮革')
-      if (plainLeather) {
-        globalMaterials.value.leather = { ...plainLeather }
-      }
+    const plainLeather = vanillaSource.materials.leather.find((m) => m.name === '普通皮革')
+    if (plainLeather) {
+      globalMaterials.value.leather = convertMaterialToPercentage(plainLeather)
     }
+
     // 木材
-    if (vanillaSource.materials.wood.length > 0) {
-      const wood = vanillaSource.materials.wood[0]
-      if (wood) {
-        globalMaterials.value.wood = { ...wood }
-      }
+    const wood = vanillaSource.materials.wood[0]
+    if (wood) {
+      globalMaterials.value.wood = convertMaterialToPercentage(wood)
     }
   }
 })
