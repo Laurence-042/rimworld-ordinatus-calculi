@@ -44,7 +44,7 @@ export function getActualArmorValue(layer: ArmorLayer, damageType: DamageType): 
 function getOutermostLayer(layer: ArmorLayer): ApparelLayer {
   if (!layer.apparelLayers || layer.apparelLayers.length === 0) {
     // 如果没有明确的层级信息，默认为外套层
-    return ApparelLayer.Shell
+    return ApparelLayer.Outer
   }
   // 返回最外层（数值最大）
   return Math.max(...layer.apparelLayers)
@@ -278,7 +278,7 @@ export function calculateDPSDistribution(
  * 4. **Sharp → Blunt 转换**：如果 Sharp 伤害被任何一层减半，剩余伤害变为 Blunt 类型
  * 5. **使用原始护甲值**：即使伤害已变为 Blunt，后续层仍使用其 Sharp 护甲值进行判定
  * 6. **乘法累积**：伤害减半是乘法累积的（两层都减半 = 最终 1/4 伤害）
- * 7. **多层装备去重**：占据多层的装备只计算一次（如海军装甲占据 middle+shell，只判定一次）
+ * 7. **多层装备去重**：占据多层的装备只计算一次（如海军装甲占据 middle+outer，只判定一次）
  *
  * **概率状态追踪：**
  * 算法使用状态机追踪所有可能的伤害结果及其概率：

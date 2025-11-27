@@ -2,56 +2,57 @@
  * 护甲类型定义
  */
 
+import i18n from '@/i18n'
 import { QualityCategory } from './quality'
+
+const { global } = i18n
 
 /**
  * 服装层级枚举（按从内到外的顺序）
+ * 注意：Outer（外套）在精灵显示上位于最上层，但在机制上被视为低于Belt/Headgear/Eyes
  */
 export enum ApparelLayer {
-  /** 皮肤层（最内层，通常不显示） */
+  /** 贴身层（最接近身体的一层，主要用于头部以下的服装） */
   Skin = 0,
-  /** 贴身层 */
-  OnSkin = 1,
-  /** 夹层 */
-  Middle = 2,
-  /** 外套层 */
-  Shell = 3,
-  /** 配件层 */
-  Belt = 4,
-  /** 头饰层 */
-  Overhead = 5,
-  /** 眼饰层（最外层） */
-  EyeCover = 6,
+  /** 夹层（从身体开始的第二层，主要用于头部以下的服装） */
+  Middle = 1,
+  /** 外套层（从身体开始的第三层，显示在精灵最上层但机制上低于后续层级） */
+  Outer = 2,
+  /** 配件层（第四层，实用物品的独特层级，允许与其他服装同时装备但不能与其他实用物品同时装备） */
+  Belt = 3,
+  /** 头饰层（第五层，用于头饰，可覆盖其他层级占用的身体部位） */
+  Headgear = 4,
+  /** 眼饰层（最外层，仅用于眼罩，允许与头饰一起佩戴） */
+  Eyes = 5,
 }
 
 /**
  * 服装层级名称映射
  */
 export const ApparelLayerNames: Record<string, ApparelLayer> = {
-  皮肤: ApparelLayer.Skin,
-  贴身: ApparelLayer.OnSkin,
+  贴身: ApparelLayer.Skin,
   夹层: ApparelLayer.Middle,
-  外套: ApparelLayer.Shell,
+  外套: ApparelLayer.Outer,
   腰: ApparelLayer.Belt,
   配件: ApparelLayer.Belt,
-  头饰: ApparelLayer.Overhead,
-  眼饰: ApparelLayer.EyeCover,
+  头饰: ApparelLayer.Headgear,
+  眼饰: ApparelLayer.Eyes,
 }
 
 /**
- * 获取层级的显示名称
+ * 获取层级的显示名称（支持i18n）
  */
 export function getApparelLayerName(layer: ApparelLayer): string {
-  const names: Record<ApparelLayer, string> = {
-    [ApparelLayer.Skin]: '皮肤',
-    [ApparelLayer.OnSkin]: '贴身',
-    [ApparelLayer.Middle]: '夹层',
-    [ApparelLayer.Shell]: '外套',
-    [ApparelLayer.Belt]: '配件',
-    [ApparelLayer.Overhead]: '头饰',
-    [ApparelLayer.EyeCover]: '眼饰',
+  const layerNames: Record<ApparelLayer, string> = {
+    [ApparelLayer.Skin]: 'skin',
+    [ApparelLayer.Middle]: 'middle',
+    [ApparelLayer.Outer]: 'outer',
+    [ApparelLayer.Belt]: 'belt',
+    [ApparelLayer.Headgear]: 'headgear',
+    [ApparelLayer.Eyes]: 'eyes',
   }
-  return names[layer] || '未知'
+  const key = `apparelLayer.${layerNames[layer]}` as const
+  return global.t(key)
 }
 
 export interface ArmorLayer {

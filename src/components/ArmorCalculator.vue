@@ -125,90 +125,7 @@ const bodyPartTreeData = buildBodyPartTree()
 const apparelLayerOptions = getApparelLayerOptions()
 
 let nextArmorSetId = 1
-const armorSets = ref<ArmorSet[]>([
-  {
-    id: nextArmorSetId++,
-    name: '双层防弹套',
-    color: ARMOR_COLORS[0]!,
-    layers: [
-      {
-        itemName: '防弹夹克',
-        armorSharp: 55,
-        armorBlunt: 8,
-        armorHeat: 10,
-        quality: QualityCategory.Masterwork,
-        useMaterial: false,
-        materialCoefficient: 1.0,
-        selectedMaterial: MaterialTag.Fabric,
-        supportedMaterials: [
-          MaterialTag.Metal,
-          MaterialTag.Wood,
-          MaterialTag.Leather,
-          MaterialTag.Fabric,
-        ],
-        apparelLayers: [ApparelLayer.Shell],
-        bodyPartCoverage: [
-          BodyPart.Torso,
-          BodyPart.Neck,
-          BodyPart.LeftShoulder,
-          BodyPart.RightShoulder,
-        ],
-      },
-      {
-        itemName: '防弹背心',
-        armorSharp: 100,
-        armorBlunt: 36,
-        armorHeat: 27,
-        quality: QualityCategory.Masterwork,
-        useMaterial: false,
-        materialCoefficient: 1.0,
-        selectedMaterial: MaterialTag.Fabric,
-        supportedMaterials: [
-          MaterialTag.Metal,
-          MaterialTag.Wood,
-          MaterialTag.Leather,
-          MaterialTag.Fabric,
-        ],
-        apparelLayers: [ApparelLayer.Middle],
-        bodyPartCoverage: [BodyPart.Torso, BodyPart.LeftShoulder, BodyPart.RightShoulder],
-      },
-    ],
-  },
-  {
-    id: nextArmorSetId++,
-    name: '单层海军甲',
-    color: ARMOR_COLORS[1]!,
-    layers: [
-      {
-        itemName: '海军装甲',
-        armorSharp: 106,
-        armorBlunt: 45,
-        armorHeat: 54,
-        quality: QualityCategory.Masterwork,
-        useMaterial: false,
-        materialCoefficient: 1.0,
-        selectedMaterial: MaterialTag.Fabric,
-        supportedMaterials: [
-          MaterialTag.Metal,
-          MaterialTag.Wood,
-          MaterialTag.Leather,
-          MaterialTag.Fabric,
-        ],
-        apparelLayers: [ApparelLayer.Shell, ApparelLayer.Middle],
-        bodyPartCoverage: [
-          BodyPart.Torso,
-          BodyPart.Neck,
-          BodyPart.LeftShoulder,
-          BodyPart.RightShoulder,
-          BodyPart.LeftArm,
-          BodyPart.RightArm,
-          BodyPart.LeftLeg,
-          BodyPart.RightLeg,
-        ],
-      },
-    ],
-  },
-])
+const armorSets = ref<ArmorSet[]>([])
 
 // 方法
 const addArmorSet = () => {
@@ -233,7 +150,7 @@ const addArmorSet = () => {
           MaterialTag.Leather,
           MaterialTag.Fabric,
         ],
-        apparelLayers: [ApparelLayer.Shell],
+        apparelLayers: [ApparelLayer.Outer],
         bodyPartCoverage: [BodyPart.Torso],
       },
     ],
@@ -263,7 +180,7 @@ const addLayer = (armorSet: ArmorSet) => {
       MaterialTag.Leather,
       MaterialTag.Fabric,
     ],
-    apparelLayers: [ApparelLayer.Shell],
+    apparelLayers: [ApparelLayer.Outer],
     bodyPartCoverage: [BodyPart.Torso],
   })
 }
@@ -372,7 +289,7 @@ const loadClothingPreset = (layer: ArmorSet['layers'][number], clothing: Clothin
   if (clothing.apparelLayers && clothing.apparelLayers.length > 0) {
     layer.apparelLayers = clothing.apparelLayers
   } else {
-    layer.apparelLayers = [ApparelLayer.Shell] // 默认外套层
+    layer.apparelLayers = [ApparelLayer.Outer] // 默认外套层
   }
 
   // 解析覆盖部位信息
@@ -516,6 +433,109 @@ onMounted(async () => {
     if (wood) {
       globalMaterials.value.wood = convertMaterialToPercentage(wood)
     }
+  }
+
+  // 加载预设护甲套装
+  const vanillaClothingSource = clothingDataSources.value.find((s) => s.id === 'vanilla')
+  if (vanillaClothingSource) {
+    // 第一套：双层防弹套
+    const bulletproofJacket = vanillaClothingSource.clothing.find((c) => c.name === '防弹夹克')
+    const bulletproofVest = vanillaClothingSource.clothing.find((c) => c.name === '防弹背心')
+
+    if (bulletproofJacket && bulletproofVest) {
+      const doubleBulletproofSet: ArmorSet = {
+        id: nextArmorSetId++,
+        name: t('armor.presetDoubleBulletproof'),
+        color: ARMOR_COLORS[0]!,
+        layers: [],
+      }
+
+      // 添加防弹夹克层
+      const jacketLayer: ArmorSet['layers'][number] = {
+        itemName: bulletproofJacket.name,
+        armorSharp: 0,
+        armorBlunt: 0,
+        armorHeat: 0,
+        quality: QualityCategory.Masterwork,
+        useMaterial: false,
+        materialCoefficient: 1.0,
+        selectedMaterial: MaterialTag.Fabric,
+        supportedMaterials: [
+          MaterialTag.Metal,
+          MaterialTag.Wood,
+          MaterialTag.Leather,
+          MaterialTag.Fabric,
+        ],
+        apparelLayers: bulletproofJacket.apparelLayers || [ApparelLayer.Outer],
+        bodyPartCoverage: bulletproofJacket.bodyPartCoverage || [BodyPart.Torso],
+      }
+      loadClothingPreset(jacketLayer, bulletproofJacket)
+      doubleBulletproofSet.layers.push(jacketLayer)
+
+      // 添加防弹背心层
+      const vestLayer: ArmorSet['layers'][number] = {
+        itemName: bulletproofVest.name,
+        armorSharp: 0,
+        armorBlunt: 0,
+        armorHeat: 0,
+        quality: QualityCategory.Masterwork,
+        useMaterial: false,
+        materialCoefficient: 1.0,
+        selectedMaterial: MaterialTag.Fabric,
+        supportedMaterials: [
+          MaterialTag.Metal,
+          MaterialTag.Wood,
+          MaterialTag.Leather,
+          MaterialTag.Fabric,
+        ],
+        apparelLayers: bulletproofVest.apparelLayers || [ApparelLayer.Middle],
+        bodyPartCoverage: bulletproofVest.bodyPartCoverage || [BodyPart.Torso],
+      }
+      loadClothingPreset(vestLayer, bulletproofVest)
+      doubleBulletproofSet.layers.push(vestLayer)
+
+      armorSets.value.push(doubleBulletproofSet)
+    }
+
+    // 第二套：单层海军甲
+    const marineArmor = vanillaClothingSource.clothing.find((c) => c.name === '海军装甲')
+
+    if (marineArmor) {
+      const singleMarineSet: ArmorSet = {
+        id: nextArmorSetId++,
+        name: t('armor.presetSingleMarine'),
+        color: ARMOR_COLORS[1]!,
+        layers: [],
+      }
+
+      const marineLayer: ArmorSet['layers'][number] = {
+        itemName: marineArmor.name,
+        armorSharp: 0,
+        armorBlunt: 0,
+        armorHeat: 0,
+        quality: QualityCategory.Masterwork,
+        useMaterial: false,
+        materialCoefficient: 1.0,
+        selectedMaterial: MaterialTag.Fabric,
+        supportedMaterials: [
+          MaterialTag.Metal,
+          MaterialTag.Wood,
+          MaterialTag.Leather,
+          MaterialTag.Fabric,
+        ],
+        apparelLayers: marineArmor.apparelLayers || [ApparelLayer.Outer, ApparelLayer.Middle],
+        bodyPartCoverage: marineArmor.bodyPartCoverage || [BodyPart.Torso],
+      }
+      loadClothingPreset(marineLayer, marineArmor)
+      singleMarineSet.layers.push(marineLayer)
+
+      armorSets.value.push(singleMarineSet)
+    }
+  }
+
+  // 如果没有成功加载任何预设，添加一个默认的空套装
+  if (armorSets.value.length === 0) {
+    addArmorSet()
   }
 })
 </script>
@@ -769,7 +789,7 @@ onMounted(async () => {
                       :key="option.value"
                       :value="option.value"
                     >
-                      {{ option.label }}
+                      {{ getApparelLayerName(option.value) }}
                     </el-checkbox-button>
                   </el-checkbox-group>
                 </el-form-item>

@@ -2,8 +2,8 @@
  * 服装覆盖范围工具函数
  */
 
-import { ApparelLayer, getApparelLayerName } from '@/types/armor'
-import { BodyPart, BodyPartNames, buildBodyPartTree, type BodyPartTreeNode } from '@/types/bodyPart'
+import { ApparelLayer } from '@/types/armor'
+import { BodyPart, buildBodyPartTree, type BodyPartTreeNode } from '@/types/bodyPart'
 
 /**
  * 覆盖信息接口（用于可视化树）
@@ -115,31 +115,15 @@ export function checkCoverageConflict(
 }
 
 /**
- * 格式化冲突信息为用户可读的字符串
- */
-export function formatConflicts(
-  conflicts: Array<{ bodyPart: BodyPart; layer: ApparelLayer }>,
-): string {
-  if (conflicts.length === 0) return ''
-
-  const messages = conflicts.map(
-    ({ bodyPart, layer }) => `${BodyPartNames[bodyPart]}的${getApparelLayerName(layer)}层`,
-  )
-
-  return `以下部位已被覆盖：${messages.join('、')}`
-}
-
-/**
  * 获取所有可用的服装层级选项（用于checkbox-button）
  */
 export function getApparelLayerOptions(): Array<{ label: string; value: ApparelLayer }> {
   return [
-    { label: '皮肤', value: ApparelLayer.Skin },
-    { label: '贴身', value: ApparelLayer.OnSkin },
+    { label: '贴身', value: ApparelLayer.Skin },
     { label: '夹层', value: ApparelLayer.Middle },
-    { label: '外套', value: ApparelLayer.Shell },
+    { label: '外套', value: ApparelLayer.Outer },
     { label: '配件', value: ApparelLayer.Belt },
-    { label: '头饰', value: ApparelLayer.Overhead },
-    { label: '眼饰', value: ApparelLayer.EyeCover },
+    { label: '头饰', value: ApparelLayer.Headgear },
+    { label: '眼饰', value: ApparelLayer.Eyes },
   ]
 }

@@ -165,13 +165,12 @@ const bodyPartNameMap: Record<string, BodyPart> = {
  * 中文层级名称到 ApparelLayer 枚举的映射
  */
 const apparelLayerNameMap: Record<string, ApparelLayer> = {
-  皮肤: ApparelLayer.Skin,
-  贴身: ApparelLayer.OnSkin,
+  贴身: ApparelLayer.Skin,
   夹层: ApparelLayer.Middle,
-  外套: ApparelLayer.Shell,
+  外套: ApparelLayer.Outer,
   配件: ApparelLayer.Belt,
-  头饰: ApparelLayer.Overhead,
-  眼饰: ApparelLayer.EyeCover,
+  头饰: ApparelLayer.Headgear,
+  眼饰: ApparelLayer.Eyes,
 }
 
 /**

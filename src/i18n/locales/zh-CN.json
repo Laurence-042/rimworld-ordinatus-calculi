@@ -98,7 +98,7 @@
         "materialCoefficient": "材料系数",
         "usedMaterial": "使用的材料",
         "armorLayers": "护甲层",
-        "layerOrderHint": "伤害计算顺序：自动按从外层到内层排序（眼饰→头饰→配件→外套→夹层→贴身→皮肤）",
+        "layerOrderHint": "伤害计算顺序：自动按从外层到内层排序（眼饰→头饰→配件→外套→夹层→贴身）",
         "layerNumber": "第 {n} 层",
         "addLayer": "添加护甲层",
         "addLayerButton": "+ 添加护甲层",
@@ -119,6 +119,8 @@
         "defaultSetName": "护甲套装 {n}",
         "defaultLayerName": "新护甲",
         "defaultClothingName": "新衣物",
+        "presetDoubleBulletproof": "双层防弹套",
+        "presetSingleMarine": "单层海军甲",
         "coverageTitle": "覆盖范围",
         "coverageHint": "点击身体部位查看该部位的护甲计算结果",
         "coverageConflict": "与第 {layers} 层存在覆盖冲突",
@@ -164,12 +166,12 @@
         "fabricButton": "织物"
     },
     "apparelLayer": {
-        "skin": "皮肤层",
-        "onSkin": "贴身层",
-        "middle": "中间层",
-        "shell": "外套层",
-        "overhead": "头戴层",
-        "belt": "腰带层"
+        "skin": "贴身",
+        "middle": "夹层",
+        "outer": "外套",
+        "belt": "配件",
+        "headgear": "头饰",
+        "eyes": "眼饰"
     },
     "calculator": {
         "dps": {

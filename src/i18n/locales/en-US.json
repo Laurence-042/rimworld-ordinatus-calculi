@@ -98,7 +98,7 @@
         "materialCoefficient": "Material Coefficient",
         "usedMaterial": "Used Material",
         "armorLayers": "Armor Layers",
-        "layerOrderHint": "Damage calculation order: automatically sorted from outer to inner layer (Eyes→Head→Accessory→Shell→Middle→OnSkin→Skin)",
+        "layerOrderHint": "Damage calculation order: automatically sorted from outer to inner layer (Eyes→Headgear→Belt→Outer→Middle→Skin)",
         "layerNumber": "Layer {n}",
         "addLayer": "Add Armor Layer",
         "addLayerButton": "+ Add Armor Layer",
@@ -119,6 +119,8 @@
         "defaultSetName": "Armor Set {n}",
         "defaultLayerName": "New Armor",
         "defaultClothingName": "New Clothing",
+        "presetDoubleBulletproof": "Double Bulletproof Set",
+        "presetSingleMarine": "Single Marine Armor",
         "coverageTitle": "Coverage Range",
         "coverageHint": "Click on body parts to view armor calculations for that part",
         "coverageConflict": "Coverage conflict with layer {layers}",
@@ -154,10 +156,10 @@
         "heat": "Heat"
     },
     "materialType": {
-        "metal": "Metal Material",
-        "wood": "Wood Material",
-        "leather": "Leather Material",
-        "fabric": "Fabric Material",
+        "metal": "Metal Materials",
+        "wood": "Wood Materials",
+        "leather": "Leather Materials",
+        "fabric": "Fabric Materials",
         "metalButton": "Metal",
         "woodButton": "Wood",
         "leatherButton": "Leather",
@@ -165,11 +167,11 @@
     },
     "apparelLayer": {
         "skin": "Skin",
-        "onSkin": "OnSkin",
         "middle": "Middle",
-        "shell": "Shell",
-        "overhead": "Overhead",
-        "belt": "Belt"
+        "outer": "Outer",
+        "belt": "Belt",
+        "headgear": "Headgear",
+        "eyes": "Eyes"
     },
     "calculator": {
         "dps": {
