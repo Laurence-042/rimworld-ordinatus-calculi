@@ -112,11 +112,13 @@ function renderChart() {
       return `减伤${damageReduction}%<br>概率: ${prob.toFixed(2)}%`
     })
 
+    const reductions = sortedMultipliers.map((v) => 1 - v)
+
     // 柱状图（概率）
     traces.push({
       name: `${armorSet.name} - 概率`,
       type: 'bar',
-      x: sortedMultipliers,
+      x: reductions,
       y: probabilities,
       text: hoverTexts,
       marker: { color: armorSet.color },
@@ -129,7 +131,7 @@ function renderChart() {
       name: `${armorSet.name} - 累积 (描边)`,
       type: 'scatter',
       mode: 'lines',
-      x: sortedMultipliers,
+      x: reductions,
       y: cumulativeProbabilities,
       line: { color: '#ffffff', width: 6 },
       yaxis: 'y2',
@@ -141,7 +143,7 @@ function renderChart() {
     const cumulativeHoverTexts = sortedMultipliers.map((multiplier, index) => {
       const cumulativeProb = cumulativeProbabilities[index] ?? 0
       const damageReduction = ((1 - multiplier) * 100).toFixed(1)
-      return `有 ${cumulativeProb.toFixed(2)}% 的概率<br>减伤至少 ${damageReduction}%`
+      return `有 ${cumulativeProb.toFixed(2)}% 的概率<br>至少减伤 ${damageReduction}%`
     })
 
     // 折线图（累积概率）
@@ -149,7 +151,7 @@ function renderChart() {
       name: `${armorSet.name} - 累积`,
       type: 'scatter',
       mode: 'lines+markers',
-      x: sortedMultipliers,
+      x: reductions,
       y: cumulativeProbabilities,
       text: cumulativeHoverTexts,
       line: { color: armorSet.color, dash: 'dash', width: 3 },
@@ -168,8 +170,9 @@ function renderChart() {
       text: `减伤概率分布 - ${damageTypeLabel.value}伤害 (穿甲${props.fixedPenetration}%)`,
     },
     xaxis: {
-      title: { text: '伤害倍率 (从低到高)' },
+      title: { text: '减伤倍率 (从高到低)' },
       tickformat: '.0%',
+      autorange: 'reversed',
     },
     yaxis: {
       title: { text: '概率 (%)' },
