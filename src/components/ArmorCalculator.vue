@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { Delete } from '@element-plus/icons-vue'
+import { Delete, QuestionFilled } from '@element-plus/icons-vue'
 import { useTimeoutFn } from '@vueuse/core'
 import {
   getClothingDataSources,
@@ -762,6 +762,17 @@ onMounted(async () => {
                 </el-form-item>
 
                 <el-form-item label="护甲来源">
+                  <el-tooltip effect="dark" placement="top" raw-content>
+                    <template #content>
+                      <div style="max-width: 300px; line-height: 1.5">
+                        下方滑块使用的是<strong>“普通品质”</strong>的基础值，计算会自动套用对应品质加成。
+                        若您只知道某特定品质下的实际数值，可在下方将品质设为“普通”，再填写该数值，即可确保计算使用正确的实际数值。
+                      </div>
+                    </template>
+                    <el-icon style="margin-left: 8px; cursor: help; vertical-align: middle"
+                      ><QuestionFilled
+                    /></el-icon>
+                  </el-tooltip>
                   <el-radio-group v-model="layer.useMaterial">
                     <el-radio-button :value="false">固定数值</el-radio-button>
                     <el-radio-button :value="true">依赖材料</el-radio-button>

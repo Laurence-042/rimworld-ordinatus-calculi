@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { Delete } from '@element-plus/icons-vue'
+import { Delete, QuestionFilled } from '@element-plus/icons-vue'
 import {
   calculateHitChance,
   calculateMaxDPS,
@@ -260,7 +260,18 @@ onMounted(async () => {
             </el-form-item>
 
             <!-- 武器属性 -->
-            <el-divider content-position="left">武器属性</el-divider>
+            <el-divider content-position="left">
+              武器属性
+              <el-tooltip effect="dark" placement="top" raw-content>
+                <template #content>
+                  <div style="max-width: 300px; line-height: 1.5">
+                    下方滑块使用的是<strong>“普通品质”</strong>的基础值，计算会自动套用对应品质加成。
+                    若您只知道某特定品质下的实际数值，可在下方将品质设为“普通”，再填写该数值，即可确保计算使用正确的实际数值。
+                  </div>
+                </template>
+                <el-icon style="margin-left: 8px; cursor: help"><QuestionFilled /></el-icon>
+              </el-tooltip>
+            </el-divider>
 
             <el-form-item label="品质">
               <el-radio-group v-model="weapon.quality">
