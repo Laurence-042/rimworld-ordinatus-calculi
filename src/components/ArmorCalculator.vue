@@ -531,9 +531,9 @@ onMounted(async () => {
 
 <template>
   <div class="calculator">
-    <div class="main-layout">
+    <el-splitter class="main-layout">
       <!-- 左侧：参数输入 -->
-      <div class="left-panel">
+      <el-splitter-panel size="30%" min="20%" collapsible class="left-panel">
         <!-- 全局参数 -->
         <el-card class="global-section">
           <template #header>
@@ -891,10 +891,9 @@ onMounted(async () => {
         <el-button type="primary" @click="addArmorSet" style="width: 100%; margin-top: 20px">
           + 添加护甲套装进行对比
         </el-button>
-      </div>
-
+      </el-splitter-panel>
       <!-- 中间：覆盖范围可视化 -->
-      <div class="middle-panel">
+      <el-splitter-panel size="30%" min="20%" collapsible class="middle-panel">
         <el-card>
           <template #header>
             <h3>覆盖范围</h3>
@@ -941,10 +940,9 @@ onMounted(async () => {
             </el-tree>
           </div>
         </el-card>
-      </div>
-
+      </el-splitter-panel>
       <!-- 右侧：结果显示 -->
-      <div class="right-panel">
+      <el-splitter-panel class="right-panel">
         <div class="chart-controls">
           <div>
             <el-radio-group v-model="chartMode" size="default">
@@ -969,8 +967,8 @@ onMounted(async () => {
           />
           <ArmorSurface3D v-else :armor-sets-data="allArmorSetsData" :damage-type="damageType" />
         </div>
-      </div>
-    </div>
+      </el-splitter-panel>
+    </el-splitter>
   </div>
 </template>
 
@@ -982,36 +980,30 @@ onMounted(async () => {
 }
 
 .main-layout {
-  display: flex;
-  gap: 20px;
   height: 100%;
-  overflow: hidden;
   width: 100%;
 }
 
-.left-panel {
-  flex: 0 0 500px;
-  min-width: 500px;
+:deep(.left-panel) {
+  height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
-  padding: 20px 10px 20px 20px;
+  padding: 20px;
 }
 
-.middle-panel {
-  flex: 0 0 300px;
-  min-width: 300px;
+:deep(.middle-panel) {
+  height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
-  padding: 20px 10px;
+  padding: 20px;
 }
 
-.right-panel {
+:deep(.right-panel) {
   display: flex;
-  flex: 1;
   flex-direction: column;
-  min-width: 600px;
+  height: 100%;
   overflow: hidden;
-  padding: 20px 20px 20px 10px;
+  padding: 20px;
 }
 
 .global-section {

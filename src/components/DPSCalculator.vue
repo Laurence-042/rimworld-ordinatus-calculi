@@ -172,9 +172,9 @@ onMounted(async () => {
 
 <template>
   <div class="calculator">
-    <div class="main-layout">
+    <el-splitter class="main-layout">
       <!-- 左侧：参数输入 -->
-      <div class="left-panel">
+      <el-splitter-panel size="35%" min="20%" max="60%" collapsible class="left-panel">
         <!-- 全局参数：目标距离 -->
         <el-card v-if="chartMode === '2d'" class="global-section">
           <template #header>
@@ -278,7 +278,7 @@ onMounted(async () => {
             <el-divider content-position="left">武器属性</el-divider>
 
             <el-form-item label="伤害">
-              <SliderInput v-model="weapon.damage" :min="1" :max="200" :step="1" />
+              <SliderInput v-model="weapon.damage" :min="1" :max="50" :step="1" />
             </el-form-item>
 
             <el-form-item label="预热时间 (Warm-Up)">
@@ -348,10 +348,9 @@ onMounted(async () => {
         <el-button type="primary" @click="addWeapon" style="width: 100%; margin-top: 20px">
           + 添加武器进行对比
         </el-button>
-      </div>
-
+      </el-splitter-panel>
       <!-- 右侧：结果显示 -->
-      <div class="right-panel">
+      <el-splitter-panel class="right-panel">
         <div class="chart-controls">
           <el-radio-group v-model="chartMode" size="default">
             <el-radio-button value="2d">2D曲线</el-radio-button>
@@ -367,8 +366,8 @@ onMounted(async () => {
           <DPSChart v-if="chartMode === '2d'" :weapons-data="allWeaponsData" />
           <DPSSurface3D v-else :weapons-data="allWeaponsData" />
         </div>
-      </div>
-    </div>
+      </el-splitter-panel>
+    </el-splitter>
   </div>
 </template>
 
@@ -379,32 +378,27 @@ onMounted(async () => {
   overflow: hidden;
 }
 
-/* 主布局：左右分栏，占满视口 */
+/* 主布局：使用 splitter */
 .main-layout {
-  display: flex;
-  gap: 20px;
   height: 100%;
-  overflow: hidden;
   width: 100%;
 }
 
 /* 左侧面板：可滚动 */
-.left-panel {
-  flex: 0 0 500px;
-  min-width: 500px;
+:deep(.left-panel) {
+  height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
-  padding: 20px 10px 20px 20px;
+  padding: 20px;
 }
 
 /* 右侧面板：固定，不滚动 */
-.right-panel {
+:deep(.right-panel) {
   display: flex;
-  flex: 1;
   flex-direction: column;
-  min-width: 600px;
+  height: 100%;
   overflow: hidden;
-  padding: 20px 20px 20px 10px;
+  padding: 20px;
 }
 
 /* 全局参数卡片 */
