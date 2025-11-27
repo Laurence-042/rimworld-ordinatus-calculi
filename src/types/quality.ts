@@ -3,6 +3,10 @@
  * 定义武器和装备的品质等级及其对应的系数
  */
 
+import i18n from '@/i18n'
+
+const { global } = i18n
+
 /**
  * 品质等级枚举
  */
@@ -17,17 +21,27 @@ export enum QualityCategory {
 }
 
 /**
- * 品质等级名称映射（中文）
+ * 获取品质等级名称（支持i18n）
  */
-export const QualityNames: Record<QualityCategory, string> = {
-  [QualityCategory.Awful]: '极差',
-  [QualityCategory.Poor]: '较差',
-  [QualityCategory.Normal]: '一般',
-  [QualityCategory.Good]: '良好',
-  [QualityCategory.Excellent]: '极佳',
-  [QualityCategory.Masterwork]: '大师',
-  [QualityCategory.Legendary]: '传奇',
+export function getQualityName(quality: QualityCategory): string {
+  const key = `quality.${quality}` as const
+  return global.t(key)
 }
+
+/**
+ * 品质等级名称映射（保留用于向后兼容，但使用i18n）
+ */
+export const QualityNames: Record<QualityCategory, string> = new Proxy(
+  {} as Record<QualityCategory, string>,
+  {
+    get(_target, prop: string | symbol) {
+      if (typeof prop === 'string' && prop in QualityCategory) {
+        return getQualityName(prop as QualityCategory)
+      }
+      return undefined
+    },
+  },
+)
 
 /**
  * 品质等级颜色（基于RimWorld Quality Colors mod）
@@ -134,7 +148,7 @@ export const ApparelQualityMultipliers: Record<QualityCategory, ApparelQualityMu
 export function getQualityOptions() {
   return Object.values(QualityCategory).map((quality) => ({
     value: quality,
-    label: QualityNames[quality],
+    label: getQualityName(quality),
     color: QualityColors[quality],
   }))
 }

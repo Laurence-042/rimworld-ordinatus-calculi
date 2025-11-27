@@ -14,8 +14,12 @@ const currentLocale = computed({
 </script>
 
 <template>
-  <el-select v-model="currentLocale" style="width: 120px">
-    <el-option label="中文" value="zh-CN" />
-    <el-option label="English" value="en-US" />
-  </el-select>
+  <div>
+    <span>Language: </span>
+
+    <el-select v-model="currentLocale" style="width: 120px">
+      <el-option label="zh-CN" value="zh-CN" />
+      <el-option label="en-US" value="en-US" />
+    </el-select>
+  </div>
 </template>

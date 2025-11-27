@@ -2,6 +2,10 @@
  * RimWorld身体部位类型定义
  */
 
+import i18n from '@/i18n'
+
+const { global } = i18n
+
 /**
  * 身体部位枚举
  * 仅包含16个常用部位，避免不必要的复杂度
@@ -29,29 +33,26 @@ export enum BodyPart {
 }
 
 /**
- * 身体部位中文名称映射
+ * 获取身体部位名称（支持i18n）
  */
-export const BodyPartNames: Record<BodyPart, string> = {
-  [BodyPart.Torso]: '躯干',
-  [BodyPart.Neck]: '颈部',
-  [BodyPart.Head]: '头',
-  [BodyPart.Waist]: '腰',
+export function getBodyPartName(part: BodyPart): string {
+  const key = `bodyPart.${part.toLowerCase()}` as const
+  return global.t(key)
+}
 
-  [BodyPart.LeftEye]: '左眼',
-  [BodyPart.RightEye]: '右眼',
-  [BodyPart.LeftEar]: '左耳',
-  [BodyPart.RightEar]: '右耳',
-  [BodyPart.Nose]: '鼻',
-  [BodyPart.Jaw]: '下颌',
+/**
+ * 身体部位名称映射（保留用于向后兼容，但使用i18n）
+ */
+export const BodyPartNames: Record<BodyPart, string> = new Proxy({} as Record<BodyPart, string>, {
+  get(_target, prop: string | symbol) {
+    if (typeof prop === 'string' && prop in BodyPart) {
+      return getBodyPartName(prop as BodyPart)
+    }
+    return undefined
+  },
+})
 
-  [BodyPart.LeftShoulder]: '左肩',
-  [BodyPart.RightShoulder]: '右肩',
-  [BodyPart.LeftArm]: '左臂',
-  [BodyPart.RightArm]: '右臂',
-
-  [BodyPart.LeftLeg]: '左腿',
-  [BodyPart.RightLeg]: '右腿',
-} /**
+/**
  * 身体部位树节点接口（用于el-tree和el-tree-select）
  */
 export interface BodyPartTreeNode {
@@ -97,39 +98,39 @@ export function buildBodyPartTree(): BodyPartTreeNode[] {
   return [
     {
       value: BodyPart.Torso,
-      label: BodyPartNames[BodyPart.Torso],
+      label: getBodyPartName(BodyPart.Torso),
       children: [
         {
           value: BodyPart.Neck,
-          label: BodyPartNames[BodyPart.Neck],
+          label: getBodyPartName(BodyPart.Neck),
           children: [
             {
               value: BodyPart.Head,
-              label: BodyPartNames[BodyPart.Head],
+              label: getBodyPartName(BodyPart.Head),
               children: [
                 {
                   value: BodyPart.LeftEye,
-                  label: BodyPartNames[BodyPart.LeftEye],
+                  label: getBodyPartName(BodyPart.LeftEye),
                 },
                 {
                   value: BodyPart.RightEye,
-                  label: BodyPartNames[BodyPart.RightEye],
+                  label: getBodyPartName(BodyPart.RightEye),
                 },
                 {
                   value: BodyPart.LeftEar,
-                  label: BodyPartNames[BodyPart.LeftEar],
+                  label: getBodyPartName(BodyPart.LeftEar),
                 },
                 {
                   value: BodyPart.RightEar,
-                  label: BodyPartNames[BodyPart.RightEar],
+                  label: getBodyPartName(BodyPart.RightEar),
                 },
                 {
                   value: BodyPart.Nose,
-                  label: BodyPartNames[BodyPart.Nose],
+                  label: getBodyPartName(BodyPart.Nose),
                 },
                 {
                   value: BodyPart.Jaw,
-                  label: BodyPartNames[BodyPart.Jaw],
+                  label: getBodyPartName(BodyPart.Jaw),
                 },
               ],
             },
@@ -137,35 +138,35 @@ export function buildBodyPartTree(): BodyPartTreeNode[] {
         },
         {
           value: BodyPart.Waist,
-          label: BodyPartNames[BodyPart.Waist],
+          label: getBodyPartName(BodyPart.Waist),
         },
         {
           value: BodyPart.LeftShoulder,
-          label: BodyPartNames[BodyPart.LeftShoulder],
+          label: getBodyPartName(BodyPart.LeftShoulder),
           children: [
             {
               value: BodyPart.LeftArm,
-              label: BodyPartNames[BodyPart.LeftArm],
+              label: getBodyPartName(BodyPart.LeftArm),
             },
           ],
         },
         {
           value: BodyPart.RightShoulder,
-          label: BodyPartNames[BodyPart.RightShoulder],
+          label: getBodyPartName(BodyPart.RightShoulder),
           children: [
             {
               value: BodyPart.RightArm,
-              label: BodyPartNames[BodyPart.RightArm],
+              label: getBodyPartName(BodyPart.RightArm),
             },
           ],
         },
         {
           value: BodyPart.LeftLeg,
-          label: BodyPartNames[BodyPart.LeftLeg],
+          label: getBodyPartName(BodyPart.LeftLeg),
         },
         {
           value: BodyPart.RightLeg,
-          label: BodyPartNames[BodyPart.RightLeg],
+          label: getBodyPartName(BodyPart.RightLeg),
         },
       ],
     },
