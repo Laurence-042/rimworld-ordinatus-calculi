@@ -200,12 +200,11 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
         text: '减伤比例 (%)',
         font: { size: 14 },
       },
-      min: 0,
-      max: 100,
       ticks: {
-        stepSize: 10,
         callback: (value) => `${value}%`,
       },
+      // 自动调整显示范围，在数据基础上留出5%的空白边距
+      grace: '5%',
     },
   },
 }))
