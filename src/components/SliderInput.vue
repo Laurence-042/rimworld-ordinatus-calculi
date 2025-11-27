@@ -75,7 +75,7 @@ const handleChange = (value: number) => {
 }
 
 .input-number-fixed {
-  width: 150px;
+  width: 6em;
 }
 
 .unit {
