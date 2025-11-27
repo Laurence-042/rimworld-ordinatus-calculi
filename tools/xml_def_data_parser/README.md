@@ -44,13 +44,17 @@ npm run parse-mod
 
 ### 3. 查看结果
 
-生成的CSV文件位于：`src/utils/weapon_data/`
+生成的CSV文件位于：`src/utils/weapon_data/<MOD名称>/`
 
-**输出文件格式：**
+**输出文件结构：**
 
-- `<MOD名称>.csv` - 使用原始英文label
-- `<MOD名称>_zh-CN.csv` - 使用中文翻译的label（如果存在）
-- `<MOD名称>_en-US.csv` - 使用英文翻译的label（如果存在）
+```
+src/utils/weapon_data/
+└── <MOD名称>/
+    ├── en-US.csv     # 英文（原始label或英文翻译）
+    ├── zh-CN.csv     # 中文翻译（如果存在）
+    └── ...           # 其他支持的语言
+```
 
 ## 工作原理
 
@@ -65,8 +69,8 @@ npm run parse-mod
 
 工具会自动搜索 MOD 目录下（最多 2 层深度）的所有 `Languages/` 目录，并扫描其直接子目录获取语言文件：
 
-- `Languages/ChineseSimplified (简体中文)/` → 生成 `*_zh-CN.csv`
-- `Languages/English/` → 生成 `*_en-US.csv`
+- `Languages/ChineseSimplified (简体中文)/` → 生成 `zh-CN.csv`
+- `Languages/English/` → 生成 `en-US.csv`
 
 **多 Languages 目录支持：**
 
@@ -85,7 +89,7 @@ D:\SteamLibrary\steamapps\common\RimWorld\Data/
         └── English/
 ```
 
-工具会找到并解析 `Data/Languages` 和 `Data/Anomaly/Languages` 两个目录中的所有翻译文件，自动合并为完整的翻译数据。
+工具会找到并解析 `Data/Languages` 和 `Data/Anomaly/Languages` 两个目录中的所有翻译文件，自动合并为完整的翻译数据，最终在 `src/utils/weapon_data/Data/` 目录下生成 `zh-CN.csv` 和 `en-US.csv`。
 
 **目录结构示例：**
 
@@ -104,7 +108,7 @@ MOD目录/
 │       └── English/
 ```
 
-工具会自动找到 `Languages` 目录，无论它在哪一级。
+工具会自动找到 `Languages` 目录（最多搜索 2 层），无论它在哪一级。
 
 **语言文件示例：**
 

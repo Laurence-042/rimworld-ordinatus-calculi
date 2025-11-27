@@ -506,15 +506,21 @@ class ModDataParser {
       return
     }
 
+    // 创建 MOD 专用目录
+    const modOutputDir = path.join(OUTPUT_DIR, this.modName)
+    if (!fs.existsSync(modOutputDir)) {
+      fs.mkdirSync(modOutputDir, { recursive: true })
+    }
+
     // 生成默认语言（使用原始label）的CSV
     const defaultWeapons = weapons.map((node) => this.createWeaponRow(node, null))
-    await this.writeCSV(defaultWeapons, this.modName)
+    await this.writeCSV(defaultWeapons, modOutputDir, 'en-US')
 
     // 为每种语言生成单独的CSV
     for (const [languageCode, translations] of this.languageData.entries()) {
       console.log(`生成 ${languageCode} 语言的CSV...`)
       const localizedWeapons = weapons.map((node) => this.createWeaponRow(node, translations))
-      await this.writeCSV(localizedWeapons, `${this.modName}_${languageCode}`)
+      await this.writeCSV(localizedWeapons, modOutputDir, languageCode)
     }
   }
 
@@ -575,13 +581,17 @@ class ModDataParser {
     return row
   }
 
-  private async writeCSV(data: WeaponCSVData[], fileName: string): Promise<void> {
+  private async writeCSV(
+    data: WeaponCSVData[],
+    outputDir: string,
+    languageCode: string,
+  ): Promise<void> {
     // 确保输出目录存在
-    if (!fs.existsSync(OUTPUT_DIR)) {
-      fs.mkdirSync(OUTPUT_DIR, { recursive: true })
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true })
     }
 
-    const outputPath = path.join(OUTPUT_DIR, `${fileName}.csv`)
+    const outputPath = path.join(outputDir, `${languageCode}.csv`)
 
     // CSV头部
     const headers = [
