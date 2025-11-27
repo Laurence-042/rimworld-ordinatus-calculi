@@ -114,7 +114,7 @@ const applyPreset = (weapon: Weapon, dataSourceId: string, weaponIndex: number) 
 
   weapon.selectedDataSourceId = dataSourceId
   weapon.selectedWeaponIndex = weaponIndex
-  weapon.name = preset.name
+  weapon.name = preset.params.label
   weapon.armorPenetration = preset.params.armorPenetration
   weapon.burstCount = preset.params.burstCount
   weapon.burstTicks = preset.params.burstTicks
@@ -150,12 +150,14 @@ onMounted(async () => {
   const vanillaSource = weaponDataSources.value.find((s) => s.id === 'vanilla')
   if (!vanillaSource) return
 
-  const needleGunIndex = vanillaSource.weapons.findIndex((w) => w.name === '栓动步枪')
+  const needleGunIndex = vanillaSource.weapons.findIndex((w) => w.defName === 'Gun_BoltActionRifle')
   if (needleGunIndex >= 0) {
     applyPreset(weapons.value[0]!, vanillaSource.id, needleGunIndex)
   }
 
-  const machinePistolIndex = vanillaSource.weapons.findIndex((w) => w.name === '冲锋手枪')
+  const machinePistolIndex = vanillaSource.weapons.findIndex(
+    (w) => w.defName === 'Gun_MachinePistol',
+  )
   if (machinePistolIndex >= 0) {
     applyPreset(weapons.value[1]!, vanillaSource.id, machinePistolIndex)
   }
@@ -244,7 +246,7 @@ onMounted(async () => {
                       (s) => s.id === weapon.selectedDataSourceId,
                     )?.weapons || []"
                     :key="presetIdx"
-                    :label="preset.name"
+                    :label="preset.params.label"
                     :value="presetIdx"
                   />
                 </el-select>

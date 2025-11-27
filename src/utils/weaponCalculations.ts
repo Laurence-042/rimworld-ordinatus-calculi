@@ -1,6 +1,8 @@
-import { parseWeaponDataFromCSV } from './weaponDataParser'
+import { loadAllWeaponDataByLocale } from './weaponDataParser'
 import type { WeaponDataSource, WeaponParams, WeaponPreset } from '@/types/weapon'
 import { WeaponQualityMultipliers } from '@/types/quality'
+import i18n from '@/i18n'
+import type { Ref } from 'vue'
 
 /**
  * 计算命中率
@@ -160,49 +162,32 @@ export function getActualArmorPenetration(params: WeaponParams): number {
 // 缓存
 let cachedDataSources: WeaponDataSource[] | null = null
 
-// 私有函数
-async function loadWeaponsFromCSV(csvContent: string): Promise<WeaponPreset[]> {
-  const parsedWeapons = await parseWeaponDataFromCSV(csvContent)
-  return parsedWeapons.map((weapon) => ({
-    name: weapon.defName,
-    params: weapon.params,
-  }))
-}
-
 /**
  * 动态扫描并加载所有可用的武器数据源
- * 支持编译后动态添加的MOD CSV文件
+ * 根据当前 i18n 语言设置加载对应的 CSV 文件
  */
 async function loadAllWeaponDataSources(): Promise<WeaponDataSource[]> {
   const dataSources: WeaponDataSource[] = []
 
-  // 动态加载所有CSV文件（包括Vanilla）
-  const csvFiles = import.meta.glob('./weapon_data/*.csv', {
-    query: '?raw',
-    eager: false,
-  })
+  // 获取当前语言设置
+  const localeRef = i18n.global.locale as unknown as Ref<string>
+  const currentLocale = localeRef.value
 
-  for (const [path, loader] of Object.entries(csvFiles)) {
-    try {
-      const module = (await loader()) as { default: string }
-      const csvContent = module.default
+  // 从 parser 加载所有 MOD 的武器数据
+  const modWeaponsMap = await loadAllWeaponDataByLocale(currentLocale)
 
-      // 从文件路径提取名称
-      const fileName = path.split('/').pop()?.replace('.csv', '') || 'Unknown'
+  // 转换为 WeaponDataSource 格式
+  for (const [modName, weapons] of modWeaponsMap.entries()) {
+    const weaponPresets: WeaponPreset[] = weapons.map((weapon) => ({
+      defName: weapon.defName,
+      params: weapon.params,
+    }))
 
-      const weapons = await loadWeaponsFromCSV(csvContent)
-
-      if (weapons.length > 0) {
-        dataSources.push({
-          id: fileName.toLowerCase().replace(/[^a-z0-9]/g, '_'),
-          label: fileName,
-          weapons,
-        })
-        console.log(`Loaded ${weapons.length} weapons from ${fileName}`)
-      }
-    } catch (error) {
-      console.warn(`Failed to load data from ${path}:`, error)
-    }
+    dataSources.push({
+      id: modName.toLowerCase().replace(/[^a-z0-9]/g, '_'),
+      label: modName,
+      weapons: weaponPresets,
+    })
   }
 
   // 排序：Vanilla 总是第一个，其余按 Unicode 排序
@@ -221,4 +206,12 @@ export async function getWeaponDataSources(): Promise<WeaponDataSource[]> {
     cachedDataSources = await loadAllWeaponDataSources()
   }
   return cachedDataSources
+}
+
+/**
+ * 清除缓存的武器数据源
+ * 用于语言切换时重新加载数据
+ */
+export function clearWeaponDataSourcesCache(): void {
+  cachedDataSources = null
 }

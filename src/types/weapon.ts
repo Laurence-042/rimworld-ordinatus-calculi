@@ -39,7 +39,7 @@ export interface Weapon extends WeaponParams {
  * 武器预设数据（来自 CSV）
  */
 export interface WeaponPreset {
-  name: string
+  defName: string
   params: WeaponParams
 }
 

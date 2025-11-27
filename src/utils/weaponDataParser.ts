@@ -3,6 +3,7 @@ import { QualityCategory } from '@/types/quality'
 
 /**
  * CSV 武器数据接口（对应 weapon_info.csv 的列）
+ * 注意：精度和穿甲数据在 CSV 中为小数格式（0-1），解析时会转换为百分比（0-100）
  */
 export interface WeaponCSVData {
   defName: string
@@ -32,10 +33,19 @@ function parseNumber(numStr: string): number {
 }
 
 /**
- * 解析百分比字符串（例如 "16%" -> 16）
+ * 解析百分比字符串
+ * 支持两种格式：
+ * - 小数格式："0.16" -> 16
+ * - 百分比格式："16%" -> 16
  */
 function parsePercentage(percentStr: string): number {
-  return parseNumber(percentStr)
+  if (!percentStr) return 0
+  const num = parseNumber(percentStr)
+  // 如果是小数格式（0-1范围），转换为百分比
+  if (num > 0 && num <= 1) {
+    return num * 100
+  }
+  return num
 }
 
 /**
@@ -125,4 +135,65 @@ export async function parseWeaponDataFromCSV(
         warmUp: weapon.params.warmUp || 0,
       },
     }))
+}
+
+/**
+ * 从所有 MOD 目录加载武器数据
+ * 根据指定语言加载对应的 CSV 文件
+ *
+ * @param locale - 语言代码（如 'zh-CN', 'en-US'）
+ * @param csvFilesGlob - Vite glob 导入结果
+ * @returns MOD 名称到武器数据的映射
+ */
+export async function loadAllWeaponDataByLocale(
+  locale: string,
+): Promise<Map<string, Array<{ defName: string; params: WeaponParams }>>> {
+  // 动态加载所有 MOD 目录下的 CSV 文件
+  const csvFilesGlob = import.meta.glob('./weapon_data/**/*.csv', {
+    query: '?raw',
+    eager: false,
+  })
+
+  const modWeaponsMap = new Map<string, Array<{ defName: string; params: WeaponParams }>>()
+
+  // 按 MOD 目录分组
+  const modGroups = new Map<
+    string,
+    { locale: string; path: string; loader: () => Promise<unknown> }
+  >()
+
+  for (const [path, loader] of Object.entries(csvFilesGlob)) {
+    // 解析路径：./weapon_data/<MOD_NAME>/<locale>.csv
+    const match = path.match(/\.\/weapon_data\/([^/]+)\/([^/]+)\.csv$/)
+    if (!match) continue
+
+    const modName = match[1]
+    const fileLocale = match[2]
+
+    if (!modName || !fileLocale) continue
+
+    // 如果该 MOD 还没有加载，或者当前文件匹配目标语言
+    if (!modGroups.has(modName) || fileLocale === locale) {
+      modGroups.set(modName, { locale: fileLocale, path, loader })
+    }
+  }
+
+  // 加载每个 MOD 的数据
+  for (const [modName, { locale: fileLocale, path, loader }] of modGroups.entries()) {
+    try {
+      const module = (await loader()) as { default: string }
+      const csvContent = module.default
+
+      const weapons = await parseWeaponDataFromCSV(csvContent)
+
+      if (weapons.length > 0) {
+        modWeaponsMap.set(modName, weapons)
+        console.log(`Loaded ${weapons.length} weapons from ${modName} (${fileLocale})`)
+      }
+    } catch (error) {
+      console.warn(`Failed to load data from ${path}:`, error)
+    }
+  }
+
+  return modWeaponsMap
 }

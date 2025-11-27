@@ -538,9 +538,10 @@ class ModDataParser {
       if (projectile) {
         damage =
           projectile.damageAmountBase !== undefined ? projectile.damageAmountBase.toString() : ''
+        // 输出为小数格式（0-1），不再使用百分比
         armorPenetration =
           projectile.armorPenetrationBase !== undefined
-            ? `${Math.round(projectile.armorPenetrationBase * 100)}%`
+            ? projectile.armorPenetrationBase.toString()
             : ''
         stoppingPower =
           projectile.stoppingPower !== undefined ? projectile.stoppingPower.toString() : ''
