@@ -79,7 +79,10 @@ function generateArmorSurfaceData(armorSet: ArmorSet) {
         })
       }
 
-      row.push(result.expectedDamage)
+      // 计算减伤比例：(单发伤害 - 期望受伤) / 单发伤害 × 100%
+      const damageReduction = ((dmg - result.expectedDamage) / dmg) * 100
+
+      row.push(damageReduction)
 
       // 构建详细的悬停文本
       const damageStatesText = result.damageStates
@@ -101,6 +104,7 @@ function generateArmorSurfaceData(armorSet: ArmorSet) {
         damageStatesText,
         `----------------`,
         `<b>期望受伤:</b> ${result.expectedDamage.toFixed(2)}`,
+        `<b>减伤比例:</b> ${damageReduction.toFixed(1)}%`,
       ].join('<br>')
 
       hoverRow.push(hoverText)
@@ -109,8 +113,8 @@ function generateArmorSurfaceData(armorSet: ArmorSet) {
     hoverTexts.push(hoverRow)
   }
 
-  // 计算最大期望伤害（用于交线归一化）
-  const maxExpectedDamage = Math.max(...zData.flat())
+  // 计算最大减伤比例（用于交线归一化，理论上是100%）
+  const maxDamageReduction = Math.max(...zData.flat())
 
   return {
     armorSet,
@@ -118,7 +122,7 @@ function generateArmorSurfaceData(armorSet: ArmorSet) {
     damageValues,
     zData,
     hoverTexts,
-    maxExpectedDamage,
+    maxDamageReduction,
   }
 }
 
@@ -148,7 +152,7 @@ function renderChart() {
       name: armorSet.name,
       x: penetrationValues, // 护甲穿透
       y: damageValues, // 单发伤害
-      z: zDataTransposed, // 期望受伤
+      z: zDataTransposed, // 减伤比例
       customdata: hoverTexts,
       hovertemplate: '%{customdata}<extra></extra>',
       colorscale: 'Viridis',
@@ -158,7 +162,7 @@ function renderChart() {
         index === 0
           ? {
               title: {
-                text: '期望受伤',
+                text: '减伤比例(%)',
                 side: 'right',
                 font: { size: 14 },
               },
@@ -182,7 +186,7 @@ function renderChart() {
       {
         x: 100, // 穿透范围 0-100%
         y: Math.max(...surface1.damageValues), // 伤害范围
-        z: Math.max(surface1.maxExpectedDamage, surface2.maxExpectedDamage),
+        z: Math.max(surface1.maxDamageReduction, surface2.maxDamageReduction),
       },
     )
 
@@ -207,7 +211,7 @@ function renderChart() {
             '<b>交线</b><br>' +
             '护甲穿透: %{x}%<br>' +
             '单发伤害: %{y}<br>' +
-            '期望受伤: %{z:.2f}<br>' +
+            '减伤比例: %{z:.1f}%<br>' +
             '<extra></extra>',
         } as unknown as Plotly.Data)
       }
@@ -226,8 +230,8 @@ function renderChart() {
     title: {
       text:
         surfaceDataCache.length === 2
-          ? `护甲对比 - ${damageTypeLabel}伤害受伤期望`
-          : `${surfaceDataCache[0]?.armorSet.name || ''} - ${damageTypeLabel}伤害受伤期望`,
+          ? `护甲对比 - ${damageTypeLabel}伤害减伤比例`
+          : `${surfaceDataCache[0]?.armorSet.name || ''} - ${damageTypeLabel}伤害减伤比例`,
       font: { size: 18 },
     },
     autosize: true,
@@ -245,15 +249,15 @@ function renderChart() {
         backgroundcolor: 'rgb(240, 240, 240)',
       },
       zaxis: {
-        title: { text: '期望受伤', font: { size: 14 } },
+        title: { text: '减伤比例 (%)', font: { size: 14 } },
         gridcolor: 'rgb(200, 200, 200)',
         showbackground: true,
         backgroundcolor: 'rgb(240, 240, 240)',
       },
       camera: {
         eye: {
-          x: -2, // 负值表示从左侧（低穿甲）观察
-          y: -1, // 负值表示从前侧（低伤害）观察
+          x: 2, // 负值表示从左侧（低穿甲）观察
+          y: 1, // 负值表示从前侧（低伤害）观察
           z: 0.1, // 正值表示从上方观察
         },
       },

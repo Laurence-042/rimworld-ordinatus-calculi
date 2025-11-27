@@ -118,7 +118,7 @@ let nextArmorSetId = 1
 const armorSets = ref<ArmorSet[]>([
   {
     id: nextArmorSetId++,
-    name: '护甲套装 1',
+    name: '双层防弹套',
     color: ARMOR_COLORS[0]!,
     layers: [
       {
@@ -164,7 +164,7 @@ const armorSets = ref<ArmorSet[]>([
   },
   {
     id: nextArmorSetId++,
-    name: '护甲套装 2',
+    name: '单层海军甲',
     color: ARMOR_COLORS[1]!,
     layers: [
       {
