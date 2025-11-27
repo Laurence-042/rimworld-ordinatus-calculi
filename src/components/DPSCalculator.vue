@@ -344,10 +344,23 @@ onMounted(async () => {
           </el-form>
         </el-card>
 
-        <!-- 添加武器按钮 -->
-        <el-button type="primary" @click="addWeapon" style="width: 100%; margin-top: 20px">
+        <!-- 添加武器按钮（最多2个） -->
+        <el-button
+          v-if="weapons.length < 2"
+          type="primary"
+          @click="addWeapon"
+          style="width: 100%; margin-top: 20px"
+        >
           + 添加武器进行对比
         </el-button>
+        <el-alert
+          v-else
+          type="info"
+          :closable="false"
+          style="margin-top: 20px"
+          title="已达到最大武器数量（2个）"
+          description="3D曲面模式最多支持2个武器对比并显示交线。如需对比其他武器，请先删除现有武器。"
+        />
       </el-splitter-panel>
       <!-- 右侧：结果显示 -->
       <el-splitter-panel class="right-panel">

@@ -6,7 +6,7 @@ import type { WeaponWithCalculations } from '@/types/weapon'
 import type { SimplifiedWeaponParams } from '@/types/weapon'
 import { calculateHitChance, calculateMaxDPS } from '@/utils/weaponCalculations'
 import { calculateDPSDistribution } from '@/utils/armorCalculations'
-import { transposeMatrix } from '@/utils/plotlyUtils'
+import { transposeMatrix, calculateSurfaceIntersection } from '@/utils/plotlyUtils'
 
 interface Props {
   weaponsData: WeaponWithCalculations[]
@@ -83,136 +83,6 @@ function generateWeaponSurfaceData(weaponData: WeaponWithCalculations) {
   return { distances, armorValues, zData, hoverTexts }
 }
 
-// 查找两组DPS数组在相邻位置的交点
-function findIntersections(
-  dps1Array: number[],
-  dps2Array: number[],
-  axisValues: number[],
-): Array<{ index: number; t: number; dps: number }> {
-  const intersections: Array<{ index: number; t: number; dps: number }> = []
-
-  for (let i = 0; i < axisValues.length - 1; i++) {
-    const diff1 = dps1Array[i]! - dps2Array[i]!
-    const diff2 = dps1Array[i + 1]! - dps2Array[i + 1]!
-
-    // 如果符号改变，说明有交点
-    if (diff1 * diff2 < 0) {
-      // 线性插值找到精确的交点
-      const t = Math.abs(diff1) / (Math.abs(diff1) + Math.abs(diff2))
-      const dpsIntersect = dps1Array[i]! + t * (dps1Array[i + 1]! - dps1Array[i]!)
-
-      intersections.push({
-        index: i,
-        t,
-        dps: dpsIntersect,
-      })
-    }
-  }
-
-  return intersections
-}
-
-// 计算两个曲面的交线
-function calculateIntersectionLine(
-  zData1: number[][],
-  zData2: number[][],
-  distances: number[],
-  armorValues: number[],
-) {
-  const intersectionPoints: Array<{ x: number; y: number; z: number }> = []
-
-  // 方法1：沿距离方向（固定护甲值），找到DPS相等的距离
-  for (let armorIndex = 0; armorIndex < armorValues.length; armorIndex++) {
-    const armor = armorValues[armorIndex]!
-    const dps1Array = zData1.map((row) => row[armorIndex]!)
-    const dps2Array = zData2.map((row) => row[armorIndex]!)
-
-    const intersections = findIntersections(dps1Array, dps2Array, distances)
-    for (const { index, t, dps } of intersections) {
-      const distanceIntersect = distances[index]! + t * (distances[index + 1]! - distances[index]!)
-      intersectionPoints.push({
-        x: distanceIntersect,
-        y: armor,
-        z: dps,
-      })
-    }
-  }
-
-  // 方法2：沿护甲方向（固定距离），找到DPS相等的护甲值
-  for (let distIndex = 0; distIndex < distances.length; distIndex++) {
-    const distance = distances[distIndex]!
-    const dps1Array = zData1[distIndex]!
-    const dps2Array = zData2[distIndex]!
-
-    const intersections = findIntersections(dps1Array, dps2Array, armorValues)
-    for (const { index, t, dps } of intersections) {
-      const armorIntersect =
-        armorValues[index]! + t * (armorValues[index + 1]! - armorValues[index]!)
-      intersectionPoints.push({
-        x: distance,
-        y: armorIntersect,
-        z: dps,
-      })
-    }
-  }
-
-  // 使用最近邻算法连接点，但避免长距离跳跃
-  // 将点分组为多条独立的曲线
-  const curves: Array<typeof intersectionPoints> = []
-
-  if (intersectionPoints.length > 1) {
-    const remaining = [...intersectionPoints]
-
-    while (remaining.length > 0) {
-      const currentCurve: typeof intersectionPoints = [remaining[0]!]
-      remaining.splice(0, 1)
-
-      // 持续添加最近的点，直到距离超过阈值
-      let foundNext = true
-      while (foundNext && remaining.length > 0) {
-        const last = currentCurve[currentCurve.length - 1]!
-        let minDist = Infinity
-        let minIndex = -1
-
-        // 找到离最后一个点最近的点
-        for (let i = 0; i < remaining.length; i++) {
-          const point = remaining[i]!
-          // 使用归一化距离：考虑x、y的实际范围
-          const distX = (point.x - last.x) / 50 // 距离范围 0-50
-          const distY = (point.y - last.y) / 200 // 护甲范围 0-200
-          const distZ = (point.z - last.z) / Math.max(last.z, 1) // 归一化DPS差异
-          const dist = Math.sqrt(distX * distX + distY * distY + distZ * distZ)
-
-          if (dist < minDist) {
-            minDist = dist
-            minIndex = i
-          }
-        }
-
-        // 如果最近的点距离太远，认为是不同的曲线段
-        // 阈值：归一化距离 > 0.1 表示跳跃太大
-        if (minIndex >= 0 && minDist < 0.2) {
-          currentCurve.push(remaining[minIndex]!)
-          remaining.splice(minIndex, 1)
-        } else {
-          foundNext = false
-        }
-      }
-
-      curves.push(currentCurve)
-    }
-  } else if (intersectionPoints.length === 1) {
-    curves.push([intersectionPoints[0]!])
-  }
-
-  // 转换为三个数组的数组（每条曲线一组）
-  return curves.map((curve) => ({
-    x: curve.map((p) => p.x),
-    y: curve.map((p) => p.y),
-    z: curve.map((p) => p.z),
-  }))
-}
-
 // 绘制3D图表
 function plotSurface() {
   if (!chartContainer.value || !props.weaponsData || props.weaponsData.length === 0) return
@@ -271,11 +141,12 @@ function plotSurface() {
         const weaponData1 = props.weaponsData[i]!
         const weaponData2 = props.weaponsData[j]!
 
-        const intersectionCurves = calculateIntersectionLine(
+        const intersectionCurves = calculateSurfaceIntersection(
           surface1.zData,
           surface2.zData,
           surface1.distances,
           surface1.armorValues,
+          { x: 50, y: 200, z: Math.max(weaponData1.maxDPS, weaponData2.maxDPS, 1) },
         )
 
         // 为每条独立的交线段添加一个轨迹

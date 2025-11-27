@@ -882,10 +882,23 @@ onMounted(async () => {
           </div>
         </el-card>
 
-        <!-- 添加护甲套装按钮 -->
-        <el-button type="primary" @click="addArmorSet" style="width: 100%; margin-top: 20px">
+        <!-- 添加护甲套装按钮（最多2个） -->
+        <el-button
+          v-if="armorSets.length < 2"
+          type="primary"
+          @click="addArmorSet"
+          style="width: 100%; margin-top: 20px"
+        >
           + 添加护甲套装进行对比
         </el-button>
+        <el-alert
+          v-else
+          type="info"
+          :closable="false"
+          style="margin-top: 20px"
+          title="已达到最大套装数量（2个）"
+          description="3D曲面模式最多支持2个护甲套装对比并显示交线。如需对比其他套装，请先删除现有套装。"
+        />
       </el-splitter-panel>
       <!-- 中间：覆盖范围可视化 -->
       <el-splitter-panel size="30%" min="20%" collapsible class="middle-panel">
