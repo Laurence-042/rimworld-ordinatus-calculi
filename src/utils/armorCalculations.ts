@@ -1,6 +1,7 @@
 import type { SimplifiedWeaponParams } from '@/types/weapon'
-import type { ArmorLayer, AttackParams, DamageResult, DamageState } from '@/types/armor'
+import type { ArmorLayer, AttackParams, DamageResult, DamageState, DamageType } from '@/types/armor'
 import { ApparelLayer } from '@/types/armor'
+import { ApparelQualityMultipliers } from '@/types/quality'
 
 /**
  * RimWorld 护甲计算工具
@@ -12,6 +13,29 @@ import { ApparelLayer } from '@/types/armor'
  * 4. 如果随机数 >= 剩余护甲值的一半 且 < 剩余护甲值，则伤害减半（50%伤害）
  * 5. 如果随机数 >= 剩余护甲值，则护甲无效（100%伤害）
  */
+
+/**
+ * 获取应用品质系数后的护甲值
+ *
+ * @param layer - 护甲层
+ * @param damageType - 伤害类型
+ * @returns 实际护甲值 (0-2)
+ */
+export function getActualArmorValue(layer: ArmorLayer, damageType: DamageType): number {
+  const qualityMultipliers = ApparelQualityMultipliers[layer.quality]
+  const armorMultiplier = qualityMultipliers.armor
+
+  let baseArmor: number
+  if (damageType === 'blunt') {
+    baseArmor = layer.armorBlunt
+  } else if (damageType === 'sharp') {
+    baseArmor = layer.armorSharp
+  } else {
+    baseArmor = layer.armorHeat
+  }
+
+  return baseArmor * armorMultiplier
+}
 
 /**
  * 获取护甲层的最高层级
@@ -364,14 +388,8 @@ export function calculateMultiLayerDamage(
 
       // 确定本层使用的护甲类型
       // 关键：即使伤害已变为Blunt，仍使用原始damageType的护甲值
-      let armorValue: number
-      if (damageType === 'blunt') {
-        armorValue = layer.armorBlunt
-      } else if (damageType === 'sharp') {
-        armorValue = layer.armorSharp
-      } else {
-        armorValue = layer.armorHeat
-      }
+      // 并应用品质系数
+      const armorValue = getActualArmorValue(layer, damageType)
 
       // 计算有效护甲值（护甲值 - AP）
       // AP不会被消耗，每层都使用完整的AP值
@@ -440,14 +458,7 @@ export function calculateMultiLayerDamage(
     layerDetails.push({
       layerName: layer.itemName,
       effectiveArmor:
-        Math.max(
-          0,
-          (damageType === 'blunt'
-            ? layer.armorBlunt
-            : damageType === 'sharp'
-              ? layer.armorSharp
-              : layer.armorHeat) - validArmorPenetration,
-        ) * 100,
+        Math.max(0, getActualArmorValue(layer, damageType) - validArmorPenetration) * 100,
       damageAfterLayer: avgDamageAfterLayer,
     })
   }

@@ -5,8 +5,10 @@ import {
   calculateHitChance,
   calculateMaxDPS,
   getWeaponDataSources,
+  getActualArmorPenetration,
 } from '@/utils/weaponCalculations'
 import type { Weapon, WeaponDataSource } from '@/types/weapon'
+import { QualityCategory, getQualityOptions } from '@/types/quality'
 import DPSChart from './DPSChart.vue'
 import DPSSurface3D from './DPSSurface3D.vue'
 import SliderInput from './SliderInput.vue'
@@ -31,6 +33,7 @@ const DEFAULT_WEAPON_PARAMS = {
   damage: 12,
   longAccuracy: 50,
   mediumAccuracy: 70,
+  quality: QualityCategory.Masterwork,
   range: 50,
   shortAccuracy: 85,
   touchAccuracy: 95,
@@ -72,6 +75,9 @@ const weapons = ref<Weapon[]>([
   }),
 ])
 
+// 品质选项
+const qualityOptions = getQualityOptions()
+
 // 辅助函数
 function createWeapon(name: string, color: string, params?: Partial<Weapon>): Weapon {
   return {
@@ -109,6 +115,7 @@ const applyPreset = (weapon: Weapon, dataSourceId: string, weaponIndex: number) 
   weapon.damage = preset.params.damage
   weapon.longAccuracy = preset.params.longAccuracy
   weapon.mediumAccuracy = preset.params.mediumAccuracy
+  weapon.quality = preset.params.quality
   weapon.range = preset.params.range
   weapon.shortAccuracy = preset.params.shortAccuracy
   weapon.touchAccuracy = preset.params.touchAccuracy
@@ -125,7 +132,8 @@ const removeWeapon = (id: number) => {
 const getWeaponStats = (weapon: Weapon) => {
   const hitChance = calculateHitChance(weapon, targetDistance.value)
   const maxDPS = calculateMaxDPS(weapon)
-  return { hitChance, maxDPS }
+  const armorPenetration = getActualArmorPenetration(weapon)
+  return { hitChance, maxDPS, armorPenetration }
 }
 
 // 生命周期
@@ -254,6 +262,20 @@ onMounted(async () => {
             <!-- 武器属性 -->
             <el-divider content-position="left">武器属性</el-divider>
 
+            <el-form-item label="品质">
+              <el-radio-group v-model="weapon.quality">
+                <el-radio-button
+                  v-for="option in qualityOptions"
+                  :key="option.value"
+                  :value="option.value"
+                  :style="{ '--quality-color': option.color }"
+                  class="quality-button"
+                >
+                  {{ option.label }}
+                </el-radio-button>
+              </el-radio-group>
+            </el-form-item>
+
             <el-form-item label="伤害">
               <SliderInput v-model="weapon.damage" :min="1" :max="50" :step="1" />
             </el-form-item>
@@ -316,7 +338,7 @@ onMounted(async () => {
               title="计算结果"
               type="success"
               :closable="false"
-              :description="`命中率: ${(getWeaponStats(weapon).hitChance * 100).toFixed(2)}% | 最大DPS: ${getWeaponStats(weapon).maxDPS.toFixed(2)} | 护甲穿透: ${weapon.armorPenetration.toFixed(0)}%`"
+              :description="`命中率: ${(getWeaponStats(weapon).hitChance * 100).toFixed(2)}% | 最大DPS: ${getWeaponStats(weapon).maxDPS.toFixed(2)} | 护甲穿透: ${getWeaponStats(weapon).armorPenetration.toFixed(1)}% (基础: ${weapon.armorPenetration}%)`"
             />
           </el-form>
         </el-card>
@@ -430,6 +452,19 @@ onMounted(async () => {
 
 .weapon-preset {
   width: 100%;
+}
+
+/* 品质按钮样式 */
+.quality-button:deep(.el-radio-button__inner) {
+  border-color: var(--quality-color);
+}
+
+.quality-button:deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
+  background-color: var(--quality-color);
+  border-color: var(--quality-color);
+  box-shadow: -1px 0 0 0 var(--quality-color);
+  color: #000;
+  font-weight: 600;
 }
 
 .chart-controls {

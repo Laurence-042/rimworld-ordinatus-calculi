@@ -3,6 +3,8 @@
  * 统一的武器数据结构，按字母顺序排列
  */
 
+import { QualityCategory } from './quality'
+
 /**
  * 武器基础参数（游戏数据）
  */
@@ -14,6 +16,7 @@ export interface WeaponParams {
   damage: number // 伤害值
   longAccuracy: number // Long 命中率 (≤40格) (0-100)
   mediumAccuracy: number // Medium 命中率 (≤25格) (0-100)
+  quality: QualityCategory // 品质等级
   range: number // 射程 (格/tiles)
   shortAccuracy: number // Short 命中率 (≤12格) (0-100)
   touchAccuracy: number // Touch 命中率 (≤3格) (0-100)

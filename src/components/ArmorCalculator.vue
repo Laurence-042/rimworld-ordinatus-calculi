@@ -21,6 +21,8 @@ import {
   getApparelLayerOptions,
   type CoverageTreeNode,
 } from '@/utils/coverageUtils'
+import { QualityCategory, getQualityOptions } from '@/types/quality'
+import { getActualArmorValue } from '@/utils/armorCalculations'
 import ArmorChart from './ArmorChart.vue'
 import ArmorSurface3D from './ArmorSurface3D.vue'
 import SliderInput from './SliderInput.vue'
@@ -36,6 +38,9 @@ const ARMOR_COLORS = [
   '#FF00FF',
   '#FFD700',
 ]
+
+// 品质选项
+const qualityOptions = getQualityOptions()
 
 // 状态
 const chartMode = ref<'2d' | '3d'>('3d')
@@ -126,6 +131,7 @@ const armorSets = ref<ArmorSet[]>([
         armorSharp: 55,
         armorBlunt: 8,
         armorHeat: 10,
+        quality: QualityCategory.Masterwork,
         useMaterial: false,
         materialCoefficient: 1.0,
         selectedMaterial: MaterialTag.Fabric,
@@ -148,6 +154,7 @@ const armorSets = ref<ArmorSet[]>([
         armorSharp: 100,
         armorBlunt: 36,
         armorHeat: 27,
+        quality: QualityCategory.Masterwork,
         useMaterial: false,
         materialCoefficient: 1.0,
         selectedMaterial: MaterialTag.Fabric,
@@ -172,6 +179,7 @@ const armorSets = ref<ArmorSet[]>([
         armorSharp: 106,
         armorBlunt: 45,
         armorHeat: 54,
+        quality: QualityCategory.Masterwork,
         useMaterial: false,
         materialCoefficient: 1.0,
         selectedMaterial: MaterialTag.Fabric,
@@ -210,6 +218,7 @@ const addArmorSet = () => {
         armorSharp: 50,
         armorBlunt: 20,
         armorHeat: 20,
+        quality: QualityCategory.Masterwork,
         useMaterial: false,
         materialCoefficient: 1.0,
         selectedMaterial: MaterialTag.Fabric,
@@ -239,6 +248,7 @@ const addLayer = (armorSet: ArmorSet) => {
     armorSharp: 50,
     armorBlunt: 20,
     armorHeat: 20,
+    quality: QualityCategory.Masterwork,
     useMaterial: false,
     materialCoefficient: 1.0,
     selectedMaterial: MaterialTag.Fabric,
@@ -259,29 +269,43 @@ const removeLayer = (armorSet: ArmorSet, index: number) => {
   }
 }
 
-// 计算层的实际护甲值（考虑材料依赖）
+// 计算层的实际护甲值（考虑材料依赖和品质）
 const getLayerActualArmor = (layer: ArmorSet['layers'][number]) => {
-  if (!layer.useMaterial || !layer.materialCoefficient || !layer.selectedMaterial) {
-    return {
-      armorSharp: layer.armorSharp,
-      armorBlunt: layer.armorBlunt,
-      armorHeat: layer.armorHeat,
+  let baseArmor = {
+    armorSharp: layer.armorSharp,
+    armorBlunt: layer.armorBlunt,
+    armorHeat: layer.armorHeat,
+  }
+
+  // 如果使用材料，先计算材料护甲值
+  if (layer.useMaterial && layer.materialCoefficient && layer.selectedMaterial) {
+    const material = globalMaterials.value[layer.selectedMaterial]
+    if (material) {
+      // 材料系数 × 材料护甲值
+      baseArmor = {
+        armorSharp: layer.materialCoefficient * material.armorSharp,
+        armorBlunt: layer.materialCoefficient * material.armorBlunt,
+        armorHeat: layer.materialCoefficient * material.armorHeat,
+      }
+    } else {
+      // 如果没有材料，返回0
+      baseArmor = { armorSharp: 0, armorBlunt: 0, armorHeat: 0 }
     }
   }
 
-  // 使用选中的材料
-  const material = globalMaterials.value[layer.selectedMaterial]
-  if (material) {
-    // 材料系数 × 材料护甲值
-    return {
-      armorSharp: layer.materialCoefficient * material.armorSharp,
-      armorBlunt: layer.materialCoefficient * material.armorBlunt,
-      armorHeat: layer.materialCoefficient * material.armorHeat,
-    }
+  // 应用品质系数到护甲值
+  const actualArmorLayer = {
+    ...layer,
+    armorSharp: baseArmor.armorSharp / 100, // 转换为0-2范围
+    armorBlunt: baseArmor.armorBlunt / 100,
+    armorHeat: baseArmor.armorHeat / 100,
   }
 
-  // 如果没有材料，返回0
-  return { armorSharp: 0, armorBlunt: 0, armorHeat: 0 }
+  return {
+    armorSharp: getActualArmorValue(actualArmorLayer, 'sharp') * 100, // 转回百分比
+    armorBlunt: getActualArmorValue(actualArmorLayer, 'blunt') * 100,
+    armorHeat: getActualArmorValue(actualArmorLayer, 'heat') * 100,
+  }
 }
 
 // 当前数据源的材料
@@ -352,6 +376,9 @@ const loadClothingPreset = (layer: ArmorSet['layers'][number], clothing: Clothin
   } else {
     layer.bodyPartCoverage = [BodyPart.Torso] // 默认覆盖躯干
   }
+
+  // 设置默认品质为大师级
+  layer.quality = QualityCategory.Masterwork
 
   if (clothing.materialCoefficient !== undefined && clothing.materialCoefficient > 0) {
     // 使用材料计算
@@ -713,6 +740,20 @@ onMounted(async () => {
                     :props="{ label: 'label', value: 'value' }"
                     node-key="value"
                   />
+                </el-form-item>
+
+                <el-form-item label="品质">
+                  <el-radio-group v-model="layer.quality">
+                    <el-radio-button
+                      v-for="option in qualityOptions"
+                      :key="option.value"
+                      :value="option.value"
+                      :style="{ '--quality-color': option.color }"
+                      class="quality-button"
+                    >
+                      {{ option.label }}
+                    </el-radio-button>
+                  </el-radio-group>
                 </el-form-item>
 
                 <el-form-item label="护甲来源">
@@ -1120,6 +1161,19 @@ onMounted(async () => {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+}
+
+/* 品质按钮样式 */
+.quality-button:deep(.el-radio-button__inner) {
+  border-color: var(--quality-color);
+}
+
+.quality-button:deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
+  background-color: var(--quality-color);
+  border-color: var(--quality-color);
+  box-shadow: -1px 0 0 0 var(--quality-color);
+  color: #000;
+  font-weight: 600;
 }
 
 /* 使树节点可点击样式更明显 */

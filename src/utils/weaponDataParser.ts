@@ -1,4 +1,5 @@
 import type { WeaponParams } from '@/types/weapon'
+import { QualityCategory } from '@/types/quality'
 
 /**
  * CSV 武器数据接口（对应 weapon_info.csv 的列）
@@ -60,6 +61,7 @@ export function convertCSVToWeaponParams(csvData: WeaponCSVData): {
       damage: parseNumber(csvData.弹药伤害),
       longAccuracy: parsePercentage(csvData['精度（远）']),
       mediumAccuracy: parsePercentage(csvData['精度（中）']),
+      quality: QualityCategory.Masterwork, // 预设默认为大师品质，因为这是玩家后期能量产的最高品质，而在前中期基本是有啥用啥没得比
       range: parseNumber(csvData['射程(tiles)']),
       shortAccuracy: parsePercentage(csvData['精度（近）']),
       touchAccuracy: parsePercentage(csvData['精度（贴近）']),
@@ -113,6 +115,7 @@ export async function parseWeaponDataFromCSV(
         damage: weapon.params.damage || 0,
         longAccuracy: weapon.params.longAccuracy || 0,
         mediumAccuracy: weapon.params.mediumAccuracy || 0,
+        quality: weapon.params.quality || QualityCategory.Masterwork,
         range: weapon.params.range || 50,
         shortAccuracy: weapon.params.shortAccuracy || 0,
         touchAccuracy: weapon.params.touchAccuracy || 0,

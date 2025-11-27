@@ -2,6 +2,8 @@
  * 护甲类型定义
  */
 
+import { QualityCategory } from './quality'
+
 /**
  * 服装层级枚举（按从内到外的顺序）
  */
@@ -61,6 +63,8 @@ export interface ArmorLayer {
   armorBlunt: number
   /** 热能护甲值 (0-2) */
   armorHeat: number
+  /** 品质等级 */
+  quality: QualityCategory
   /** 是否依赖材料计算护甲 */
   useMaterial?: boolean
   /** 材料系数 (0-2) */

@@ -1,6 +1,7 @@
 import { parseWeaponDataFromCSV } from './weaponDataParser'
 import vanillaCSV from './weapon_data/Vanilla.csv?raw'
 import type { WeaponDataSource, WeaponParams, WeaponPreset } from '@/types/weapon'
+import { WeaponQualityMultipliers } from '@/types/quality'
 
 /**
  * 计算命中率
@@ -48,14 +49,18 @@ export function calculateHitChance(params: WeaponParams, targetDistance: number)
     targetDistance = 0
   }
 
-  const { longAccuracy, mediumAccuracy, shortAccuracy, touchAccuracy } = params
+  const { longAccuracy, mediumAccuracy, shortAccuracy, touchAccuracy, quality } = params
 
-  // 转换为 0-1 范围
+  // 获取品质系数
+  const qualityMultipliers = WeaponQualityMultipliers[quality]
+  const accuracyMultiplier = qualityMultipliers.rangedAccuracy
+
+  // 转换为 0-1 范围并应用品质系数
   const accuracies = {
-    long: longAccuracy / 100,
-    medium: mediumAccuracy / 100,
-    short: shortAccuracy / 100,
-    touch: touchAccuracy / 100,
+    long: (longAccuracy / 100) * accuracyMultiplier,
+    medium: (mediumAccuracy / 100) * accuracyMultiplier,
+    short: (shortAccuracy / 100) * accuracyMultiplier,
+    touch: (touchAccuracy / 100) * accuracyMultiplier,
   }
 
   let value: number
@@ -108,7 +113,14 @@ export function calculateHitChance(params: WeaponParams, targetDistance: number)
  * @returns 最大DPS值
  */
 export function calculateMaxDPS(params: WeaponParams): number {
-  const { burstCount, burstTicks, cooldown, damage, warmUp } = params
+  const { burstCount, burstTicks, cooldown, damage, quality, warmUp } = params
+
+  // 获取品质系数
+  const qualityMultipliers = WeaponQualityMultipliers[quality]
+  const damageMultiplier = qualityMultipliers.rangedDamage
+
+  // 应用品质系数到伤害
+  const actualDamage = damage * damageMultiplier
 
   // 验证参数
   if (damage < 0) {
@@ -130,9 +142,20 @@ export function calculateMaxDPS(params: WeaponParams): number {
     return 0
   }
 
-  const totalDamage = Math.max(1, burstCount) * damage
+  const totalDamage = Math.max(1, burstCount) * actualDamage
 
   return (totalDamage * 60) / cycleDuration
+}
+
+/**
+ * 获取应用品质系数后的护甲穿透值
+ *
+ * @param params - 武器参数
+ * @returns 实际护甲穿透值 (0-100)
+ */
+export function getActualArmorPenetration(params: WeaponParams): number {
+  const qualityMultipliers = WeaponQualityMultipliers[params.quality]
+  return params.armorPenetration * qualityMultipliers.rangedArmorPenetration
 }
 
 // 缓存
