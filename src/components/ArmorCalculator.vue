@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { Delete } from '@element-plus/icons-vue'
+import { useTimeoutFn } from '@vueuse/core'
 import {
   calculateArmorDamageCurve,
   calculateMultiLayerDamage,
@@ -97,7 +98,9 @@ const globalMaterials = ref<{
 
 // 加载状态标志
 const isLoadingPreset = ref(false)
-let loadingTimer: NodeJS.Timeout | null = null
+const { start: startLoadingTimer, stop: stopLoadingTimer } = useTimeoutFn(() => {
+  isLoadingPreset.value = false
+}, 1000)
 
 // 材料折叠面板
 const activeMaterialPanels = ref<MaterialTag[]>([])
@@ -351,16 +354,8 @@ const allCoverageTrees = computed(() => {
 // 开始加载预设（设置标志并启动计时器）
 const startLoadingPreset = () => {
   isLoadingPreset.value = true
-
-  // 清除旧计时器
-  if (loadingTimer) {
-    clearTimeout(loadingTimer)
-  }
-
-  // 1秒后重置标志
-  loadingTimer = setTimeout(() => {
-    isLoadingPreset.value = false
-  }, 1000)
+  stopLoadingTimer() // 停止之前的计时器
+  startLoadingTimer() // 启动新的计时器
 }
 
 // 全局材料值变化处理
