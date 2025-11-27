@@ -48,7 +48,7 @@ export function calculateHitChance(params: WeaponParams, targetDistance: number)
     targetDistance = 0
   }
 
-  const { longAccuracy, mediumAccuracy, shortAccuracy, touchAccuracy, quality } = params
+  const { accuracyLong, accuracyMedium, accuracyShort, accuracyTouch, quality } = params
 
   // 获取品质系数
   const qualityMultipliers = WeaponQualityMultipliers[quality]
@@ -56,10 +56,10 @@ export function calculateHitChance(params: WeaponParams, targetDistance: number)
 
   // 转换为 0-1 范围并应用品质系数
   const accuracies = {
-    long: (longAccuracy / 100) * accuracyMultiplier,
-    medium: (mediumAccuracy / 100) * accuracyMultiplier,
-    short: (shortAccuracy / 100) * accuracyMultiplier,
-    touch: (touchAccuracy / 100) * accuracyMultiplier,
+    long: (accuracyLong / 100) * accuracyMultiplier,
+    medium: (accuracyMedium / 100) * accuracyMultiplier,
+    short: (accuracyShort / 100) * accuracyMultiplier,
+    touch: (accuracyTouch / 100) * accuracyMultiplier,
   }
 
   let value: number

@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import Plotly from 'plotly.js-dist-min'
 import { useResizeObserver } from '@vueuse/core'
 import type { Weapon } from '@/types/weapon'
 import { calculateHitChance, calculateMaxDPS } from '@/utils/weaponCalculations'
 import { calculateDPSDistribution } from '@/utils/armorCalculations'
 import { transposeMatrix, calculateSurfaceIntersection } from '@/utils/plotlyUtils'
+
+const { t } = useI18n()
 
 interface Props {
   weapons: Weapon[]
@@ -61,17 +64,17 @@ function generateWeaponSurfaceData(weapon: Weapon) {
       const hoverText = [
         `<b>${weapon.name}</b>`,
         `----------------`,
-        `<b>目标距离:</b> ${distance} 格`,
-        `<b>护甲值:</b> ${armorValues[j]}%`,
-        `<b>命中率:</b> ${(hitChance * 100).toFixed(2)}%`,
-        `<b>最大DPS:</b> ${maxDPS.toFixed(2)}`,
+        `<b>${t('weapon.targetDistance')}:</b> ${distance} ${t('unit.tile')}`,
+        `<b>${t('armor.armorSharp')}:</b> ${armorValues[j]}%`,
+        `<b>${t('weapon.hitChance')}:</b> ${(hitChance * 100).toFixed(2)}%`,
+        `<b>${t('weapon.maxDPS')}:</b> ${maxDPS.toFixed(2)}`,
         `----------------`,
-        `<b>未命中:</b> ${(distribution.missProb * 100).toFixed(2)}%`,
-        `<b>完全偏转 (0伤害):</b> ${(distribution.zeroDamageProb * 100).toFixed(2)}%`,
-        `<b>部分偏转 (50%伤害):</b> ${(distribution.halfDamageProb * 100).toFixed(2)}%`,
-        `<b>穿透 (100%伤害):</b> ${(distribution.fullDamageProb * 100).toFixed(2)}%`,
+        `<b>${t('chart.miss')}:</b> ${(distribution.missProb * 100).toFixed(2)}%`,
+        `<b>${t('chart.deflectFull')}:</b> ${(distribution.zeroDamageProb * 100).toFixed(2)}%`,
+        `<b>${t('chart.deflectPartial')}:</b> ${(distribution.halfDamageProb * 100).toFixed(2)}%`,
+        `<b>${t('chart.penetrate')}:</b> ${(distribution.fullDamageProb * 100).toFixed(2)}%`,
         `----------------`,
-        `<b>期望DPS:</b> ${expectedDPS.toFixed(3)}`,
+        `<b>${t('weapon.expectedDPS')}:</b> ${expectedDPS.toFixed(3)}`,
       ].join('<br>')
 
       hoverRow.push(hoverText)
@@ -117,7 +120,7 @@ function plotSurface() {
         plotData.length === 0
           ? {
               title: {
-                text: '期望DPS',
+                text: t('chart.expectedDPSLabel'),
                 side: 'right',
                 font: { size: 14 },
               },
@@ -162,9 +165,9 @@ function plotSurface() {
                 width: 6,
               },
               hovertemplate:
-                '<b>交线</b><br>' +
-                '距离: %{x} 格<br>' +
-                '护甲: %{y:.1f}%<br>' +
+                `<b>${t('chart.intersectionLine')}</b><br>` +
+                `${t('chart.distance')}: %{x} ${t('unit.tile')}<br>` +
+                `${t('armor.armorSharp')}: %{y:.1f}%<br>` +
                 'DPS: %{z:.2f}<br>' +
                 '<extra></extra>',
             } as unknown as Plotly.Data)
@@ -176,14 +179,14 @@ function plotSurface() {
 
   const layout: Partial<Plotly.Layout> = {
     title: {
-      text: 'DPS 三维曲面对比图',
+      text: t('chart.surface3DTitle'),
       font: { size: 18 },
     },
     autosize: true,
     scene: {
       xaxis: {
         title: {
-          text: '目标距离 (格)',
+          text: t('chart.targetDistanceAxis'),
           font: { size: 14 },
         },
         gridcolor: 'rgb(200, 200, 200)',
@@ -192,7 +195,7 @@ function plotSurface() {
       },
       yaxis: {
         title: {
-          text: '护甲值 (%)',
+          text: t('chart.armorValueAxis'),
           font: { size: 14 },
         },
         gridcolor: 'rgb(200, 200, 200)',
@@ -201,7 +204,7 @@ function plotSurface() {
       },
       zaxis: {
         title: {
-          text: '期望DPS',
+          text: t('chart.expectedDPSLabel'),
           font: { size: 14 },
         },
         gridcolor: 'rgb(200, 200, 200)',

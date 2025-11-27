@@ -14,12 +14,12 @@ export interface WeaponParams {
   burstTicks: number // 连发间隔 (ticks)
   cooldown: number // 冷却时间 (秒)
   damage: number // 伤害值
-  longAccuracy: number // Long 命中率 (≤40格) (0-100)
-  mediumAccuracy: number // Medium 命中率 (≤25格) (0-100)
+  accuracyLong: number // Long 命中率 (≤40格) (0-100)
+  accuracyMedium: number // Medium 命中率 (≤25格) (0-100)
   quality: QualityCategory // 品质等级
   range: number // 射程 (格/tiles)
-  shortAccuracy: number // Short 命中率 (≤12格) (0-100)
-  touchAccuracy: number // Touch 命中率 (≤3格) (0-100)
+  accuracyShort: number // Short 命中率 (≤12格) (0-100)
+  accuracyTouch: number // Touch 命中率 (≤3格) (0-100)
   warmUp: number // 预热时间 (秒)
 }
 

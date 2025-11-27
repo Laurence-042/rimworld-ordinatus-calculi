@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Line } from 'vue-chartjs'
 import {
   CategoryScale,
@@ -15,6 +16,8 @@ import {
 import type { Weapon } from '@/types/weapon'
 import { calculateHitChance, calculateMaxDPS } from '@/utils/weaponCalculations'
 import { calculateDPSCurve, calculateDPSDistribution } from '@/utils/armorCalculations'
+
+const { t } = useI18n()
 
 // 注册 Chart.js 组件
 ChartJS.register(
@@ -111,7 +114,7 @@ const chartOptions = computed(() => ({
 
           const weaponData = weaponsData.value[context.datasetIndex]
           if (!weaponData) return ''
-          return `${weaponData.weapon.name} - 期望DPS: ${y.toFixed(3)}`
+          return `${weaponData.weapon.name} - ${t('weapon.expectedDPS')}: ${y.toFixed(3)}`
         },
         afterLabel: (context: { dataIndex: number; datasetIndex: number }) => {
           const index = context.dataIndex
@@ -122,10 +125,10 @@ const chartOptions = computed(() => ({
 
           return [
             '',
-            `未命中: ${(dist.missProb * 100).toFixed(2)}%`,
-            `完全偏转(0伤害): ${(dist.zeroDamageProb * 100).toFixed(2)}%`,
-            `部分偏转(50%伤害): ${(dist.halfDamageProb * 100).toFixed(2)}% → DPS ${dist.halfDPS.toFixed(2)}`,
-            `穿透(100%伤害): ${(dist.fullDamageProb * 100).toFixed(2)}% → DPS ${dist.fullDPS.toFixed(2)}`,
+            `${t('chart.miss')}: ${(dist.missProb * 100).toFixed(2)}%`,
+            `${t('chart.noDamage')}: ${(dist.zeroDamageProb * 100).toFixed(2)}%`,
+            `${t('chart.halfDamage')}: ${(dist.halfDamageProb * 100).toFixed(2)}% → DPS ${dist.halfDPS.toFixed(2)}`,
+            `${t('chart.fullDamage')}: ${(dist.fullDamageProb * 100).toFixed(2)}% → DPS ${dist.fullDPS.toFixed(2)}`,
           ]
         },
       },
@@ -135,7 +138,7 @@ const chartOptions = computed(() => ({
     x: {
       title: {
         display: true,
-        text: '护甲值',
+        text: t('armor.armorSharp'),
       },
       ticks: {
         maxTicksLimit: 21,
@@ -144,7 +147,7 @@ const chartOptions = computed(() => ({
     y: {
       title: {
         display: true,
-        text: 'DPS',
+        text: t('chart.dps'),
       },
       beginAtZero: true,
     },

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Delete, QuestionFilled } from '@element-plus/icons-vue'
 import { useTimeoutFn } from '@vueuse/core'
 import {
@@ -26,6 +27,8 @@ import { getActualArmorValue } from '@/utils/armorCalculations'
 import ArmorChart from './ArmorChart.vue'
 import ArmorReductionCurve from './ArmorReductionCurve.vue'
 import SliderInput from './SliderInput.vue'
+
+const { t } = useI18n()
 
 // 常量
 const ARMOR_COLORS = [
@@ -104,13 +107,16 @@ const { start: startLoadingTimer, stop: stopLoadingTimer } = useTimeoutFn(() => 
 // 材料折叠面板
 const activeMaterialPanels = ref<MaterialTag[]>([])
 
-// 材料类型配置
-const materialTypes = [
-  { tag: MaterialTag.Metal, name: 'metal', label: '金属材料' },
-  { tag: MaterialTag.Wood, name: 'wood', label: '木材材料' },
-  { tag: MaterialTag.Leather, name: 'leather', label: '皮革材料' },
-  { tag: MaterialTag.Fabric, name: 'fabric', label: '织物材料' },
-] as const
+// 材料类型配置 - computed for i18n reactivity
+const materialTypes = computed(
+  () =>
+    [
+      { tag: MaterialTag.Metal, name: 'metal', label: t('materialType.metal') },
+      { tag: MaterialTag.Wood, name: 'wood', label: t('materialType.wood') },
+      { tag: MaterialTag.Leather, name: 'leather', label: t('materialType.leather') },
+      { tag: MaterialTag.Fabric, name: 'fabric', label: t('materialType.fabric') },
+    ] as const,
+)
 
 // 身体部位树数据
 const bodyPartTreeData = buildBodyPartTree()
@@ -209,11 +215,11 @@ const addArmorSet = () => {
   const colorIndex = armorSets.value.length % ARMOR_COLORS.length
   const newArmorSet: ArmorSet = {
     id: nextArmorSetId++,
-    name: `护甲套装 ${armorSets.value.length + 1}`,
+    name: t('armor.defaultSetName', { n: armorSets.value.length + 1 }),
     color: ARMOR_COLORS[colorIndex]!,
     layers: [
       {
-        itemName: '新护甲',
+        itemName: t('armor.defaultLayerName'),
         armorSharp: 50,
         armorBlunt: 20,
         armorHeat: 20,
@@ -243,7 +249,7 @@ const removeArmorSet = (id: number) => {
 
 const addLayer = (armorSet: ArmorSet) => {
   armorSet.layers.push({
-    itemName: '新衣物',
+    itemName: t('armor.defaultClothingName'),
     armorSharp: 50,
     armorBlunt: 20,
     armorHeat: 20,
@@ -430,7 +436,9 @@ const armorSetConflicts = computed(() => {
         conflicts.push({
           layerIndex,
           conflictingWith: layerConflicts,
-          message: `与第 ${layerConflicts.map((i) => i + 1).join('、')} 层存在覆盖冲突`,
+          message: t('armor.coverageConflict', {
+            layers: layerConflicts.map((i) => i + 1).join('、'),
+          }),
         })
       }
     })
@@ -520,28 +528,34 @@ onMounted(async () => {
         <!-- 全局参数 -->
         <el-card class="global-section">
           <template #header>
-            <h3>全局参数</h3>
+            <h3>{{ t('armor.globalParams') }}</h3>
           </template>
           <el-form label-width="10em">
-            <el-divider content-position="left">伤害类型</el-divider>
+            <el-divider content-position="left">{{ t('armor.damageTypeLabel') }}</el-divider>
 
             <el-form-item>
               <el-radio-group v-model="damageType">
-                <el-radio-button :value="DamageType.Sharp">利器</el-radio-button>
-                <el-radio-button :value="DamageType.Blunt">钝器</el-radio-button>
-                <el-radio-button :value="DamageType.Heat">热能</el-radio-button>
+                <el-radio-button :value="DamageType.Sharp">{{
+                  t('damageType.sharp')
+                }}</el-radio-button>
+                <el-radio-button :value="DamageType.Blunt">{{
+                  t('damageType.blunt')
+                }}</el-radio-button>
+                <el-radio-button :value="DamageType.Heat">{{
+                  t('damageType.heat')
+                }}</el-radio-button>
               </el-radio-group>
             </el-form-item>
 
             <template v-if="chartMode === 'distribution'">
-              <el-divider content-position="left">固定攻击参数</el-divider>
+              <el-divider content-position="left">{{ t('armor.fixedAttackParams') }}</el-divider>
 
-              <el-form-item label="固定穿甲">
+              <el-form-item :label="t('armor.fixedPenetration')">
                 <SliderInput v-model="fixedPenetration" :min="0" :max="100" :step="1" unit="%" />
               </el-form-item>
             </template>
 
-            <el-divider content-position="left">全局材料预设</el-divider>
+            <el-divider content-position="left">{{ t('armor.globalMaterialPresets') }}</el-divider>
 
             <el-collapse v-model="activeMaterialPanels" accordion>
               <el-collapse-item
@@ -550,10 +564,10 @@ onMounted(async () => {
                 :title="materialType.label"
                 :name="materialType.name"
               >
-                <el-form-item label="加载预设">
+                <el-form-item :label="t('armor.loadPreset')">
                   <el-select
                     :model-value="globalMaterials[materialType.tag].name"
-                    :placeholder="`选择${materialType.label}预设`"
+                    :placeholder="t('armor.selectMaterialPreset', { type: materialType.label })"
                     style="width: 100%"
                     filterable
                     @change="
@@ -567,13 +581,13 @@ onMounted(async () => {
                     <el-option
                       v-for="material in currentMaterials[materialType.name]"
                       :key="material.name"
-                      :label="`${material.name} (利器${Math.round(material.armorSharp * 100)}% 钝器${Math.round(material.armorBlunt * 100)}% 热能${Math.round(material.armorHeat * 100)}%)`"
+                      :label="`${material.name} (${t('damageType.sharp')}${Math.round(material.armorSharp * 100)}% ${t('damageType.blunt')}${Math.round(material.armorBlunt * 100)}% ${t('damageType.heat')}${Math.round(material.armorHeat * 100)}%)`"
                       :value="material"
                     />
                   </el-select>
                 </el-form-item>
 
-                <el-form-item label="利器护甲">
+                <el-form-item :label="t('armor.armorSharp')">
                   <SliderInput
                     v-model="globalMaterials[materialType.tag].armorSharp"
                     :min="0"
@@ -585,7 +599,7 @@ onMounted(async () => {
                   />
                 </el-form-item>
 
-                <el-form-item label="钝器护甲">
+                <el-form-item :label="t('armor.armorBlunt')">
                   <SliderInput
                     v-model="globalMaterials[materialType.tag].armorBlunt"
                     :min="0"
@@ -597,7 +611,7 @@ onMounted(async () => {
                   />
                 </el-form-item>
 
-                <el-form-item label="热能护甲">
+                <el-form-item :label="t('armor.armorHeat')">
                   <SliderInput
                     v-model="globalMaterials[materialType.tag].armorHeat"
                     :min="0"
@@ -624,7 +638,7 @@ onMounted(async () => {
             <div class="armor-header">
               <el-input
                 v-model="armorSet.name"
-                placeholder="护甲套装名称"
+                :placeholder="t('armor.setNamePlaceholder')"
                 class="armor-name-input"
                 :style="{ '--armor-color': armorSet.color }"
               />
@@ -648,9 +662,16 @@ onMounted(async () => {
               style="margin-bottom: 10px"
             >
               <template #title>
-                <span style="font-size: 0.9em"
-                  >伤害计算顺序：自动按从外层到内层排序（眼饰→头饰→配件→外套→夹层→贴身→皮肤）</span
-                >
+                <span style="font-size: 0.9em">{{ t('armor.layerOrderHint') }}</span>
+
+                <el-tooltip effect="dark" placement="top" raw-content>
+                  <template #content>
+                    <div style="max-width: 300px; line-height: 1.5">
+                      {{ t('weapon.qualityTooltip') }}
+                    </div>
+                  </template>
+                  <el-icon style="margin-left: 8px; cursor: help"><QuestionFilled /></el-icon>
+                </el-tooltip>
               </template>
             </el-alert>
 
@@ -660,7 +681,9 @@ onMounted(async () => {
               class="layer-item"
             >
               <div class="layer-header">
-                <span class="layer-title">第 {{ layerIndex + 1 }} 层 </span>
+                <span class="layer-title"
+                  >{{ t('armor.layerNumber', { n: layerIndex + 1 }) }}
+                </span>
                 <el-button
                   v-if="armorSets.length > 1"
                   type="danger"
@@ -690,10 +713,10 @@ onMounted(async () => {
               </el-alert>
 
               <el-form label-width="10em" size="small">
-                <el-form-item label="衣物名称">
+                <el-form-item :label="t('armor.clothingName')">
                   <el-select
                     :model-value="layer.itemName"
-                    placeholder="选择衣物预设"
+                    :placeholder="t('armor.selectClothing')"
                     style="width: 100%"
                     filterable
                     @change="
@@ -713,36 +736,7 @@ onMounted(async () => {
                   </el-select>
                 </el-form-item>
 
-                <el-form-item label="服装层级">
-                  <el-checkbox-group v-model="layer.apparelLayers">
-                    <el-checkbox-button
-                      v-for="option in apparelLayerOptions"
-                      :key="option.value"
-                      :value="option.value"
-                    >
-                      {{ option.label }}
-                    </el-checkbox-button>
-                  </el-checkbox-group>
-                </el-form-item>
-
-                <el-form-item label="覆盖部位">
-                  <el-tree-select
-                    v-model="layer.bodyPartCoverage"
-                    :data="bodyPartTreeData"
-                    multiple
-                    clearable
-                    collapse-tags
-                    collapse-tags-tooltip
-                    :max-collapse-tags="10"
-                    check-strictly
-                    placeholder="选择覆盖的身体部位"
-                    style="width: 100%"
-                    :props="{ label: 'label', value: 'value' }"
-                    node-key="value"
-                  />
-                </el-form-item>
-
-                <el-form-item label="品质">
+                <el-form-item :label="t('quality.label')">
                   <el-radio-group v-model="layer.quality">
                     <el-radio-button
                       v-for="option in qualityOptions"
@@ -756,26 +750,58 @@ onMounted(async () => {
                   </el-radio-group>
                 </el-form-item>
 
-                <el-form-item label="护甲来源">
+                <el-divider content-position="left">
                   <el-tooltip effect="dark" placement="top" raw-content>
                     <template #content>
                       <div style="max-width: 300px; line-height: 1.5">
-                        下方滑块使用的是<strong>“普通品质”</strong>的基础值，计算会自动套用对应品质加成。
-                        若您只知道某特定品质下的实际数值，可在下方将品质设为“普通”，再填写该数值，即可确保计算使用正确的实际数值。
+                        {{ t('weapon.qualityTooltip') }}
                       </div>
                     </template>
-                    <el-icon style="margin-left: 8px; cursor: help; vertical-align: middle"
+                    <el-icon style="margin-left: 8px; cursor: help"
                       ><QuestionFilled
-                    /></el-icon>
-                  </el-tooltip>
+                    /></el-icon> </el-tooltip
+                ></el-divider>
+
+                <el-form-item :label="t('armor.apparelLayer')">
+                  <el-checkbox-group v-model="layer.apparelLayers">
+                    <el-checkbox-button
+                      v-for="option in apparelLayerOptions"
+                      :key="option.value"
+                      :value="option.value"
+                    >
+                      {{ option.label }}
+                    </el-checkbox-button>
+                  </el-checkbox-group>
+                </el-form-item>
+
+                <el-form-item :label="t('armor.coverageParts')">
+                  <el-tree-select
+                    v-model="layer.bodyPartCoverage"
+                    :data="bodyPartTreeData"
+                    multiple
+                    clearable
+                    collapse-tags
+                    collapse-tags-tooltip
+                    :max-collapse-tags="10"
+                    check-strictly
+                    :placeholder="t('armor.selectCoverageParts')"
+                    style="width: 100%"
+                    :props="{ label: 'label', value: 'value' }"
+                    node-key="value"
+                  />
+                </el-form-item>
+
+                <el-form-item :label="t('armor.armorSource')">
                   <el-radio-group v-model="layer.useMaterial">
-                    <el-radio-button :value="false">固定数值</el-radio-button>
-                    <el-radio-button :value="true">依赖材料</el-radio-button>
+                    <el-radio-button :value="false">{{ t('armor.fixedValue') }}</el-radio-button>
+                    <el-radio-button :value="true">{{
+                      t('armor.dependOnMaterial')
+                    }}</el-radio-button>
                   </el-radio-group>
                 </el-form-item>
 
                 <template v-if="!layer.useMaterial">
-                  <el-form-item label="利器护甲">
+                  <el-form-item :label="t('armor.armorSharp')">
                     <SliderInput
                       v-model="layer.armorSharp"
                       :min="0"
@@ -786,7 +812,7 @@ onMounted(async () => {
                     />
                   </el-form-item>
 
-                  <el-form-item label="钝器护甲">
+                  <el-form-item :label="t('armor.armorBlunt')">
                     <SliderInput
                       v-model="layer.armorBlunt"
                       :min="0"
@@ -797,7 +823,7 @@ onMounted(async () => {
                     />
                   </el-form-item>
 
-                  <el-form-item label="热能护甲">
+                  <el-form-item :label="t('armor.armorHeat')">
                     <SliderInput
                       v-model="layer.armorHeat"
                       :min="0"
@@ -810,7 +836,7 @@ onMounted(async () => {
                 </template>
 
                 <template v-else>
-                  <el-form-item label="材料系数">
+                  <el-form-item :label="t('armor.materialCoefficient')">
                     <SliderInput
                       v-model="layer.materialCoefficient!"
                       :min="0"
@@ -822,7 +848,7 @@ onMounted(async () => {
                     />
                   </el-form-item>
 
-                  <el-form-item label="使用的材料">
+                  <el-form-item :label="t('armor.usedMaterial')">
                     <el-radio-group v-model="layer.selectedMaterial">
                       <el-radio-button
                         value="metal"
@@ -831,7 +857,7 @@ onMounted(async () => {
                           !layer.supportedMaterials.includes(MaterialTag.Metal)
                         "
                       >
-                        金属
+                        {{ t('materialType.metalButton') }}
                       </el-radio-button>
                       <el-radio-button
                         value="wood"
@@ -840,7 +866,7 @@ onMounted(async () => {
                           !layer.supportedMaterials.includes(MaterialTag.Wood)
                         "
                       >
-                        木材
+                        {{ t('materialType.woodButton') }}
                       </el-radio-button>
                       <el-radio-button
                         value="leather"
@@ -849,7 +875,7 @@ onMounted(async () => {
                           !layer.supportedMaterials.includes(MaterialTag.Leather)
                         "
                       >
-                        皮革
+                        {{ t('materialType.leatherButton') }}
                       </el-radio-button>
                       <el-radio-button
                         value="fabric"
@@ -858,7 +884,7 @@ onMounted(async () => {
                           !layer.supportedMaterials.includes(MaterialTag.Fabric)
                         "
                       >
-                        织物
+                        {{ t('materialType.fabricButton') }}
                       </el-radio-button>
                     </el-radio-group>
                   </el-form-item>
@@ -870,11 +896,11 @@ onMounted(async () => {
                     style="margin-top: 10px"
                   >
                     <template #title>
-                      计算护甲 =
+                      {{ t('armor.calculatedArmor') }} =
                       {{
                         (() => {
                           const armor = getLayerActualArmor(layer)
-                          return `利器${(armor.armorSharp * 100).toFixed(0)}% 钝器${(armor.armorBlunt * 100).toFixed(0)}% 热能${(armor.armorHeat * 100).toFixed(0)}%`
+                          return `${t('damageType.sharp')}${armor.armorSharp.toFixed(0)}% ${t('damageType.blunt')}${armor.armorBlunt.toFixed(0)}% ${t('damageType.heat')}${armor.armorHeat.toFixed(0)}%`
                         })()
                       }}
                     </template>
@@ -886,7 +912,7 @@ onMounted(async () => {
             </div>
 
             <el-button type="primary" text @click="addLayer(armorSet)" style="width: 100%">
-              + 添加护甲层
+              {{ t('armor.addLayerButton') }}
             </el-button>
           </div>
         </el-card>
@@ -898,23 +924,23 @@ onMounted(async () => {
           @click="addArmorSet"
           style="width: 100%; margin-top: 20px"
         >
-          + 添加护甲套装进行对比
+          {{ t('armor.addArmorSet') }}
         </el-button>
         <el-alert
           v-else
           type="info"
           :closable="false"
           style="margin-top: 20px"
-          title="已达到最大套装数量（2个）"
-          description="3D曲面模式最多支持2个护甲套装对比并显示交线。如需对比其他套装，请先删除现有套装。"
+          :title="t('armor.maxSetsReached')"
+          :description="t('armor.maxSetsDescription')"
         />
       </el-splitter-panel>
       <!-- 中间：覆盖范围可视化 -->
       <el-splitter-panel size="30%" min="20%" collapsible class="middle-panel">
         <el-card>
           <template #header>
-            <h3>覆盖范围</h3>
-            <p class="coverage-hint">点击身体部位查看该部位的护甲计算结果</p>
+            <h3>{{ t('armor.coverageTitle') }}</h3>
+            <p class="coverage-hint">{{ t('armor.coverageHint') }}</p>
           </template>
 
           <div
@@ -964,18 +990,20 @@ onMounted(async () => {
           <div>
             <el-radio-group v-model="chartMode" size="default">
               <el-radio-button value="distribution"
-                >减伤概率分布 - {{ selectedBodyPartName }}</el-radio-button
+                >{{ t('chart.damageReductionDistribution') }} -
+                {{ selectedBodyPartName }}</el-radio-button
               >
               <el-radio-button value="curve"
-                >减伤期望曲线 - {{ selectedBodyPartName }}</el-radio-button
+                >{{ t('chart.damageReductionExpectedCurve') }} -
+                {{ selectedBodyPartName }}</el-radio-button
               >
             </el-radio-group>
           </div>
           <p class="chart-hint">
             <template v-if="chartMode === 'distribution'">
-              在固定穿甲条件下，不同护甲套装的减伤比例概率分布
+              {{ t('chart.distributionDescription') }}
             </template>
-            <template v-else> 护甲穿透 vs 减伤比例的2D曲线对比 </template>
+            <template v-else> {{ t('chart.curveDescription') }} </template>
           </p>
         </div>
 
@@ -1079,6 +1107,7 @@ onMounted(async () => {
 }
 
 .layer-title {
+  flex: 1;
   color: #303133;
   font-size: 0.95em;
   font-weight: 600;

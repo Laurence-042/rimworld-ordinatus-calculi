@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -20,6 +21,8 @@ import {
   filterArmorLayersByBodyPart,
 } from '@/utils/armorCalculations'
 
+const { t } = useI18n()
+
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
 
 const props = defineProps<{
@@ -34,10 +37,10 @@ const props = defineProps<{
 }>()
 
 const damageTypeLabel = computed(() => {
-  const labels = {
-    blunt: '钝器',
-    sharp: '利器',
-    heat: '热能',
+  const labels: Record<DamageType, string> = {
+    blunt: t('damageType.blunt'),
+    sharp: t('damageType.sharp'),
+    heat: t('damageType.heat'),
   }
   return labels[props.damageType]
 })
@@ -127,7 +130,7 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
   plugins: {
     title: {
       display: true,
-      text: `减伤曲线 - ${damageTypeLabel.value}伤害`,
+      text: t('chart.reductionCurve', { damageType: damageTypeLabel.value }),
       font: { size: 16 },
     },
     legend: {
@@ -138,7 +141,7 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
       callbacks: {
         title: (context) => {
           const pen = context[0]?.label || '0'
-          return `护甲穿透: ${pen}%`
+          return t('chart.penetrationLabel', { penetration: pen })
         },
         label: (context) => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -153,7 +156,8 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
           const damageReduction = (context.parsed.y ?? 0).toFixed(1)
           const info = detailedInfo?.[pointIndex]
 
-          if (!info) return `${armorSetName}: 减伤 ${damageReduction}%`
+          if (!info)
+            return t('chart.reductionValue', { name: armorSetName, reduction: damageReduction })
 
           const pen = context.label || '0'
 
@@ -161,8 +165,8 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
           return [
             `━━━━━━━━━━━━━━━━`,
             `【${armorSetName}】`,
-            `护甲穿透: ${pen}%`,
-            `伤害分布:`,
+            t('chart.penetrationLabel', { penetration: pen }),
+            t('chart.damageDistribution') + ':',
             ...info.damageStates
               .sort(
                 (a: { damageMultiplier: number }, b: { damageMultiplier: number }) =>
@@ -171,9 +175,9 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
               .map((state: { damageMultiplier: number; probability: number }) => {
                 const percent = (state.damageMultiplier * 100).toFixed(0)
                 const prob = (state.probability * 100).toFixed(2)
-                return `  ${percent}%伤害: ${prob}%`
+                return `  ${percent}%${t('chart.damage')}: ${prob}%`
               }),
-            `减伤期望: ${damageReduction}%`,
+            t('chart.expectedReduction', { reduction: damageReduction }),
           ]
         },
       },
@@ -184,7 +188,7 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
       type: 'linear',
       title: {
         display: true,
-        text: '护甲穿透 (%)',
+        text: t('weapon.armorPenetration') + ' (%)',
         font: { size: 14 },
       },
       min: 0,
@@ -197,7 +201,7 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
     y: {
       title: {
         display: true,
-        text: '减伤比例 (%)',
+        text: t('armor.damageReduction') + ' (%)',
         font: { size: 14 },
       },
       ticks: {

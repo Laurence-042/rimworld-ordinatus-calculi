@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import Plotly from 'plotly.js-dist-min'
 import { useResizeObserver } from '@vueuse/core'
 import type { ArmorSet, ArmorLayer, DamageType } from '@/types/armor'
@@ -8,6 +9,8 @@ import {
   calculateMultiLayerDamageReduction,
   filterArmorLayersByBodyPart,
 } from '@/utils/armorCalculations'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   armorSets: ArmorSet[]
@@ -24,10 +27,10 @@ const props = defineProps<{
 const chartContainer = ref<HTMLElement | null>(null)
 
 const damageTypeLabel = computed(() => {
-  const labels = {
-    blunt: '钝器',
-    sharp: '利器',
-    heat: '热能',
+  const labels: Record<DamageType, string> = {
+    blunt: t('damageType.blunt'),
+    sharp: t('damageType.sharp'),
+    heat: t('damageType.heat'),
   }
   return labels[props.damageType]
 })
@@ -109,14 +112,17 @@ function renderChart() {
     const hoverTexts = sortedMultipliers.map((multiplier, index) => {
       const damageReduction = ((1 - multiplier) * 100).toFixed(1)
       const prob = probabilities[index] ?? 0
-      return `减伤${damageReduction}%<br>概率: ${prob.toFixed(2)}%`
+      return t('chart.reductionHoverText', {
+        reduction: damageReduction,
+        prob: prob.toFixed(2),
+      })
     })
 
     const reductions = sortedMultipliers.map((v) => 1 - v)
 
     // 柱状图（概率）
     traces.push({
-      name: `${armorSet.name} - 概率`,
+      name: `${armorSet.name} - ${t('chart.probabilityLabel')}`,
       type: 'bar',
       x: reductions,
       y: probabilities,
@@ -143,12 +149,15 @@ function renderChart() {
     const cumulativeHoverTexts = sortedMultipliers.map((multiplier, index) => {
       const cumulativeProb = cumulativeProbabilities[index] ?? 0
       const damageReduction = ((1 - multiplier) * 100).toFixed(1)
-      return `有 ${cumulativeProb.toFixed(2)}% 的概率<br>至少减伤 ${damageReduction}%`
+      return t('chart.cumulativeProbText', {
+        prob: cumulativeProb.toFixed(2),
+        reduction: damageReduction,
+      })
     })
 
     // 折线图（累积概率）
     traces.push({
-      name: `${armorSet.name} - 累积`,
+      name: `${armorSet.name} - ${t('chart.cumulativeLabel')}`,
       type: 'scatter',
       mode: 'lines+markers',
       x: reductions,
@@ -167,20 +176,23 @@ function renderChart() {
 
   const layout: Partial<Plotly.Layout> = {
     title: {
-      text: `减伤概率分布 - ${damageTypeLabel.value}伤害 (穿甲${props.fixedPenetration}%)`,
+      text: t('chart.damageReductionDistribution', {
+        damageType: damageTypeLabel.value,
+        penetration: props.fixedPenetration,
+      }),
     },
     xaxis: {
-      title: { text: '减伤倍率 (从高到低)' },
+      title: { text: t('chart.damageReductionRatio') },
       tickformat: '.0%',
       autorange: 'reversed',
     },
     yaxis: {
-      title: { text: '概率 (%)' },
+      title: { text: `${t('chart.probability')} (%)` },
       side: 'left' as const,
       rangemode: 'tozero' as const,
     },
     yaxis2: {
-      title: { text: '累积概率 (%)' },
+      title: { text: `${t('chart.cumulativeProbability')} (%)` },
       side: 'right' as const,
       overlaying: 'y' as const,
       range: [0, 100],

@@ -59,12 +59,12 @@ export function convertCSVToWeaponParams(csvData: WeaponCSVData): {
       burstTicks: parseNumber(csvData['连发间隔(ticks)']),
       cooldown: parseTime(csvData.冷却时间),
       damage: parseNumber(csvData.弹药伤害),
-      longAccuracy: parsePercentage(csvData['精度（远）']),
-      mediumAccuracy: parsePercentage(csvData['精度（中）']),
+      accuracyLong: parsePercentage(csvData['精度（远）']),
+      accuracyMedium: parsePercentage(csvData['精度（中）']),
       quality: QualityCategory.Masterwork, // 预设默认为大师品质，因为这是玩家后期能量产的最高品质，而在前中期基本是有啥用啥没得比
       range: parseNumber(csvData['射程(tiles)']),
-      shortAccuracy: parsePercentage(csvData['精度（近）']),
-      touchAccuracy: parsePercentage(csvData['精度（贴近）']),
+      accuracyShort: parsePercentage(csvData['精度（近）']),
+      accuracyTouch: parsePercentage(csvData['精度（贴近）']),
       warmUp: parseTime(csvData.瞄准时间),
     },
   }
@@ -103,7 +103,7 @@ export async function parseWeaponDataFromCSV(
       (weapon) =>
         weapon.params.damage &&
         weapon.params.cooldown &&
-        (weapon.params.shortAccuracy || weapon.params.mediumAccuracy || weapon.params.longAccuracy),
+        (weapon.params.accuracyShort || weapon.params.accuracyMedium || weapon.params.accuracyLong),
     )
     .map((weapon) => ({
       name: weapon.name,
@@ -113,12 +113,12 @@ export async function parseWeaponDataFromCSV(
         burstTicks: weapon.params.burstTicks || 0,
         cooldown: weapon.params.cooldown || 0,
         damage: weapon.params.damage || 0,
-        longAccuracy: weapon.params.longAccuracy || 0,
-        mediumAccuracy: weapon.params.mediumAccuracy || 0,
+        accuracyLong: weapon.params.accuracyLong || 0,
+        accuracyMedium: weapon.params.accuracyMedium || 0,
         quality: weapon.params.quality || QualityCategory.Masterwork,
         range: weapon.params.range || 50,
-        shortAccuracy: weapon.params.shortAccuracy || 0,
-        touchAccuracy: weapon.params.touchAccuracy || 0,
+        accuracyShort: weapon.params.accuracyShort || 0,
+        accuracyTouch: weapon.params.accuracyTouch || 0,
         warmUp: weapon.params.warmUp || 0,
       },
     }))

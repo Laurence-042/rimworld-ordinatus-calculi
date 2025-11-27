@@ -1,24 +1,45 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import DPSCalculator from './components/DPSCalculator.vue'
 import ArmorCalculator from './components/ArmorCalculator.vue'
+import LanguageSelector from './components/LanguageSelector.vue'
 
+const { t, locale } = useI18n()
 const calculationMode = ref<'weapon' | 'armor'>('weapon')
+
+// Update document title when locale changes
+watch(
+  locale,
+  () => {
+    document.title = t('app.pageTitle')
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
   <div class="app-container">
     <header class="app-header">
-      <h1 class="app-title">RimWorld 计算仪典</h1>
-      <el-radio-group v-model="calculationMode" size="default">
-        <el-radio-button value="weapon">破甲者之歌（计算武器DPS）</el-radio-button>
-        <el-radio-button value="armor">留命者之吟（计算护甲效果）</el-radio-button>
-      </el-radio-group>
+      <h1 class="app-title">
+        {{ t('app.title') }} - {{ t('app.subtitleWeapon') }}·{{ t('app.subtitleArmor') }}
+      </h1>
+      <div class="header-actions">
+        <el-radio-group v-model="calculationMode" size="default">
+          <el-radio-button value="weapon"
+            >{{ t('app.subtitleWeapon') }}({{ t('calculator.dps.title') }})</el-radio-button
+          >
+          <el-radio-button value="armor"
+            >{{ t('app.subtitleArmor') }}({{ t('calculator.armor.title') }})</el-radio-button
+          >
+        </el-radio-group>
+        <LanguageSelector />
+      </div>
     </header>
     <main class="app-main">
       <DPSCalculator v-if="calculationMode === 'weapon'" />
       <ArmorCalculator v-else-if="calculationMode === 'armor'" />
-      <div v-else class="placeholder">如果你看到了这个，那就说明这个应用出bug了...</div>
+      <div v-else class="placeholder">{{ t('error.invalidData') }}</div>
     </main>
   </div>
 </template>
@@ -38,6 +59,12 @@ const calculationMode = ref<'weapon' | 'armor'>('weapon')
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }
 
 .app-title {
