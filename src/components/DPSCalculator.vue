@@ -481,12 +481,14 @@ onMounted(async () => {
 /* 品质按钮样式 */
 .quality-button:deep(.el-radio-button__inner) {
   border-color: var(--quality-color);
+  border-width: 2px;
 }
 
 .quality-button:deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
   background-color: var(--quality-color);
   border-color: var(--quality-color);
-  box-shadow: -1px 0 0 0 var(--quality-color);
+  border-width: 2px;
+  box-shadow: -2px 0 0 0 var(--quality-color);
   color: #000;
   font-weight: 600;
 }
