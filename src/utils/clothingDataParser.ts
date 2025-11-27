@@ -6,7 +6,8 @@ import { BodyPart } from '@/types/bodyPart'
  * 衣物数据接口
  */
 export interface ClothingData {
-  name: string
+  defName: string
+  label: string
   // 直接护甲值（如果有的话）
   armorBlunt?: number // 护甲 - 钝器
   armorSharp?: number // 护甲 - 利器
@@ -37,35 +38,36 @@ export async function parseClothingDataFromCSV(csvContent: string): Promise<Clot
       complete: (results) => {
         try {
           const clothingData = results.data
-            .filter((row) => row['名称'] && row['名称'].trim())
+            .filter((row) => row['defName'] && row['defName'].trim())
             .map((row) => {
               const clothing: ClothingData = {
-                name: row['名称']!.trim(),
+                defName: row['defName']!.trim(),
+                label: row['label']?.trim() || row['defName']!.trim(),
               }
 
-              // 解析直接护甲值
-              const armorBlunt = row['护甲 - 钝器']?.trim()
-              const armorSharp = row['护甲 - 利器']?.trim()
-              const armorHeat = row['护甲 - 热能']?.trim()
+              // 解析直接护甲值 (CSV中已经是小数格式 0-2)
+              const armorBlunt = row['armorBlunt']?.trim()
+              const armorSharp = row['armorSharp']?.trim()
+              const armorHeat = row['armorHeat']?.trim()
 
-              if (armorBlunt) {
-                clothing.armorBlunt = parsePercentage(armorBlunt)
+              if (armorBlunt && armorBlunt !== '') {
+                clothing.armorBlunt = parseFloat(armorBlunt)
               }
-              if (armorSharp) {
-                clothing.armorSharp = parsePercentage(armorSharp)
+              if (armorSharp && armorSharp !== '') {
+                clothing.armorSharp = parseFloat(armorSharp)
               }
-              if (armorHeat) {
-                clothing.armorHeat = parsePercentage(armorHeat)
+              if (armorHeat && armorHeat !== '') {
+                clothing.armorHeat = parseFloat(armorHeat)
               }
 
               // 解析材料系数
-              const materialCoeff = row['护甲 - 材料系数']?.trim()
-              if (materialCoeff) {
-                clothing.materialCoefficient = parsePercentage(materialCoeff)
+              const materialCoeff = row['materialCoefficient']?.trim()
+              if (materialCoeff && materialCoeff !== '') {
+                clothing.materialCoefficient = parseFloat(materialCoeff)
               }
 
               // 解析接受的材质
-              const materials = row['材质']?.trim()
+              const materials = row['acceptedMaterials']?.trim()
               if (materials) {
                 clothing.acceptedMaterials = materials
                   .split(/[、，,]/)
@@ -74,13 +76,13 @@ export async function parseClothingDataFromCSV(csvContent: string): Promise<Clot
               }
 
               // 解析覆盖部位
-              const coverage = row['覆盖']?.trim()
+              const coverage = row['bodyPartCoverage']?.trim()
               if (coverage) {
                 clothing.bodyPartCoverage = parseBodyParts(coverage)
               }
 
               // 解析层次
-              const layers = row['层']?.trim()
+              const layers = row['apparelLayers']?.trim()
               if (layers) {
                 clothing.apparelLayers = parseApparelLayers(layers)
               }
@@ -103,83 +105,13 @@ export async function parseClothingDataFromCSV(csvContent: string): Promise<Clot
 }
 
 /**
- * 解析百分比字符串为数值（0-2范围）
- * 例如："100%" -> 1.0, "200%" -> 2.0
- */
-function parsePercentage(value: string): number {
-  if (!value) return 0
-
-  // 移除百分号和其他非数字字符（保留小数点和负号）
-  const numStr = value.replace(/[^\d.-]/g, '')
-  const num = parseFloat(numStr)
-
-  if (isNaN(num)) return 0
-
-  // 转换为0-2范围（假设输入是百分比）
-  return num / 100
-}
-
-/**
- * 中文身体部位名称到 BodyPart 枚举的映射
- * 仅映射16个常用部位
- */
-const bodyPartNameMap: Record<string, BodyPart> = {
-  // 核心部位
-  躯干: BodyPart.Torso,
-  颈部: BodyPart.Neck,
-  头: BodyPart.Head,
-  头部: BodyPart.Head,
-  腰: BodyPart.Waist,
-
-  // 眼耳鼻颌
-  左眼: BodyPart.LeftEye,
-  右眼: BodyPart.RightEye,
-  眼: BodyPart.LeftEye, // 通用"眼"映射到左眼（CSV通常同时列出左右）
-  眼睛: BodyPart.LeftEye,
-  左耳: BodyPart.LeftEar,
-  右耳: BodyPart.RightEar,
-  耳: BodyPart.LeftEar,
-  耳朵: BodyPart.LeftEar,
-  鼻: BodyPart.Nose,
-  鼻子: BodyPart.Nose,
-  下颌: BodyPart.Jaw,
-  下颚: BodyPart.Jaw,
-
-  // 上肢
-  左肩: BodyPart.LeftShoulder,
-  右肩: BodyPart.RightShoulder,
-  肩: BodyPart.LeftShoulder,
-  肩部: BodyPart.LeftShoulder,
-  左臂: BodyPart.LeftArm,
-  右臂: BodyPart.RightArm,
-  左手臂: BodyPart.LeftArm,
-  右手臂: BodyPart.RightArm,
-  手臂: BodyPart.LeftArm,
-  臂: BodyPart.LeftArm,
-
-  // 下肢
-  左腿: BodyPart.LeftLeg,
-  右腿: BodyPart.RightLeg,
-  腿: BodyPart.LeftLeg,
-} /**
- * 中文层级名称到 ApparelLayer 枚举的映射
- */
-const apparelLayerNameMap: Record<string, ApparelLayer> = {
-  贴身: ApparelLayer.Skin,
-  夹层: ApparelLayer.Middle,
-  外套: ApparelLayer.Outer,
-  配件: ApparelLayer.Belt,
-  头饰: ApparelLayer.Headgear,
-  眼饰: ApparelLayer.Eyes,
-}
-
-/**
- * 缓存所有在CSV中见过的身体部位字符串
+ * 缓存所有在CSV中见过的身体部位字符串（用于调试）
  */
 const seenBodyPartStrings = new Set<string>()
 
 /**
  * 解析身体部位字符串为 BodyPart 枚举数组
+ * CSV中存储的是BodyPart枚举值，用逗号或顿号分隔
  */
 function parseBodyParts(coverageStr: string): BodyPart[] {
   const parts = coverageStr
@@ -192,9 +124,11 @@ function parseBodyParts(coverageStr: string): BodyPart[] {
     // 记录所有见过的部位字符串
     seenBodyPartStrings.add(partStr)
 
-    const bodyPart = bodyPartNameMap[partStr]
-    if (bodyPart) {
-      bodyParts.add(bodyPart)
+    // 直接验证是否是有效的BodyPart枚举值
+    if (Object.values(BodyPart).includes(partStr as BodyPart)) {
+      bodyParts.add(partStr as BodyPart)
+    } else if (DEBUG_MODE) {
+      console.warn(`未知的身体部位: ${partStr}`)
     }
   }
 
@@ -203,6 +137,7 @@ function parseBodyParts(coverageStr: string): BodyPart[] {
 
 /**
  * 解析服装层级字符串为 ApparelLayer 枚举数组
+ * CSV中存储的是ApparelLayer枚举数值（0-5），用逗号或顿号分隔
  */
 function parseApparelLayers(layersStr: string): ApparelLayer[] {
   const layers = layersStr
@@ -212,16 +147,18 @@ function parseApparelLayers(layersStr: string): ApparelLayer[] {
 
   const apparelLayers: ApparelLayer[] = []
   for (const layerStr of layers) {
-    const layer = apparelLayerNameMap[layerStr]
-    if (layer !== undefined) {
-      apparelLayers.push(layer)
+    const layerNum = parseInt(layerStr, 10)
+    if (!isNaN(layerNum) && layerNum >= 0 && layerNum <= 5) {
+      apparelLayers.push(layerNum as ApparelLayer)
+    } else if (DEBUG_MODE) {
+      console.warn(`未知的服装层级: ${layerStr}`)
     }
   }
 
   return apparelLayers
 }
 
-// 缓存
+const DEBUG_MODE = false // 设置为true以启用调试输出// 缓存
 let cachedClothingDataSources: ClothingDataSource[] | null = null
 
 /**
@@ -244,27 +181,6 @@ export async function getClothingDataSources(): Promise<ClothingDataSource[]> {
       label: 'Vanilla',
       clothing: vanillaClothing,
     })
-
-    // 输出所有在CSV中见过的身体部位
-    if (seenBodyPartStrings.size > 0) {
-      console.log('CSV中出现的所有身体部位字符串：')
-      const sortedParts = Array.from(seenBodyPartStrings).sort()
-      sortedParts.forEach((part) => {
-        const mapped = bodyPartNameMap[part]
-        if (mapped) {
-          console.log(`  ✓ ${part} → ${mapped}`)
-        } else {
-          console.warn(`  ✗ ${part} → 未映射`)
-        }
-      })
-      console.log(`总计: ${seenBodyPartStrings.size} 个不同的身体部位字符串`)
-
-      // 统计未映射的部位
-      const unmappedParts = sortedParts.filter((part) => !bodyPartNameMap[part])
-      if (unmappedParts.length > 0) {
-        console.warn(`警告: 有 ${unmappedParts.length} 个身体部位未映射:`, unmappedParts)
-      }
-    }
   } catch (error) {
     console.error('Failed to load Vanilla clothing:', error)
   }

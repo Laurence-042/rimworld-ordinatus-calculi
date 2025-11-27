@@ -2,10 +2,7 @@
  * 护甲类型定义
  */
 
-import i18n from '@/i18n'
 import { QualityCategory } from './quality'
-
-const { global } = i18n
 
 /**
  * 服装层级枚举（按从内到外的顺序）
@@ -37,22 +34,6 @@ export const ApparelLayerNames: Record<string, ApparelLayer> = {
   配件: ApparelLayer.Belt,
   头饰: ApparelLayer.Headgear,
   眼饰: ApparelLayer.Eyes,
-}
-
-/**
- * 获取层级的显示名称（支持i18n）
- */
-export function getApparelLayerName(layer: ApparelLayer): string {
-  const layerNames: Record<ApparelLayer, string> = {
-    [ApparelLayer.Skin]: 'skin',
-    [ApparelLayer.Middle]: 'middle',
-    [ApparelLayer.Outer]: 'outer',
-    [ApparelLayer.Belt]: 'belt',
-    [ApparelLayer.Headgear]: 'headgear',
-    [ApparelLayer.Eyes]: 'eyes',
-  }
-  const key = `apparelLayer.${layerNames[layer]}` as const
-  return global.t(key)
 }
 
 export interface ArmorLayer {

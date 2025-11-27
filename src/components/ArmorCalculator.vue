@@ -14,8 +14,10 @@ import {
   type MaterialDataSource,
 } from '@/utils/materialDataParser'
 import { MaterialTag, parseAcceptedMaterials } from '@/types/material'
-import { type ArmorSet, ApparelLayer, DamageType, getApparelLayerName } from '@/types/armor'
-import { BodyPart, BodyPartNames, buildBodyPartTree } from '@/types/bodyPart'
+import { type ArmorSet, ApparelLayer, DamageType } from '@/types/armor'
+import { getApparelLayerName } from '@/utils/armorUtils'
+import { BodyPart } from '@/types/bodyPart'
+import { BodyPartNames, buildBodyPartTree } from '@/utils/bodyPartUtils'
 import {
   buildCoverageMap,
   buildCoverageTree,
@@ -283,7 +285,7 @@ const loadMaterialPreset = (materialType: MaterialTag, material: MaterialData) =
 // 从衣物预设加载到层
 const loadClothingPreset = (layer: ArmorSet['layers'][number], clothing: ClothingData) => {
   startLoadingPreset()
-  layer.itemName = clothing.name
+  layer.itemName = clothing.label
 
   // 解析层级信息
   if (clothing.apparelLayers && clothing.apparelLayers.length > 0) {
@@ -439,8 +441,12 @@ onMounted(async () => {
   const vanillaClothingSource = clothingDataSources.value.find((s) => s.id === 'vanilla')
   if (vanillaClothingSource) {
     // 第一套：双层防弹套
-    const bulletproofJacket = vanillaClothingSource.clothing.find((c) => c.name === '防弹夹克')
-    const bulletproofVest = vanillaClothingSource.clothing.find((c) => c.name === '防弹背心')
+    const bulletproofJacket = vanillaClothingSource.clothing.find(
+      (c) => c.defName === 'Apparel_FlakJacket',
+    )
+    const bulletproofVest = vanillaClothingSource.clothing.find(
+      (c) => c.defName === 'Apparel_FlakVest',
+    )
 
     if (bulletproofJacket && bulletproofVest) {
       const doubleBulletproofSet: ArmorSet = {
@@ -452,7 +458,7 @@ onMounted(async () => {
 
       // 添加防弹夹克层
       const jacketLayer: ArmorSet['layers'][number] = {
-        itemName: bulletproofJacket.name,
+        itemName: bulletproofJacket.label,
         armorSharp: 0,
         armorBlunt: 0,
         armorHeat: 0,
@@ -474,7 +480,7 @@ onMounted(async () => {
 
       // 添加防弹背心层
       const vestLayer: ArmorSet['layers'][number] = {
-        itemName: bulletproofVest.name,
+        itemName: bulletproofVest.label,
         armorSharp: 0,
         armorBlunt: 0,
         armorHeat: 0,
@@ -498,7 +504,9 @@ onMounted(async () => {
     }
 
     // 第二套：单层海军甲
-    const marineArmor = vanillaClothingSource.clothing.find((c) => c.name === '海军装甲')
+    const marineArmor = vanillaClothingSource.clothing.find(
+      (c) => c.defName === 'Apparel_PowerArmor',
+    )
 
     if (marineArmor) {
       const singleMarineSet: ArmorSet = {
@@ -509,7 +517,7 @@ onMounted(async () => {
       }
 
       const marineLayer: ArmorSet['layers'][number] = {
-        itemName: marineArmor.name,
+        itemName: marineArmor.label,
         armorSharp: 0,
         armorBlunt: 0,
         armorHeat: 0,
@@ -749,8 +757,8 @@ onMounted(async () => {
                   >
                     <el-option
                       v-for="clothing in currentClothing"
-                      :key="clothing.name"
-                      :label="clothing.name"
+                      :key="clothing.defName"
+                      :label="clothing.label"
                       :value="clothing"
                     />
                   </el-select>
