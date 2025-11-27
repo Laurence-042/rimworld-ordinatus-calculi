@@ -97,7 +97,7 @@ export enum DamageType {
 }
 
 export interface AttackParams {
-  /** 武器护甲穿透 (0-1) */
+  /** 武器护甲穿透 (0-2) */
   armorPenetration: number
   /** 伤害类型 */
   damageType: DamageType

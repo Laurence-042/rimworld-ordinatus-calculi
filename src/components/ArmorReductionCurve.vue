@@ -59,7 +59,7 @@ function generateArmorReductionCurve(armorSet: ArmorSet) {
   // 过滤只覆盖选中身体部位的护甲层
   const filteredLayers = filterArmorLayersByBodyPart(actualLayers, props.selectedBodyPart)
 
-  // 护甲穿透范围：0%-100%
+  // 护甲穿透范围：0%-200%
   const penetrationValues: number[] = []
   const damageReductions: number[] = []
   const detailedInfo: Array<{

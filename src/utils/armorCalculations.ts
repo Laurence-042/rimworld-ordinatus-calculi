@@ -156,14 +156,14 @@ export function calculateDPSCurve(params: SimplifiedWeaponParams): DPSCalculatio
   if (maxDPS < 0) {
     console.warn(`最大DPS为负数: ${maxDPS}，已自动设为 0`)
   }
-  if (armorPenetration < 0 || armorPenetration > 1) {
-    console.warn(`护甲穿透值超出有效范围 [0, 1]: ${armorPenetration}，已自动限制`)
+  if (armorPenetration < 0 || armorPenetration > 2) {
+    console.warn(`护甲穿透值超出有效范围 [0, 2]: ${armorPenetration}，已自动限制`)
   }
 
   // 确保参数在有效范围内
   const validHitChance = Math.max(0, Math.min(1, hitChance))
   const validMaxDPS = Math.max(0, maxDPS)
-  const validArmorPenetration = Math.max(0, Math.min(1, armorPenetration))
+  const validArmorPenetration = Math.max(0, Math.min(2, armorPenetration))
 
   const dpsValues: number[] = []
   const armorValues: number[] = []
@@ -232,7 +232,7 @@ export function calculateDPSDistribution(
   // 验证并限制输入参数
   const validHitChance = Math.max(0, Math.min(1, hitChance))
   const validMaxDPS = Math.max(0, maxDPS)
-  const validArmorPenetration = Math.max(0, Math.min(1, armorPenetration))
+  const validArmorPenetration = Math.max(0, Math.min(2, armorPenetration))
   const validTargetArmor = Math.max(0, targetArmor)
 
   // 计算有效护甲值
@@ -346,7 +346,7 @@ export function calculateMultiLayerDamageReduction(
   }
 
   // 确保参数在有效范围内
-  const validArmorPenetration = Math.max(0, Math.min(1, armorPenetration))
+  const validArmorPenetration = Math.max(0, Math.min(2, armorPenetration))
 
   // 自动排序：从外层到内层
   const sortedLayers = sortArmorLayersOuterToInner(armorLayers)

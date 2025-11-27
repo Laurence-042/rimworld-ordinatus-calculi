@@ -1,5 +1,4 @@
 import { parseWeaponDataFromCSV } from './weaponDataParser'
-import vanillaCSV from './weapon_data/Vanilla.csv?raw'
 import type { WeaponDataSource, WeaponParams, WeaponPreset } from '@/types/weapon'
 import { WeaponQualityMultipliers } from '@/types/quality'
 
@@ -151,7 +150,7 @@ export function calculateMaxDPS(params: WeaponParams): number {
  * 获取应用品质系数后的护甲穿透值
  *
  * @param params - 武器参数
- * @returns 实际护甲穿透值 (0-100)
+ * @returns 实际护甲穿透值 (0-200)
  */
 export function getActualArmorPenetration(params: WeaponParams): number {
   const qualityMultipliers = WeaponQualityMultipliers[params.quality]
@@ -170,33 +169,48 @@ async function loadWeaponsFromCSV(csvContent: string): Promise<WeaponPreset[]> {
   }))
 }
 
+/**
+ * 动态扫描并加载所有可用的武器数据源
+ * 支持编译后动态添加的MOD CSV文件
+ */
 async function loadAllWeaponDataSources(): Promise<WeaponDataSource[]> {
   const dataSources: WeaponDataSource[] = []
 
-  try {
-    const vanillaWeapons = await loadWeaponsFromCSV(vanillaCSV)
-    dataSources.push({
-      id: 'vanilla',
-      label: 'Vanilla',
-      weapons: vanillaWeapons,
-    })
-  } catch (error) {
-    console.error('Failed to load Vanilla weapons:', error)
+  // 动态加载所有CSV文件（包括Vanilla）
+  const csvFiles = import.meta.glob('./weapon_data/*.csv', {
+    query: '?raw',
+    eager: false,
+  })
+
+  for (const [path, loader] of Object.entries(csvFiles)) {
+    try {
+      const module = (await loader()) as { default: string }
+      const csvContent = module.default
+
+      // 从文件路径提取名称
+      const fileName = path.split('/').pop()?.replace('.csv', '') || 'Unknown'
+
+      const weapons = await loadWeaponsFromCSV(csvContent)
+
+      if (weapons.length > 0) {
+        dataSources.push({
+          id: fileName.toLowerCase().replace(/[^a-z0-9]/g, '_'),
+          label: fileName,
+          weapons,
+        })
+        console.log(`Loaded ${weapons.length} weapons from ${fileName}`)
+      }
+    } catch (error) {
+      console.warn(`Failed to load data from ${path}:`, error)
+    }
   }
 
-  // 未来可以在这里添加 Mod 数据源
-  // 例如：
-  // try {
-  //   const mod1CSV = await import('./weapon_data/Mod1.csv?raw')
-  //   const mod1Weapons = await loadWeaponsFromCSV(mod1CSV.default)
-  //   dataSources.push({
-  //     id: 'mod1',
-  //     label: 'Mod 1',
-  //     weapons: mod1Weapons,
-  //   })
-  // } catch (error) {
-  //   console.error('Failed to load Mod1 weapons:', error)
-  // }
+  // 排序：Vanilla 总是第一个，其余按 Unicode 排序
+  dataSources.sort((a, b) => {
+    if (a.label === 'Vanilla') return -1
+    if (b.label === 'Vanilla') return 1
+    return a.label.localeCompare(b.label)
+  })
 
   return dataSources
 }

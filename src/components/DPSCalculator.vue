@@ -338,7 +338,7 @@ onMounted(async () => {
               <SliderInput
                 v-model="weapon.armorPenetration"
                 :min="0"
-                :max="100"
+                :max="200"
                 :step="1"
                 unit="%"
               />

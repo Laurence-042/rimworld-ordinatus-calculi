@@ -34,3 +34,6 @@ coverage
 
 # Vitest
 __screenshots__/
+
+# 调试提取数据的脚本时用的测试样本文件
+tools/xml_def_data_parser/samples
