@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import Plotly from 'plotly.js-dist-min'
 import { useResizeObserver } from '@vueuse/core'
 import { transposeMatrix, calculateSurfaceIntersection } from '@/utils/plotlyUtils'
 import type { ArmorSet, ArmorLayer, DamageType } from '@/types/armor'
 import { BodyPart } from '@/types/bodyPart'
-import { calculateArmorDamageCurve, filterArmorLayersByBodyPart } from '@/utils/armorCalculations'
+import { calculateMultiLayerDamage, filterArmorLayersByBodyPart } from '@/utils/armorCalculations'
 
 const props = defineProps<{
   armorSets: ArmorSet[]
@@ -20,69 +20,138 @@ const props = defineProps<{
 
 const chartContainer = ref<HTMLElement | null>(null)
 
-const damageTypeLabel = computed(() => {
-  const labels = {
-    blunt: '钓器',
-    sharp: '利器',
-    heat: '热能',
-  }
-  return labels[props.damageType]
-})
-
-// 在组件内部计算所有护甲套装的伤害曲线数据
-const armorSetsData = computed(() => {
-  return props.armorSets.map((armorSet) => {
-    // 计算实际护甲值的层
-    const actualLayers = armorSet.layers.map((layer) => {
-      const armor = props.getLayerActualArmor(layer)
-      return {
-        ...layer,
-        // 将百分比转换为0-1的小数供计算使用
-        armorSharp: armor.armorSharp / 100,
-        armorBlunt: armor.armorBlunt / 100,
-        armorHeat: armor.armorHeat / 100,
-      }
-    })
-
-    // 过滤只覆盖选中身体部位的护甲层
-    const filteredLayers = filterArmorLayersByBodyPart(actualLayers, props.selectedBodyPart)
-
-    // 计算伤害曲线（穿透 vs 伤害 的网格）
-    const damageCurve = calculateArmorDamageCurve(filteredLayers, props.damageType)
-
+// 为单个护甲套装生成3D曲面数据
+function generateArmorSurfaceData(armorSet: ArmorSet) {
+  // 计算实际护甲值的层
+  const actualLayers = armorSet.layers.map((layer) => {
+    const armor = props.getLayerActualArmor(layer)
     return {
-      armorSet,
-      damageCurve,
+      ...layer,
+      // 将百分比转换为0-1的小数供计算使用
+      armorSharp: armor.armorSharp / 100,
+      armorBlunt: armor.armorBlunt / 100,
+      armorHeat: armor.armorHeat / 100,
     }
   })
-})
 
+  // 过滤只覆盖选中身体部位的护甲层
+  const filteredLayers = filterArmorLayersByBodyPart(actualLayers, props.selectedBodyPart)
+
+  // 护甲穿透范围：0%-100%
+  const penetrationValues: number[] = []
+  for (let pen = 0; pen <= 100; pen += 5) {
+    penetrationValues.push(pen)
+  }
+
+  // 单发伤害范围：1-50
+  const damageValues: number[] = []
+  for (let dmg = 1; dmg <= 50; dmg += 1) {
+    damageValues.push(dmg)
+  }
+
+  // 计算每个点的期望受伤和详细信息
+  // zData[i][j] 对应 penetrationValues[i], damageValues[j]
+  const zData: number[][] = []
+  const hoverTexts: string[][] = []
+
+  for (let i = 0; i < penetrationValues.length; i++) {
+    const row: number[] = []
+    const hoverRow: string[] = []
+    const pen = penetrationValues[i]!
+
+    for (let j = 0; j < damageValues.length; j++) {
+      const dmg = damageValues[j]!
+
+      const attackParams = {
+        armorPenetration: pen / 100,
+        damagePerShot: dmg,
+        damageType: props.damageType,
+      }
+
+      const result = calculateMultiLayerDamage(filteredLayers, attackParams)
+
+      // 验证：期望伤害不应超过单发伤害
+      if (result.expectedDamage > dmg + 0.001) {
+        console.error('曲面计算错误：期望伤害超过单发伤害', {
+          expectedDamage: result.expectedDamage,
+          damagePerShot: dmg,
+          penetration: pen,
+        })
+      }
+
+      row.push(result.expectedDamage)
+
+      // 构建详细的悬停文本
+      const damageStatesText = result.damageStates
+        .sort((a, b) => a.damageMultiplier - b.damageMultiplier)
+        .map((state) => {
+          const percent = (state.damageMultiplier * 100).toFixed(0)
+          const prob = (state.probability * 100).toFixed(2)
+          return `  ${percent}%伤害: ${prob}%`
+        })
+        .join('<br>')
+
+      const hoverText = [
+        `<b>${armorSet.name}</b>`,
+        `----------------`,
+        `<b>护甲穿透:</b> ${pen}%`,
+        `<b>单发伤害:</b> ${dmg}`,
+        `----------------`,
+        `<b>伤害分布:</b>`,
+        damageStatesText,
+        `----------------`,
+        `<b>期望受伤:</b> ${result.expectedDamage.toFixed(2)}`,
+      ].join('<br>')
+
+      hoverRow.push(hoverText)
+    }
+    zData.push(row)
+    hoverTexts.push(hoverRow)
+  }
+
+  // 计算最大期望伤害（用于交线归一化）
+  const maxExpectedDamage = Math.max(...zData.flat())
+
+  return {
+    armorSet,
+    penetrationValues,
+    damageValues,
+    zData,
+    hoverTexts,
+    maxExpectedDamage,
+  }
+}
+
+// 绘制3D图表
 function renderChart() {
-  if (!chartContainer.value || armorSetsData.value.length === 0) return
+  if (!chartContainer.value || !props.armorSets || props.armorSets.length === 0) return
 
   const plotData: Plotly.Data[] = []
 
-  // 显示最多2个护甲套装的曲面
-  const displayedSets = armorSetsData.value.slice(0, 2)
+  // 先为所有护甲套装生成曲面数据（最多2个）
+  const surfaceDataCache = props.armorSets
+    .slice(0, 2)
+    .map((armorSet) => generateArmorSurfaceData(armorSet))
 
-  displayedSets.forEach((setData, index) => {
-    const { armorSet, damageCurve } = setData
-    const { penetrationValues, damageValues, expectedDamageGrid } = damageCurve
+  // 为每个护甲套装创建一个曲面
+  surfaceDataCache.forEach((surfaceData, index) => {
+    const { armorSet, penetrationValues, damageValues, zData, hoverTexts } = surfaceData
 
-    // 数据结构：expectedDamageGrid[penetrationIndex][damageIndex]
+    // 数据结构：zData[penetrationIndex][damageIndex]
     // 目标映射：x=penetrationValues, y=damageValues, z=expectedDamage
     // Plotly 要求：z[i][j] 对应 y[i] 和 x[j]（第一维=Y轴，第二维=X轴）
     // 因此需要转置：将 [penetration][damage] 转为 [damage][penetration]
-    const zDataTransposed = transposeMatrix(expectedDamageGrid)
+    const zDataTransposed = transposeMatrix(zData)
 
     plotData.push({
-      type: 'surface' as const,
-      x: penetrationValues,
-      y: damageValues,
-      z: zDataTransposed,
-      colorscale: 'Viridis' as const,
+      type: 'surface',
       name: armorSet.name,
-      hovertemplate: '护甲穿透: %{x}%<br>单发伤害: %{y}<br>期望受伤: %{z:.2f}<extra></extra>',
+      x: penetrationValues, // 护甲穿透
+      y: damageValues, // 单发伤害
+      z: zDataTransposed, // 期望受伤
+      customdata: hoverTexts,
+      hovertemplate: '%{customdata}<extra></extra>',
+      colorscale: 'Viridis',
       showscale: index === 0, // 只显示第一个颜色条
       opacity: 0.85,
       colorbar:
@@ -101,22 +170,19 @@ function renderChart() {
   })
 
   // 如果有两个护甲套装，绘制交线
-  if (displayedSets.length === 2) {
-    const set1 = displayedSets[0]!
-    const set2 = displayedSets[1]!
+  if (surfaceDataCache.length === 2) {
+    const surface1 = surfaceDataCache[0]!
+    const surface2 = surfaceDataCache[1]!
 
     const intersectionCurves = calculateSurfaceIntersection(
-      set1.damageCurve.expectedDamageGrid,
-      set2.damageCurve.expectedDamageGrid,
-      set1.damageCurve.penetrationValues,
-      set1.damageCurve.damageValues,
+      surface1.zData,
+      surface2.zData,
+      surface1.penetrationValues,
+      surface1.damageValues,
       {
         x: 100, // 穿透范围 0-100%
-        y: Math.max(...set1.damageCurve.damageValues), // 伤害范围
-        z: Math.max(
-          ...set1.damageCurve.expectedDamageGrid.flat(),
-          ...set2.damageCurve.expectedDamageGrid.flat(),
-        ),
+        y: Math.max(...surface1.damageValues), // 伤害范围
+        z: Math.max(surface1.maxExpectedDamage, surface2.maxExpectedDamage),
       },
     )
 
@@ -124,12 +190,12 @@ function renderChart() {
     intersectionCurves.forEach((curve, curveIndex) => {
       if (curve.x.length > 0) {
         plotData.push({
-          type: 'scatter3d' as const,
-          mode: 'lines' as const,
+          type: 'scatter3d',
+          mode: 'lines',
           name:
             curveIndex === 0
-              ? `${set1.armorSet.name} ∩ ${set2.armorSet.name}`
-              : `${set1.armorSet.name} ∩ ${set2.armorSet.name} (${curveIndex + 1})`,
+              ? `${surface1.armorSet.name} ∩ ${surface2.armorSet.name}`
+              : `${surface1.armorSet.name} ∩ ${surface2.armorSet.name} (${curveIndex + 1})`,
           x: curve.x,
           y: curve.y,
           z: curve.z,
@@ -148,12 +214,20 @@ function renderChart() {
     })
   }
 
+  // 伤害类型标签
+  const damageTypeLabels = {
+    blunt: '钝器',
+    sharp: '利器',
+    heat: '热能',
+  }
+  const damageTypeLabel = damageTypeLabels[props.damageType]
+
   const layout: Partial<Plotly.Layout> = {
     title: {
       text:
-        displayedSets.length === 2
-          ? `护甲对比 - ${damageTypeLabel.value}伤害受伤期望`
-          : `${displayedSets[0]?.armorSet.name || ''} - ${damageTypeLabel.value}伤害受伤期望`,
+        surfaceDataCache.length === 2
+          ? `护甲对比 - ${damageTypeLabel}伤害受伤期望`
+          : `${surfaceDataCache[0]?.armorSet.name || ''} - ${damageTypeLabel}伤害受伤期望`,
       font: { size: 18 },
     },
     autosize: true,
@@ -194,9 +268,14 @@ function renderChart() {
   })
 }
 
-watch(() => [props.armorSets, props.damageType, props.selectedBodyPart], renderChart, {
-  deep: true,
-})
+// 监听参数变化，重新绘制
+watch(
+  () => [props.armorSets, props.damageType, props.selectedBodyPart],
+  () => {
+    renderChart()
+  },
+  { deep: true },
+)
 
 // 监听容器尺寸变化（包括 splitter 拖动）
 useResizeObserver(chartContainer, () => {
