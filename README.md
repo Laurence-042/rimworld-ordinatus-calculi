@@ -1,5 +1,7 @@
 # RimWorld 计算仪典：破甲者之歌・留命者之吟
 
+[TOC]
+
 > RimWorld Ordinatus Calculi：Song of the Breaker ・ Chant of the Keeper
 
 一个基于 Vue 3 + TypeScript 的 RimWorld 战斗机制计算器，用于计算给定武器在不同的距离/护甲情况下的DPS，以及给定护甲组合在不同单发伤害/穿甲情况下的受伤期望。
@@ -223,10 +225,24 @@ SMW 查询乃导航之仪，不为启示之源；
 **致破甲者**：愿你的子弹找到缝隙  
 **致留命者**：愿你的护甲承载希望
 
-# TODO
+## TODO
 
 - [ ] 看看能不能米利拉帝国的数据导进来
 - [x] 用更灵活的splitter而非固定宽度布局
 - [x] 减小input，增大slider
 - [ ] 加俩截图
 - [ ] i18n
+
+## 一些有趣的事实
+
+在面对原版的护甲杀手-电荷标枪（35%穿甲）和更低穿甲的武器时，普通品质的防弹夹克和防弹夹板组成的防弹套在对躯干的保护上优于普通品质的海军甲
+> 但这不代表有海军甲不穿去穿防弹套。因为防弹套是不保护双臂的，脖颈也只有防弹夹克提供单层保护，所以不想飞头的话，有海军甲还是好好穿上——除非你的敌人是某些mod里那种就算减伤50%也能飞头的伤害数值怪
+<img width="1920" height="909" alt="image" src="https://github.com/user-attachments/assets/2f1e7b20-1d88-4ae1-9a03-6fdc42ba3d55" />
+
+不同于流行的“极差巨弓一箭射穿大师级海军头盔”meme，实际上即使是一般的巨弓（15%穿甲）也不可能打穿大师级海军头盔
+> 但极佳的海军头盔有大概18%的概率无法完全免疫巨弓的射击，会在减伤后仍受到8、9点钝器伤害
+<img width="1920" height="916" alt="322f940d7227b9b3165e31cbe060c947" src="https://github.com/user-attachments/assets/6a168cd6-3967-4d24-85d7-098a0a98b46a" />
+
+在同为大师级品质的情况下，链霰即使在面对高护甲下平均DPS也高于速射啊
+> 不过链霰确实手太短了，而且一般也没啥能抗住一轮速射队的齐射，所以实际使用时速射的长后摇一般不会造成什么影响，也正因如此速射是神
+<img width="1920" height="910" alt="image" src="https://github.com/user-attachments/assets/1b577f26-4855-433d-9ca9-5bf18394be53" />
