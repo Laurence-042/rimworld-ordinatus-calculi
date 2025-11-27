@@ -90,7 +90,11 @@ export interface ArmorSet {
   color: string
 }
 
-export type DamageType = 'blunt' | 'sharp' | 'heat'
+export enum DamageType {
+  Blunt = 'blunt',
+  Sharp = 'sharp',
+  Heat = 'heat',
+}
 
 export interface AttackParams {
   /** 武器护甲穿透 (0-1) */

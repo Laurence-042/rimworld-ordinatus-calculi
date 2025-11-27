@@ -1,6 +1,6 @@
 import type { SimplifiedWeaponParams } from '@/types/weapon'
-import type { ArmorLayer, AttackParams, DamageResult, DamageState, DamageType } from '@/types/armor'
-import { ApparelLayer } from '@/types/armor'
+import type { ArmorLayer, AttackParams, DamageResult, DamageState } from '@/types/armor'
+import { ApparelLayer, DamageType } from '@/types/armor'
 import { ApparelQualityMultipliers } from '@/types/quality'
 
 /**
@@ -26,9 +26,9 @@ export function getActualArmorValue(layer: ArmorLayer, damageType: DamageType): 
   const armorMultiplier = qualityMultipliers.armor
 
   let baseArmor: number
-  if (damageType === 'blunt') {
+  if (damageType === DamageType.Blunt) {
     baseArmor = layer.armorBlunt
-  } else if (damageType === 'sharp') {
+  } else if (damageType === DamageType.Sharp) {
     baseArmor = layer.armorSharp
   } else {
     baseArmor = layer.armorHeat
@@ -423,7 +423,7 @@ export function calculateMultiLayerDamage(
         newStates.push({
           damageMultiplier: state.damageMultiplier * 0.5,
           probability: state.probability * halfDamageProb,
-          damageType: state.damageType === 'sharp' ? 'blunt' : state.damageType,
+          damageType: state.damageType === DamageType.Sharp ? DamageType.Blunt : state.damageType,
         })
       }
 

@@ -13,7 +13,7 @@ import {
   type MaterialDataSource,
 } from '@/utils/materialDataParser'
 import { MaterialTag, parseAcceptedMaterials } from '@/types/material'
-import { type ArmorSet, ApparelLayer, getApparelLayerName } from '@/types/armor'
+import { type ArmorSet, ApparelLayer, DamageType, getApparelLayerName } from '@/types/armor'
 import { BodyPart, BodyPartNames, buildBodyPartTree } from '@/types/bodyPart'
 import {
   buildCoverageMap,
@@ -44,7 +44,7 @@ const qualityOptions = getQualityOptions()
 
 // 状态
 const chartMode = ref<'2d' | '3d'>('3d')
-const damageType = ref<'blunt' | 'sharp' | 'heat'>('sharp')
+const damageType = ref<DamageType>(DamageType.Sharp)
 const fixedPenetration = ref(35) // 用于2D模式
 const fixedDamage = ref(15) // 用于2D模式
 
@@ -302,9 +302,9 @@ const getLayerActualArmor = (layer: ArmorSet['layers'][number]) => {
   }
 
   return {
-    armorSharp: getActualArmorValue(actualArmorLayer, 'sharp') * 100, // 转回百分比
-    armorBlunt: getActualArmorValue(actualArmorLayer, 'blunt') * 100,
-    armorHeat: getActualArmorValue(actualArmorLayer, 'heat') * 100,
+    armorSharp: getActualArmorValue(actualArmorLayer, DamageType.Sharp) * 100, // 转回百分比
+    armorBlunt: getActualArmorValue(actualArmorLayer, DamageType.Blunt) * 100,
+    armorHeat: getActualArmorValue(actualArmorLayer, DamageType.Heat) * 100,
   }
 }
 
@@ -523,9 +523,9 @@ onMounted(async () => {
 
             <el-form-item>
               <el-radio-group v-model="damageType">
-                <el-radio-button value="sharp">利器</el-radio-button>
-                <el-radio-button value="blunt">钝器</el-radio-button>
-                <el-radio-button value="heat">热能</el-radio-button>
+                <el-radio-button :value="DamageType.Sharp">利器</el-radio-button>
+                <el-radio-button :value="DamageType.Blunt">钝器</el-radio-button>
+                <el-radio-button :value="DamageType.Heat">热能</el-radio-button>
               </el-radio-group>
             </el-form-item>
 
