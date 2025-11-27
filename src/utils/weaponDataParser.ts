@@ -49,13 +49,13 @@ function parseTime(timeStr: string): number {
  * 将 CSV 数据转换为武器参数
  */
 export function convertCSVToWeaponParams(csvData: WeaponCSVData): {
-  name: string
+  defName: string
   params: WeaponParams
 } {
   return {
-    name: csvData.label,
+    defName: csvData.defName,
     params: {
-      defName: csvData.defName,
+      label: csvData.label,
       armorPenetration: parsePercentage(csvData.armorPenetration),
       burstCount: parseNumber(csvData.burstShotCount) || 1,
       burstTicks: parseNumber(csvData.ticksBetweenBurstShots),
@@ -91,7 +91,7 @@ export function isValidWeapon(csvData: WeaponCSVData): boolean {
  */
 export async function parseWeaponDataFromCSV(
   csvContent: string,
-): Promise<Array<{ name: string; params: WeaponParams }>> {
+): Promise<Array<{ defName: string; params: WeaponParams }>> {
   const Papa = await import('papaparse')
   const parsed = Papa.parse<WeaponCSVData>(csvContent, {
     header: true,
@@ -108,8 +108,9 @@ export async function parseWeaponDataFromCSV(
         (weapon.params.accuracyShort || weapon.params.accuracyMedium || weapon.params.accuracyLong),
     )
     .map((weapon) => ({
-      name: weapon.name,
+      defName: weapon.defName,
       params: {
+        label: weapon.params.label,
         armorPenetration: weapon.params.armorPenetration || 0,
         burstCount: weapon.params.burstCount || 1,
         burstTicks: weapon.params.burstTicks || 0,

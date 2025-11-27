@@ -7,6 +7,12 @@ import { MOD_CONFIGS, OUTPUT_DIR_OVERRIDE, DEBUG_OPTIONS } from './config.js'
 const DEFAULT_OUTPUT_DIR = path.join(__dirname, '..', '..', 'src', 'utils', 'weapon_data')
 const OUTPUT_DIR = OUTPUT_DIR_OVERRIDE || DEFAULT_OUTPUT_DIR
 
+// 语言映射配置
+const LANGUAGE_MAP: Record<string, string> = {
+  'ChineseSimplified (简体中文)': 'zh-CN',
+  English: 'en-US',
+}
+
 interface ThingDefNode {
   defName?: string
   parentName?: string
@@ -52,6 +58,7 @@ interface ProjectileNode {
 class ModDataParser {
   private thingDefMap: Map<string, ThingDefNode> = new Map()
   private projectileMap: Map<string, ProjectileNode> = new Map()
+  private languageData: Map<string, Map<string, string>> = new Map() // language -> (defName.property -> translation)
   private modName: string = ''
   private modDir: string
 
@@ -111,10 +118,13 @@ class ModDataParser {
       `解析完成: ${this.thingDefMap.size} 个ThingDef, ${this.projectileMap.size} 个Projectile`,
     )
 
-    // 3. 解析继承关系
+    // 3. 解析语言文件
+    await this.parseLanguageFiles()
+
+    // 4. 解析继承关系
     this.resolveInheritance()
 
-    // 4. 提取武器数据并生成CSV
+    // 5. 提取武器数据并生成CSV
     await this.generateWeaponCSV()
   }
 
@@ -139,6 +149,123 @@ class ModDataParser {
     }
 
     return results
+  }
+
+  private findLanguagesDirectories(dir: string, maxDepth: number = 2): string[] {
+    const results: string[] = []
+
+    const search = (currentDir: string, depth: number) => {
+      if (!fs.existsSync(currentDir) || depth > maxDepth) {
+        return
+      }
+
+      const entries = fs.readdirSync(currentDir, { withFileTypes: true })
+
+      // 检查当前目录是否包含 Languages 目录
+      for (const entry of entries) {
+        if (entry.isDirectory() && entry.name === 'Languages') {
+          results.push(path.join(currentDir, entry.name))
+        }
+      }
+
+      // 如果还没到最大深度，继续搜索子目录
+      if (depth < maxDepth) {
+        for (const entry of entries) {
+          if (entry.isDirectory() && entry.name !== 'Languages') {
+            search(path.join(currentDir, entry.name), depth + 1)
+          }
+        }
+      }
+    }
+
+    search(dir, 0)
+    return results
+  }
+
+  private async parseLanguageFiles(): Promise<void> {
+    console.log('开始解析语言文件...')
+
+    const languagesDirs = this.findLanguagesDirectories(this.modDir)
+    if (languagesDirs.length === 0) {
+      console.log('未找到 Languages 目录')
+      return
+    }
+
+    console.log(`找到 ${languagesDirs.length} 个 Languages 目录:`)
+    languagesDirs.forEach((dir) => console.log(`  - ${dir}`))
+
+    // 为每种语言创建翻译映射
+    const languageTranslations = new Map<string, Map<string, string>>()
+
+    // 遍历所有 Languages 目录
+    for (const languagesDir of languagesDirs) {
+      const languageFolders = fs.readdirSync(languagesDir, { withFileTypes: true })
+
+      for (const folder of languageFolders) {
+        if (!folder.isDirectory()) continue
+
+        const languageCode = LANGUAGE_MAP[folder.name]
+        if (!languageCode) {
+          if (DEBUG_OPTIONS.verbose) {
+            console.log(`跳过不支持的语言: ${folder.name}`)
+          }
+          continue
+        }
+
+        console.log(`解析语言: ${folder.name} (${languageCode}) 从 ${languagesDir}`)
+
+        const languagePath = path.join(languagesDir, folder.name)
+        const xmlFiles = this.scanXMLFiles(languagePath)
+
+        // 获取或创建该语言的翻译映射
+        let translations = languageTranslations.get(languageCode)
+        if (!translations) {
+          translations = new Map<string, string>()
+          languageTranslations.set(languageCode, translations)
+        }
+
+        for (const xmlFile of xmlFiles) {
+          await this.parseLanguageFile(xmlFile, translations)
+        }
+      }
+    }
+
+    // 将合并后的翻译存储到 languageData
+    for (const [languageCode, translations] of languageTranslations.entries()) {
+      this.languageData.set(languageCode, translations)
+      console.log(`  ${languageCode}: 共 ${translations.size} 个翻译条目`)
+    }
+  }
+
+  private async parseLanguageFile(
+    filePath: string,
+    translations: Map<string, string>,
+  ): Promise<void> {
+    try {
+      const content = fs.readFileSync(filePath, 'utf-8')
+      const result = await parseStringPromise(content, {
+        explicitArray: false,
+        mergeAttrs: true,
+      })
+
+      if (!result.LanguageData) {
+        return
+      }
+
+      const languageData = result.LanguageData
+
+      // 遍历 LanguageData 中的所有键值对
+      for (const [key, value] of Object.entries(languageData)) {
+        if (typeof value === 'string' && key.includes('.')) {
+          // key 格式为 "DefName.property"
+          translations.set(key, value)
+        }
+      }
+    } catch (error) {
+      if (DEBUG_OPTIONS.verbose) {
+        console.warn(`解析语言文件失败: ${filePath}`, error)
+      }
+    }
   }
 
   private async parseXMLFile(filePath: string): Promise<void> {
@@ -356,7 +483,7 @@ class ModDataParser {
   private async generateWeaponCSV(): Promise<void> {
     console.log('开始生成武器CSV...')
 
-    const weapons: WeaponCSVData[] = []
+    const weapons: ThingDefNode[] = []
 
     for (const node of this.thingDefMap.values()) {
       // 跳过抽象定义和非武器
@@ -369,22 +496,32 @@ class ModDataParser {
         continue
       }
 
-      const row = this.createWeaponRow(node)
-      if (row) {
-        weapons.push(row)
-      }
+      weapons.push(node)
     }
 
     console.log(`找到 ${weapons.length} 个武器定义`)
 
-    if (weapons.length > 0) {
-      await this.writeCSV(weapons)
-    } else {
+    if (weapons.length === 0) {
       console.warn('未找到有效的武器定义')
+      return
+    }
+
+    // 生成默认语言（使用原始label）的CSV
+    const defaultWeapons = weapons.map((node) => this.createWeaponRow(node, null))
+    await this.writeCSV(defaultWeapons, this.modName)
+
+    // 为每种语言生成单独的CSV
+    for (const [languageCode, translations] of this.languageData.entries()) {
+      console.log(`生成 ${languageCode} 语言的CSV...`)
+      const localizedWeapons = weapons.map((node) => this.createWeaponRow(node, translations))
+      await this.writeCSV(localizedWeapons, `${this.modName}_${languageCode}`)
     }
   }
 
-  private createWeaponRow(weapon: ThingDefNode): WeaponCSVData | null {
+  private createWeaponRow(
+    weapon: ThingDefNode,
+    translations: Map<string, string> | null,
+  ): WeaponCSVData {
     // 获取子弹数据
     let damage = ''
     let armorPenetration = ''
@@ -404,55 +541,65 @@ class ModDataParser {
       }
     }
 
+    // 获取翻译后的label（如果有翻译数据）
+    let label = weapon.label || weapon.defName || ''
+    if (translations && weapon.defName) {
+      const translationKey = `${weapon.defName}.label`
+      const translatedLabel = translations.get(translationKey)
+      if (translatedLabel) {
+        label = translatedLabel
+      }
+    }
+
     // 格式化数据
-    const formatPercent = (val?: number) => (val !== undefined ? `${Math.round(val * 100)}%` : '')
     const formatNumber = (val?: number) => (val !== undefined ? val.toString() : '')
-    const formatTime = (val?: number) => (val !== undefined ? `${val.toFixed(2)}秒` : '')
 
     const row: WeaponCSVData = {
-      名称: weapon.label || weapon.defName || '',
-      弹药伤害: damage,
-      护甲穿透: armorPenetration,
-      抑止能力: stoppingPower,
-      瞄准时间: formatTime(weapon.warmupTime),
-      冷却时间: formatTime(weapon.cooldown),
-      '射程(tiles)': formatNumber(weapon.range),
-      连发数量: formatNumber(weapon.burstShotCount),
-      '连发间隔(ticks)': formatNumber(weapon.ticksBetweenBurstShots),
-      '精度（贴近）': formatPercent(weapon.accuracyTouch),
-      '精度（近）': formatPercent(weapon.accuracyShort),
-      '精度（中）': formatPercent(weapon.accuracyMedium),
-      '精度（远）': formatPercent(weapon.accuracyLong),
-      市场价值: weapon.marketValue !== undefined ? `"${Math.round(weapon.marketValue)} 银"` : '',
+      defName: weapon.defName || '',
+      label: label,
+      damage: damage,
+      armorPenetration: armorPenetration,
+      stoppingPower: stoppingPower,
+      warmupTime: formatNumber(weapon.warmupTime),
+      cooldown: formatNumber(weapon.cooldown),
+      range: formatNumber(weapon.range),
+      burstShotCount: formatNumber(weapon.burstShotCount),
+      ticksBetweenBurstShots: formatNumber(weapon.ticksBetweenBurstShots),
+      accuracyTouch: formatNumber(weapon.accuracyTouch),
+      accuracyShort: formatNumber(weapon.accuracyShort),
+      accuracyMedium: formatNumber(weapon.accuracyMedium),
+      accuracyLong: formatNumber(weapon.accuracyLong),
+      marketValue: formatNumber(weapon.marketValue),
     }
 
     return row
   }
 
-  private async writeCSV(data: WeaponCSVData[]): Promise<void> {
+  private async writeCSV(data: WeaponCSVData[], fileName: string): Promise<void> {
     // 确保输出目录存在
     if (!fs.existsSync(OUTPUT_DIR)) {
       fs.mkdirSync(OUTPUT_DIR, { recursive: true })
     }
 
-    const outputPath = path.join(OUTPUT_DIR, `${this.modName}.csv`)
+    const outputPath = path.join(OUTPUT_DIR, `${fileName}.csv`)
 
     // CSV头部
     const headers = [
-      '名称',
-      '弹药伤害',
-      '护甲穿透',
-      '抑止能力',
-      '瞄准时间',
-      '冷却时间',
-      '射程(tiles)',
-      '连发数量',
-      '连发间隔(ticks)',
-      '精度（贴近）',
-      '精度（近）',
-      '精度（中）',
-      '精度（远）',
-      '市场价值',
+      'defName',
+      'label',
+      'damage',
+      'armorPenetration',
+      'stoppingPower',
+      'warmupTime',
+      'cooldown',
+      'range',
+      'burstShotCount',
+      'ticksBetweenBurstShots',
+      'accuracyTouch',
+      'accuracyShort',
+      'accuracyMedium',
+      'accuracyLong',
+      'marketValue',
     ]
 
     // 构建CSV内容

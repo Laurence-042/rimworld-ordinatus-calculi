@@ -164,7 +164,7 @@ let cachedDataSources: WeaponDataSource[] | null = null
 async function loadWeaponsFromCSV(csvContent: string): Promise<WeaponPreset[]> {
   const parsedWeapons = await parseWeaponDataFromCSV(csvContent)
   return parsedWeapons.map((weapon) => ({
-    name: weapon.name,
+    name: weapon.defName,
     params: weapon.params,
   }))
 }

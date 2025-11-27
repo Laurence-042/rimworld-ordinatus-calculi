@@ -2,6 +2,14 @@
 
 从RimWorld MOD的XML定义文件中提取武器数据，生成与Vanilla.csv格式兼容的CSV文件。
 
+## 功能特性
+
+- ✅ 解析ThingDef继承树，自动填充父类属性
+- ✅ 提取武器统计数据（精度、冷却、连发等）
+- ✅ 关联子弹数据（伤害、穿甲、抑止）
+- ✅ **多语言支持**：自动生成中文(zh-CN)和英文(en-US)版本的CSV文件
+- ✅ 批量处理多个MOD
+
 ## 快速开始
 
 ### 1. 配置MOD路径
@@ -36,15 +44,79 @@ npm run parse-mod
 
 ### 3. 查看结果
 
-生成的CSV文件位于：`src/utils/weapon_data/<MOD名称>.csv`
+生成的CSV文件位于：`src/utils/weapon_data/`
+
+**输出文件格式：**
+
+- `<MOD名称>.csv` - 使用原始英文label
+- `<MOD名称>_zh-CN.csv` - 使用中文翻译的label（如果存在）
+- `<MOD名称>_en-US.csv` - 使用英文翻译的label（如果存在）
 
 ## 工作原理
 
 1. **扫描XML** - 递归扫描MOD目录下所有XML文件
 2. **建立映射** - 解析ThingDef节点，建立defName到节点的映射
-3. **依赖解析** - 根据ParentName建立继承树，递归填充缺失属性
-4. **数据提取** - 识别武器定义，通过defaultProjectile查找子弹数据
-5. **生成CSV** - 组合武器和子弹属性，格式化并输出
+3. **解析语言文件** - 扫描 `Languages/` 目录，提取各语言的翻译数据
+4. **依赖解析** - 根据ParentName建立继承树，递归填充缺失属性
+5. **数据提取** - 识别武器定义，通过defaultProjectile查找子弹数据
+6. **生成CSV** - 组合武器和子弹属性，为每种语言生成对应的CSV文件
+
+## 多语言支持
+
+工具会自动搜索 MOD 目录下（最多 2 层深度）的所有 `Languages/` 目录，并扫描其直接子目录获取语言文件：
+
+- `Languages/ChineseSimplified (简体中文)/` → 生成 `*_zh-CN.csv`
+- `Languages/English/` → 生成 `*_en-US.csv`
+
+**多 Languages 目录支持：**
+
+工具会合并所有找到的 `Languages` 目录中的翻译。例如：
+
+```
+D:\SteamLibrary\steamapps\common\RimWorld\Data/
+├── Languages/                    # 根目录的语言文件
+│   ├── ChineseSimplified (简体中文)/
+│   └── English/
+├── Core/
+│   └── Defs/
+└── Anomaly/
+    └── Languages/                # DLC 的语言文件
+        ├── ChineseSimplified (简体中文)/
+        └── English/
+```
+
+工具会找到并解析 `Data/Languages` 和 `Data/Anomaly/Languages` 两个目录中的所有翻译文件，自动合并为完整的翻译数据。
+
+**目录结构示例：**
+
+```
+MOD目录/
+├── Defs/           # ThingDef 定义
+├── Languages/      # 可能在根目录
+│   ├── ChineseSimplified (简体中文)/
+│   └── English/
+或
+MOD目录/
+├── 1.5/
+│   ├── Defs/
+│   └── Languages/  # 也可能在子目录
+│       ├── ChineseSimplified (简体中文)/
+│       └── English/
+```
+
+工具会自动找到 `Languages` 目录，无论它在哪一级。
+
+**语言文件示例：**
+
+```xml
+<!-- Languages/ChineseSimplified (简体中文)/DefInjected/ThingDef/Weapons.xml -->
+<LanguageData>
+  <Gun_ChargeRifle.label>电荷步枪</Gun_ChargeRifle.label>
+  <Gun_AssaultRifle.label>突击步枪</Gun_AssaultRifle.label>
+</LanguageData>
+```
+
+生成的 `*_zh-CN.csv` 会使用 "电荷步枪" 作为 `Gun_ChargeRifle` 的 `label`。
 
 ## 解析示例
 

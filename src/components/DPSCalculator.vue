@@ -29,6 +29,7 @@ const WEAPON_COLORS = [
 ]
 
 const DEFAULT_WEAPON_PARAMS = {
+  label: '', // 默认为空字符串
   armorPenetration: 15,
   burstCount: 3,
   burstTicks: 8,

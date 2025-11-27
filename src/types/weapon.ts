@@ -9,6 +9,7 @@ import { QualityCategory } from './quality'
  * 武器基础参数（游戏数据）
  */
 export interface WeaponParams {
+  label: string // 显示名称
   armorPenetration: number // 护甲穿透 (0-200，对应0%-200%)
   burstCount: number // 连发数量
   burstTicks: number // 连发间隔 (ticks)
