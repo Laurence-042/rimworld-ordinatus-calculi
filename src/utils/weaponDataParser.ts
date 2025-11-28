@@ -93,12 +93,7 @@ async function parseWeaponCSV(
  * @returns 武器数据源数组
  */
 export async function getWeaponDataSources(locale: string): Promise<WeaponDataSource[]> {
-  const csvFilesGlob = import.meta.glob('./weapon_data/**/*.csv', {
-    query: '?raw',
-    eager: false,
-  })
-
-  const modCSVMap = await loadCSVByLocale(DataSourceType.Weapon, locale, csvFilesGlob)
+  const modCSVMap = await loadCSVByLocale(DataSourceType.Weapon, locale)
 
   // 按数据源ID分组
   const dataSourceMap = new Map<string, Array<{ defName: string; params: WeaponParams }>>()

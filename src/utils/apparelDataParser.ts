@@ -112,12 +112,7 @@ async function parseApparelCSV(csvContent: string): Promise<ClothingData[]> {
  * @returns 衣物数据源数组
  */
 export async function getApparelDataSources(locale: string): Promise<ClothingDataSource[]> {
-  const csvFilesGlob = import.meta.glob('./apparel_data/**/*.csv', {
-    query: '?raw',
-    eager: false,
-  })
-
-  const modCSVMap = await loadCSVByLocale(DataSourceType.Apparel, locale, csvFilesGlob)
+  const modCSVMap = await loadCSVByLocale(DataSourceType.Apparel, locale)
 
   // 按数据源ID分组
   const dataSourceMap = new Map<string, ClothingData[]>()

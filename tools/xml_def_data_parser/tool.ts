@@ -1,45 +1,23 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import { parseStringPromise } from 'xml2js'
-import { DataSourceType, DATA_SOURCE_PATHS } from '../../src/utils/dataSourceConfig'
-import { MOD_CONFIGS, OUTPUT_DIR_OVERRIDE, DEBUG_OPTIONS } from './config'
+import {
+  DataSourceType,
+  type DataManifest,
+  type ModDataConfig,
+} from '../../src/utils/dataSourceConfig'
+import { MOD_CONFIGS, DEBUG_OPTIONS } from './config'
 import { BaseThingDefNode, BaseParserUtils, LANGUAGE_MAP } from './baseParser'
 import { ProjectileNode, ProjectileParser } from './projectileParser'
 import { WeaponThingDefNode, isWeaponNode, WeaponParser } from './weaponParser'
 import { ApparelThingDefNode, isApparelNode, ApparelParser } from './apparelParser'
 import { MaterialThingDefNode, isMaterialNode, MaterialParser } from './materialParser'
 
-const DEFAULT_WEAPON_OUTPUT_DIR = path.join(
-  __dirname,
-  '..',
-  '..',
-  'src',
-  'utils',
-  DATA_SOURCE_PATHS[DataSourceType.Weapon],
-)
-const DEFAULT_APPAREL_OUTPUT_DIR = path.join(
-  __dirname,
-  '..',
-  '..',
-  'src',
-  'utils',
-  DATA_SOURCE_PATHS[DataSourceType.Apparel],
-)
-const DEFAULT_MATERIAL_OUTPUT_DIR = path.join(
-  __dirname,
-  '..',
-  '..',
-  'src',
-  'utils',
-  DATA_SOURCE_PATHS[DataSourceType.Material],
-)
-const WEAPON_OUTPUT_DIR = OUTPUT_DIR_OVERRIDE || DEFAULT_WEAPON_OUTPUT_DIR
-const APPAREL_OUTPUT_DIR = OUTPUT_DIR_OVERRIDE
-  ? path.join(OUTPUT_DIR_OVERRIDE, '..', DATA_SOURCE_PATHS[DataSourceType.Apparel])
-  : DEFAULT_APPAREL_OUTPUT_DIR
-const MATERIAL_OUTPUT_DIR = OUTPUT_DIR_OVERRIDE
-  ? path.join(OUTPUT_DIR_OVERRIDE, '..', DATA_SOURCE_PATHS[DataSourceType.Material])
-  : DEFAULT_MATERIAL_OUTPUT_DIR
+// 数据输出目录（public/data/）
+const PUBLIC_DATA_DIR = path.join(__dirname, '..', '..', 'public', 'data')
+const WEAPON_OUTPUT_DIR = path.join(PUBLIC_DATA_DIR, 'weapon')
+const APPAREL_OUTPUT_DIR = path.join(PUBLIC_DATA_DIR, 'apparel')
+const MATERIAL_OUTPUT_DIR = path.join(PUBLIC_DATA_DIR, 'material')
 
 // 通用ThingDef节点类型（用于解析时的临时存储）
 type ThingDefNode =
@@ -186,12 +164,99 @@ class ModDataParser {
     console.log('阶段 4: 生成CSV文件')
     console.log('='.repeat(60))
 
+    // 记录生成的MOD信息用于生成manifest
+    const generatedMods: {
+      weapon: Map<string, string[]>
+      apparel: Map<string, string[]>
+      material: Map<string, string[]>
+    } = {
+      weapon: new Map(),
+      apparel: new Map(),
+      material: new Map(),
+    }
+
     for (const modCollection of this.modDataCollections) {
       console.log(`\n生成 ${modCollection.name} 的数据文件...`)
-      await this.generateWeaponCSV(modCollection)
-      await this.generateClothingCSV(modCollection)
-      await this.generateMaterialCSV(modCollection)
+      const weaponLocales = await this.generateWeaponCSV(modCollection)
+      const apparelLocales = await this.generateClothingCSV(modCollection)
+      const materialLocales = await this.generateMaterialCSV(modCollection)
+
+      if (weaponLocales.length > 0) {
+        generatedMods.weapon.set(modCollection.outputName, weaponLocales)
+      }
+      if (apparelLocales.length > 0) {
+        generatedMods.apparel.set(modCollection.outputName, apparelLocales)
+      }
+      if (materialLocales.length > 0) {
+        generatedMods.material.set(modCollection.outputName, materialLocales)
+      }
     }
+
+    // 生成manifest.json文件
+    console.log('\n阶段 5: 生成manifest.json文件...')
+    this.generateManifests(generatedMods)
+  }
+
+  /**
+   * 生成统一的manifest.json文件
+   */
+  private generateManifests(generatedMods: {
+    weapon: Map<string, string[]>
+    apparel: Map<string, string[]>
+    material: Map<string, string[]>
+  }): void {
+    // 收集所有MOD名称
+    const allModNames = new Set<string>()
+    for (const mods of [generatedMods.weapon, generatedMods.apparel, generatedMods.material]) {
+      for (const modName of mods.keys()) {
+        allModNames.add(modName)
+      }
+    }
+
+    // 为每个MOD构建配置
+    const modConfigs: ModDataConfig[] = []
+    for (const modName of allModNames) {
+      const types: DataSourceType[] = []
+      const localesSet = new Set<string>()
+
+      // 检查weapon
+      const weaponLocales = generatedMods.weapon.get(modName)
+      if (weaponLocales && weaponLocales.length > 0) {
+        types.push(DataSourceType.Weapon)
+        weaponLocales.forEach((l) => localesSet.add(l))
+      }
+
+      // 检查apparel
+      const apparelLocales = generatedMods.apparel.get(modName)
+      if (apparelLocales && apparelLocales.length > 0) {
+        types.push(DataSourceType.Apparel)
+        apparelLocales.forEach((l) => localesSet.add(l))
+      }
+
+      // 检查material
+      const materialLocales = generatedMods.material.get(modName)
+      if (materialLocales && materialLocales.length > 0) {
+        types.push(DataSourceType.Material)
+        materialLocales.forEach((l) => localesSet.add(l))
+      }
+
+      if (types.length > 0) {
+        modConfigs.push({
+          name: modName,
+          locales: Array.from(localesSet),
+          types,
+        })
+      }
+    }
+
+    const manifest: DataManifest = {
+      mods: modConfigs,
+      generatedAt: new Date().toISOString(),
+    }
+
+    const manifestPath = path.join(PUBLIC_DATA_DIR, 'manifest.json')
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8')
+    console.log(`  生成统一manifest.json (${modConfigs.length} 个MOD)`)
   }
 
   /**
@@ -570,7 +635,7 @@ class ModDataParser {
     }
   }
 
-  private async generateWeaponCSV(modCollection: ModDataCollection): Promise<void> {
+  private async generateWeaponCSV(modCollection: ModDataCollection): Promise<string[]> {
     const weapons: WeaponThingDefNode[] = []
 
     // 只收集此MOD自己定义的节点
@@ -585,7 +650,7 @@ class ModDataParser {
     console.log(`  武器: ${validWeapons.length} 个`)
 
     if (validWeapons.length === 0) {
-      return
+      return []
     }
 
     // 创建 MOD 专用目录
@@ -593,6 +658,8 @@ class ModDataParser {
     if (!fs.existsSync(modOutputDir)) {
       fs.mkdirSync(modOutputDir, { recursive: true })
     }
+
+    const generatedLocales: string[] = ['en-US']
 
     // 生成默认语言（使用原始label）的CSV
     const defaultWeapons = validWeapons.map((node) =>
@@ -606,10 +673,13 @@ class ModDataParser {
         WeaponParser.createWeaponRow(node, this.projectileMap, translations),
       )
       WeaponParser.writeWeaponCSV(localizedWeapons, modOutputDir, languageCode)
+      generatedLocales.push(languageCode)
     }
+
+    return generatedLocales
   }
 
-  private async generateClothingCSV(modCollection: ModDataCollection): Promise<void> {
+  private async generateClothingCSV(modCollection: ModDataCollection): Promise<string[]> {
     const clothing: ApparelThingDefNode[] = []
 
     // 只收集此MOD自己定义的节点
@@ -624,7 +694,7 @@ class ModDataParser {
     console.log(`  衣物: ${validClothing.length} 个`)
 
     if (validClothing.length === 0) {
-      return
+      return []
     }
 
     // 创建 MOD 专用目录
@@ -632,6 +702,8 @@ class ModDataParser {
     if (!fs.existsSync(modOutputDir)) {
       fs.mkdirSync(modOutputDir, { recursive: true })
     }
+
+    const generatedLocales: string[] = ['en-US']
 
     // 生成默认语言（使用原始label）的CSV
     const defaultClothing = validClothing.map((node) => ApparelParser.createClothingRow(node, null))
@@ -643,10 +715,13 @@ class ModDataParser {
         ApparelParser.createClothingRow(node, translations),
       )
       ApparelParser.writeClothingCSV(localizedClothing, modOutputDir, languageCode)
+      generatedLocales.push(languageCode)
     }
+
+    return generatedLocales
   }
 
-  private async generateMaterialCSV(modCollection: ModDataCollection): Promise<void> {
+  private async generateMaterialCSV(modCollection: ModDataCollection): Promise<string[]> {
     const materials: MaterialThingDefNode[] = []
 
     // 只收集此MOD自己定义的节点
@@ -661,7 +736,7 @@ class ModDataParser {
     console.log(`  材料: ${validMaterials.length} 个`)
 
     if (validMaterials.length === 0) {
-      return
+      return []
     }
 
     // 创建 MOD 专用目录
@@ -669,6 +744,8 @@ class ModDataParser {
     if (!fs.existsSync(modOutputDir)) {
       fs.mkdirSync(modOutputDir, { recursive: true })
     }
+
+    const generatedLocales: string[] = ['en-US']
 
     // 生成默认语言（使用原始label）的CSV
     const defaultMaterials = validMaterials.map((node) =>
@@ -682,7 +759,10 @@ class ModDataParser {
         MaterialParser.createMaterialRow(node, translations),
       )
       MaterialParser.writeMaterialCSV(localizedMaterials, modOutputDir, languageCode)
+      generatedLocales.push(languageCode)
     }
+
+    return generatedLocales
   }
 }
 

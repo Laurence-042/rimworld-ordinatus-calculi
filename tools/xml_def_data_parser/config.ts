@@ -56,12 +56,6 @@ export const MOD_CONFIGS: ModConfig[] = [
 ]
 
 /**
- * 输出目录配置
- * 默认输出到 src/utils/weapon_data/
- */
-export const OUTPUT_DIR_OVERRIDE: string | undefined = undefined
-
-/**
  * 调试选项
  */
 export const DEBUG_OPTIONS = {

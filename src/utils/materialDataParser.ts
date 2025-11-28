@@ -118,12 +118,7 @@ export function calculateArmorFromMaterial(
 export async function getMaterialDataSources(
   locale: string = 'zh-CN',
 ): Promise<MaterialDataSource[]> {
-  const csvFilesGlob = import.meta.glob('./material_data/**/*.csv', {
-    query: '?raw',
-    eager: false,
-  })
-
-  const modCSVMap = await loadCSVByLocale(DataSourceType.Material, locale, csvFilesGlob)
+  const modCSVMap = await loadCSVByLocale(DataSourceType.Material, locale)
 
   // 按数据源ID分组
   const dataSourceMap = new Map<string, MaterialData[]>()

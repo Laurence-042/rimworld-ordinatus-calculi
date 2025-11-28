@@ -1,47 +1,26 @@
 /**
  * CSV解析通用工具函数
+ * 使用 fetch 从 public/data 目录动态加载 CSV 文件
  */
 
 import Papa from 'papaparse'
+import {
+  DataSourceType,
+  getManifestPath,
+  getCSVPath,
+  VANILLA_MODS,
+  type DataManifest,
+  type ModDataConfig,
+} from './dataSourceConfig'
+
+// Re-export for backward compatibility
+export { DataSourceType, VANILLA_MODS }
+export { normalizeModName, getModLabel } from './dataSourceConfig'
 
 /**
- * 数据源类型
+ * 全局清单缓存
  */
-export enum DataSourceType {
-  Weapon = 'weapon',
-  Apparel = 'apparel',
-  Material = 'material',
-}
-
-/**
- * 核心MOD列表（这些MOD会被合并为"Vanilla"）
- */
-export const VANILLA_MODS = ['Core', 'Royalty', 'Ideology', 'Biotech', 'Anomaly', 'Odyssey']
-
-/**
- * 数据源配置
- */
-const DATA_SOURCE_CONFIG = {
-  [DataSourceType.Weapon]: {
-    path: './weapon_data',
-    regex: /\.\/weapon_data\/([^/]+)\/([^/]+)\.csv$/,
-  },
-  [DataSourceType.Apparel]: {
-    path: './apparel_data',
-    regex: /\.\/apparel_data\/([^/]+)\/([^/]+)\.csv$/,
-  },
-  [DataSourceType.Material]: {
-    path: './material_data',
-    regex: /\.\/material_data\/([^/]+)\/([^/]+)\.csv$/,
-  },
-}
-
-/**
- * 获取数据源路径正则表达式
- */
-export function getDataSourcePathRegex(type: DataSourceType): RegExp {
-  return DATA_SOURCE_CONFIG[type].regex
-}
+let manifestCache: DataManifest | null = null
 
 /**
  * 解析数值字符串
@@ -98,9 +77,7 @@ export function parseOptionalDelimitedString(value: string | undefined): string[
 /**
  * 通用CSV解析函数
  */
-export async function parseCSV<T extends Record<string, string>>(
-  csvContent: string,
-): Promise<T[]> {
+export async function parseCSV<T extends Record<string, string>>(csvContent: string): Promise<T[]> {
   return new Promise((resolve, reject) => {
     Papa.parse<T>(csvContent, {
       complete: (results) => {
@@ -116,63 +93,122 @@ export async function parseCSV<T extends Record<string, string>>(
 }
 
 /**
+ * 获取全局数据清单
+ * @returns 清单数据
+ */
+export async function getManifest(): Promise<DataManifest> {
+  // 检查缓存
+  if (manifestCache) {
+    return manifestCache
+  }
+
+  const manifestPath = getManifestPath()
+  try {
+    const response = await fetch(manifestPath)
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+    const manifest: DataManifest = await response.json()
+    manifestCache = manifest
+    return manifest
+  } catch (error) {
+    console.warn(`Failed to load manifest:`, error)
+    // 返回空清单
+    return { mods: [] }
+  }
+}
+
+/**
+ * 获取支持指定数据类型的MOD列表
+ * @param type 数据源类型
+ * @returns 支持该类型的MOD配置列表
+ */
+export async function getModsForType(type: DataSourceType): Promise<ModDataConfig[]> {
+  const manifest = await getManifest()
+  return manifest.mods.filter((mod) => mod.types.includes(type))
+}
+
+/**
+ * 清除清单缓存（用于强制刷新）
+ */
+export function clearManifestCache(): void {
+  manifestCache = null
+}
+
+/**
+ * 加载单个CSV文件
+ * @param type 数据源类型
+ * @param modName MOD名称
+ * @param locale 语言代码
+ * @returns CSV内容字符串，失败时返回null
+ */
+export async function loadCSVFile(
+  type: DataSourceType,
+  modName: string,
+  locale: string,
+): Promise<string | null> {
+  const csvPath = getCSVPath(type, modName, locale)
+  try {
+    const response = await fetch(csvPath)
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+    return await response.text()
+  } catch (error) {
+    console.warn(`Failed to load CSV from ${csvPath}:`, error)
+    return null
+  }
+}
+
+/**
  * 加载指定类型的所有CSV文件
  * @param type 数据源类型
  * @param locale 语言代码
- * @param globImport Vite glob导入对象
  * @returns MOD名称到CSV内容的映射
  */
 export async function loadCSVByLocale(
   type: DataSourceType,
   locale: string,
-  globImport: Record<string, () => Promise<unknown>>,
 ): Promise<Map<string, string>> {
-  const pathRegex = getDataSourcePathRegex(type)
   const modCSVMap = new Map<string, string>()
 
-  // 收集所有文件路径
-  const fileGroups = new Map<
-    string,
-    { locale: string; path: string; loader: () => Promise<unknown> }
-  >()
+  // 获取支持该类型的MOD列表
+  const mods = await getModsForType(type)
 
-  for (const [path, loader] of Object.entries(globImport)) {
-    const match = path.match(pathRegex)
-    if (!match) continue
-
-    const [, modName, fileLocale] = match
-    if (!modName || !fileLocale) continue
-
-    // 优先选择匹配的语言，否则使用找到的第一个
-    if (!fileGroups.has(modName) || fileLocale === locale) {
-      fileGroups.set(modName, { locale: fileLocale, path, loader })
-    }
+  if (mods.length === 0) {
+    console.warn(`No mods found for ${type}`)
+    return modCSVMap
   }
 
-  // 加载每个MOD的CSV内容
-  for (const [modName, { loader }] of fileGroups.entries()) {
-    try {
-      const module = (await loader()) as { default: string }
-      modCSVMap.set(modName, module.default)
-    } catch (error) {
-      console.warn(`Failed to load ${type} data from ${modName}:`, error)
+  // 并行加载所有MOD的CSV文件
+  const loadPromises = mods.map(async (mod) => {
+    // 优先使用请求的语言，否则使用第一个可用语言
+    let targetLocale = locale
+    if (!mod.locales.includes(locale)) {
+      const firstLocale = mod.locales[0]
+      if (firstLocale) {
+        targetLocale = firstLocale
+        console.warn(`Locale ${locale} not available for ${mod.name}, using ${targetLocale}`)
+      } else {
+        console.warn(`No locales available for ${mod.name}`)
+        return null
+      }
+    }
+
+    const content = await loadCSVFile(type, mod.name, targetLocale)
+    if (content) {
+      return { modName: mod.name, content }
+    }
+    return null
+  })
+
+  const results = await Promise.all(loadPromises)
+
+  for (const result of results) {
+    if (result) {
+      modCSVMap.set(result.modName, result.content)
     }
   }
 
   return modCSVMap
-}
-
-/**
- * 将MOD名称规范化为数据源ID
- * 核心MOD（Core/Royalty等）合并为"vanilla"
- */
-export function normalizeModName(modName: string): string {
-  return VANILLA_MODS.includes(modName) ? 'vanilla' : modName.toLowerCase()
-}
-
-/**
- * 将MOD名称转换为显示标签
- */
-export function getModLabel(modName: string): string {
-  return VANILLA_MODS.includes(modName) ? 'Vanilla' : modName
 }
