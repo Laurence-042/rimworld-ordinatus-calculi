@@ -43,6 +43,7 @@ interface ModMetadata {
   name: string
   dir: string
   customOutputName?: string
+  sourceUrl: string
 }
 
 /**
@@ -51,6 +52,7 @@ interface ModMetadata {
 interface ModDataCollection {
   name: string
   outputName: string
+  sourceUrl: string
   // 记录此MOD定义的节点标识符（不包括继承的节点）
   ownedIdentifiers: Set<string>
 }
@@ -62,7 +64,11 @@ class ModDataParser {
   private languageData: Map<string, Map<string, string>> = new Map() // language -> (defName.property -> translation)
 
   // 当前正在处理的MOD信息
-  private currentMod: ModMetadata = { name: '', dir: '' }
+  private currentMod: ModMetadata = {
+    name: '',
+    dir: '',
+    sourceUrl: '',
+  }
 
   // 记录每个MOD的数据集合
   private modDataCollections: ModDataCollection[] = []
@@ -99,11 +105,15 @@ class ModDataParser {
   /**
    * 解析单个MOD的XML定义和语言文件
    */
-  private async parseMod(modDir: string, customOutputName?: string): Promise<void> {
+  private async parseMod(
+    modDir: string,
+    sourceUrl: string,
+    customOutputName?: string,
+  ): Promise<void> {
     const modName = this.extractModName(modDir, customOutputName)
     const outputName = customOutputName || modName
 
-    this.currentMod = { name: modName, dir: modDir, customOutputName }
+    this.currentMod = { name: modName, dir: modDir, customOutputName, sourceUrl }
 
     console.log(`开始解析MOD: ${modName}`)
 
@@ -111,6 +121,7 @@ class ModDataParser {
     const modCollection: ModDataCollection = {
       name: modName,
       outputName: outputName,
+      sourceUrl,
       ownedIdentifiers: new Set<string>(),
     }
     this.modDataCollections.push(modCollection)
@@ -141,14 +152,20 @@ class ModDataParser {
   /**
    * 批量解析所有MOD，然后统一解析继承关系和生成CSV
    */
-  async parseAll(configs: Array<{ path: string; outputName?: string }>): Promise<void> {
+  async parseAll(
+    configs: Array<{
+      path: string
+      sourceUrl: string
+      outputName?: string
+    }>,
+  ): Promise<void> {
     console.log('='.repeat(60))
     console.log('阶段 1: 解析所有MOD的XML定义')
     console.log('='.repeat(60))
 
     // 按顺序解析所有MOD（保证依赖顺序）
     for (const config of configs) {
-      await this.parseMod(config.path, config.outputName)
+      await this.parseMod(config.path, config.sourceUrl, config.outputName)
       console.log()
     }
 
@@ -205,6 +222,10 @@ class ModDataParser {
     // 生成manifest.json文件
     console.log('\n阶段 5: 生成manifest.json文件...')
     this.generateManifests(generatedMods)
+
+    // 生成README.md文件
+    console.log('\n阶段 6: 生成README.md文件...')
+    this.generateReadme()
   }
 
   /**
@@ -267,6 +288,46 @@ class ModDataParser {
     const manifestPath = path.join(PUBLIC_DATA_DIR, 'manifest.json')
     fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8')
     console.log(`  生成统一manifest.json (${modConfigs.length} 个MOD)`)
+  }
+
+  /**
+   * 生成 README.md 文件
+   */
+  private generateReadme(): void {
+    // 读取模板文件
+    const templatePath = path.join(__dirname, 'README.template.md')
+    if (!fs.existsSync(templatePath)) {
+      console.warn('  警告: README.template.md 模板文件不存在，跳过生成')
+      return
+    }
+
+    const template = fs.readFileSync(templatePath, 'utf-8')
+
+    // 收集有数据输出的MOD（去重，基于outputName）
+    const processedMods = new Map<string, { name: string; sourceUrl: string }>()
+    for (const modCollection of this.modDataCollections) {
+      // 只添加第一次出现的（避免翻译MOD覆盖原MOD信息）
+      if (!processedMods.has(modCollection.outputName)) {
+        processedMods.set(modCollection.outputName, {
+          name: modCollection.name,
+          sourceUrl: modCollection.sourceUrl,
+        })
+      }
+    }
+
+    // 生成来源列表
+    let sourceListContent = '\n\n---\n\n## 📚 Data Sources / 数据来源\n\n'
+    for (const mod of processedMods.values()) {
+      sourceListContent += `- **${mod.name}**: <${mod.sourceUrl}>\n`
+    }
+
+    // 合并模板和来源列表
+    const readmeContent = template + sourceListContent
+
+    // 写入 README.md
+    const readmePath = path.join(PUBLIC_DATA_DIR, 'README.md')
+    fs.writeFileSync(readmePath, readmeContent, 'utf-8')
+    console.log(`  生成 README.md (${processedMods.size} 个MOD来源信息)`)
   }
 
   /**

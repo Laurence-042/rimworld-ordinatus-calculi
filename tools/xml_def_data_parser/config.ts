@@ -9,6 +9,8 @@
 export interface ModConfig {
   /** MOD目录的绝对路径 */
   path: string
+  /** 数据来源URL（必填）- Steam创意工坊链接或官方来源 */
+  sourceUrl: string
   /** （可选）自定义输出文件名，默认使用About.xml中的名称 */
   outputName?: string
   /** （可选）是否启用此MOD的解析，默认true */
@@ -23,68 +25,82 @@ export interface ModConfig {
  * - 本地MOD: 'C:\\Program Files\\Steam\\steamapps\\common\\RimWorld\\Mods\\<MOD_NAME>'
  */
 export const MOD_CONFIGS: ModConfig[] = [
-  {
-    path: 'D:\\SteamLibrary\\steamapps\\common\\RimWorld\\Data\\Core',
-    enabled: true,
-  },
-  {
-    path: 'D:\\SteamLibrary\\steamapps\\common\\RimWorld\\Data\\Royalty',
-    enabled: true,
-  },
-  {
-    path: 'D:\\SteamLibrary\\steamapps\\common\\RimWorld\\Data\\Ideology',
-    enabled: true,
-  },
-  {
-    path: 'D:\\SteamLibrary\\steamapps\\common\\RimWorld\\Data\\Biotech',
-    enabled: true,
-  },
-  {
-    path: 'D:\\SteamLibrary\\steamapps\\common\\RimWorld\\Data\\Anomaly',
-    enabled: true,
-  },
-  {
-    path: 'D:\\SteamLibrary\\steamapps\\common\\RimWorld\\Data\\Odyssey',
-    enabled: true,
-  },
+  // {
+  //   path: 'D:\\SteamLibrary\\steamapps\\common\\RimWorld\\Data\\Core',
+  //   sourceUrl: 'https://store.steampowered.com/app/294100/RimWorld/',
+  //   enabled: true,
+  // },
+  // {
+  //   path: 'D:\\SteamLibrary\\steamapps\\common\\RimWorld\\Data\\Royalty',
+  //   sourceUrl: 'https://store.steampowered.com/app/1149640/RimWorld__Royalty/',
+  //   enabled: true,
+  // },
+  // {
+  //   path: 'D:\\SteamLibrary\\steamapps\\common\\RimWorld\\Data\\Ideology',
+  //   sourceUrl: 'https://store.steampowered.com/app/1392840/RimWorld__Ideology/',
+  //   enabled: true,
+  // },
+  // {
+  //   path: 'D:\\SteamLibrary\\steamapps\\common\\RimWorld\\Data\\Biotech',
+  //   sourceUrl: 'https://store.steampowered.com/app/1826140/RimWorld__Biotech/',
+  //   enabled: true,
+  // },
+  // {
+  //   path: 'D:\\SteamLibrary\\steamapps\\common\\RimWorld\\Data\\Anomaly',
+  //   sourceUrl: 'https://store.steampowered.com/app/2380740/RimWorld__Anomaly/',
+  //   enabled: true,
+  // },
+  // {
+  //   path: 'D:\\SteamLibrary\\steamapps\\common\\RimWorld\\Data\\Odyssey',
+  //   sourceUrl: 'https://store.steampowered.com/app/3408120/RimWorld__Odyssey/',
+  //   enabled: true,
+  // },
   {
     // Vanilla Expanded - Weapons
     path: 'D:\\SteamLibrary\\steamapps\\workshop\\content\\294100\\1814383360',
+    sourceUrl: 'https://steamcommunity.com/sharedfiles/filedetails/?id=1814383360',
     enabled: true,
   },
   {
     // Vanilla Expanded - Weapons Translate
     path: 'D:\\SteamLibrary\\steamapps\\workshop\\content\\294100\\2459440010',
+    sourceUrl: 'https://steamcommunity.com/sharedfiles/filedetails/?id=2459440010',
     enabled: true,
   },
   {
-    // ratkin
+    // ratkin - 1.6临时维护版
     path: 'D:\\SteamLibrary\\steamapps\\workshop\\content\\294100\\3497673755',
+    sourceUrl: 'https://steamcommunity.com/sharedfiles/filedetails/?id=3497673755',
     enabled: true,
   },
   {
     // ratkin translate
     path: 'D:\\SteamLibrary\\steamapps\\workshop\\content\\294100\\2898638732',
+    sourceUrl: 'https://steamcommunity.com/sharedfiles/filedetails/?id=2898638732',
     enabled: true,
   },
   {
     // ratkin royalty
     path: 'D:\\SteamLibrary\\steamapps\\workshop\\content\\294100\\3159926804',
+    sourceUrl: 'https://steamcommunity.com/sharedfiles/filedetails/?id=3159926804',
     enabled: true,
   },
   {
     // Milira
     path: 'D:\\SteamLibrary\\steamapps\\workshop\\content\\294100\\3256974620',
+    sourceUrl: 'https://steamcommunity.com/sharedfiles/filedetails/?id=3256974620',
     enabled: true,
   },
   {
     // Milira empire
     path: 'D:\\SteamLibrary\\steamapps\\workshop\\content\\294100\\3588393755',
+    sourceUrl: 'https://steamcommunity.com/sharedfiles/filedetails/?id=3588393755',
     enabled: true,
   },
   // 添加更多MOD配置...
   // {
   //   path: 'D:\\SteamLibrary\\steamapps\\workshop\\content\\294100\\1234567890',
+  //   sourceUrl: 'https://steamcommunity.com/sharedfiles/filedetails/?id=1234567890',
   //   outputName: 'CustomName',
   //   enabled: true,
   // },
@@ -100,6 +116,6 @@ export const DEBUG_OPTIONS = {
   dumpRawNodes: false,
   /** 是否跳过CSV生成（仅测试解析） */
   skipCSVGeneration: false,
-  /** 输出到其他目录 */
+  /** 输出到其他目录，留空会输出到默认的 public/data 目录 */
   outputDirectory: 'data_mods',
 }

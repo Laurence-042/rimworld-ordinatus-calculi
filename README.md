@@ -1,12 +1,12 @@
 # RimWorld 计算仪典：破甲者之歌・留命者之吟
 
-[TOC]
-
 > RimWorld Ordinatus Calculi：Song of the Breaker ・ Chant of the Keeper
 
 一个基于 Vue 3 + TypeScript 的 RimWorld 战斗机制计算器，用于计算给定武器在不同的距离/护甲情况下的DPS，以及给定护甲组合在不同单发伤害/穿甲情况下的受伤期望。
 
 ![Vue 3](https://img.shields.io/badge/Vue-3.5-brightgreen) ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue) ![Element Plus](https://img.shields.io/badge/Element%20Plus-2.11-409EFF)
+
+[TOC]
 
 ## 功能特性
 
@@ -16,25 +16,18 @@
 - **精确命中率**：基于距离分段（贴近/近/中/远）的线性插值算法
 - **连发机制**：完整模拟预热、连发间隔、冷却时序
 - **2D/3D 可视化**：
-  - 2D 曲线图：DPS vs 护甲率（指定距离）
-  - 3D 曲面图：DPS vs 护甲率 vs 距离
+  - 2D 曲线图：特定距离下 DPS 随 护甲率 变化的曲线
+  - 3D 曲面图：护甲率 随 距离 和 穿甲 变化的曲面，并标记两种武器曲面交线（什么情况下两种武器 DPS 期望一致）
 
 ### 护甲效能计算器（Armor-Centric）
 
-- **多层护甲系统**：支持最多 3 层护甲叠加（贴身层/中层/外壳层）
-- **身体部位覆盖**：基于游戏内覆盖率数据的精确计算
+- **多层护甲系统**：支持多层护甲计算
+- **身体部位覆盖**：支持显示覆盖情况并根据覆盖的护甲计算防护效果
 - **伤害类型模拟**：利器/钝器/热能伤害的不同穿透机制
 - **概率分布**：显示完全偏转/部分穿透/完全穿透的概率分布
 - **实战场景**：
-  - 2D 曲线图：各部位受到伤害 vs 武器伤害（固定穿透）
-  - 3D 曲面图：特定部位受到伤害 vs 武器伤害 vs 穿透力
-
-### 核心计算特性
-
-- **利器→钝器转换**：伤害减少 50% 后自动转换为钝器伤害
-- **护甲穿透不衰减**：穿透力应用于所有护甲层
-- **RNG 模拟**：每层护甲的偏转/减伤/穿透概率计算
-- **去重逻辑**：多层穿着同一装备时仅计算一次
+  - 减伤概率分布：特定穿甲的减伤概率分布
+  - 减伤期望曲线：不同穿甲的减伤期望曲线
 
 ## 快速开始
 
@@ -55,7 +48,9 @@ npm install
 npm run dev
 ```
 
-访问 `http://localhost:5173`
+访问 `http://localhost:5173/project/rimworld-ordinatus-calculi/demo/`
+
+> 这个路径是我的项目部署页 https://laurence-042.github.io/project/rimworld-ordinatus-calculi/demo/index.html ，其就像普通 vite 项目一样在 `vite.config.ts` 里定义
 
 ### 构建生产版本
 
@@ -74,6 +69,18 @@ npm run type-check
 ```powershell
 npm run lint      # ESLint 检查并自动修复
 npm run format    # Prettier 格式化
+```
+
+### 预设数据生成
+
+执行前请参照 `tools\xml_def_data_parser\config.ts` 中的注释修改配置，以对应实际 Mod 路径
+
+其默认参数通常为开发者生成 [扩展数据集](https://github.com/Laurence-042/rimworld-ordinatus-calculi-extra-data) 的时候的配置
+
+请注意，Mod 中提取出的数据仅应提交到上述 扩展数据集 仓库，这是因为 Mod 往往使用 CC 系类协议（或者未提及），将其包含在本仓库后本仓库的 License 声明将不再适用
+
+```powershell
+npm run parse-mod # 从 RimWorld 游戏本体和 Mod 的 XML 中提取数据
 ```
 
 ## 核心计算公式
@@ -116,25 +123,50 @@ src/
 │   ├── DPSChart.vue           # 2D DPS 曲线图
 │   ├── DPSSurface3D.vue       # 3D DPS 曲面图
 │   ├── ArmorChart.vue         # 2D 护甲效能图
-│   ├── ArmorSurface3D.vue     # 3D 护甲曲面图
+│   ├── ArmorReductionCurve.vue # 护甲减伤曲线
+│   ├── LanguageSelector.vue   # 语言切换组件
 │   └── SliderInput.vue        # 通用滑块输入组件
+├── i18n/
+│   ├── index.ts               # vue-i18n 配置
+│   └── locales/
+│       ├── zh-CN.json         # 简体中文
+│       └── en-US.json         # English
 ├── types/
 │   ├── weapon.ts              # 武器参数接口
 │   ├── armor.ts               # 护甲与装备接口
 │   ├── material.ts            # 材料系统
-│   └── bodyPart.ts            # 身体部位定义
+│   ├── bodyPart.ts            # 身体部位定义
+│   └── quality.ts             # 品质等级定义
 ├── utils/
 │   ├── weaponCalculations.ts  # 武器 DPS 计算
 │   ├── armorCalculations.ts   # 多层护甲计算
-│   ├── weaponDataParser.ts    # 武器数据解析（CSV）
-│   ├── clothingDataParser.ts  # 衣物数据解析（CSV）
-│   ├── materialDataParser.ts  # 材料数据解析（CSV）
+│   ├── weaponDataParser.ts    # 武器数据解析
+│   ├── apparelDataParser.ts   # 服装数据解析
+│   ├── materialDataParser.ts  # 材料数据解析
+│   ├── dataSourceConfig.ts    # 数据源配置（manifest加载）
 │   ├── coverageUtils.ts       # 覆盖率计算工具
-│   ├── plotlyUtils.ts         # Plotly 3D 图表工具
-│   ├── weapon_data/           # 武器 CSV 数据
-│   ├── clothing_data/         # 衣物 CSV 数据
-│   └── material_data/         # 材料 CSV 数据
-└── App.vue                    # 根组件（Tab 切换）
+│   ├── bodyPartUtils.ts       # 身体部位工具
+│   ├── armorUtils.ts          # 护甲工具函数
+│   ├── csvParserUtils.ts      # CSV 解析工具
+│   └── plotlyUtils.ts         # Plotly 3D 图表工具
+├── App.vue                    # 根组件（Tab 切换）
+└── main.ts                    # 入口文件
+
+public/data/                   # 游戏数据（由 xml_def_data_parser 生成）
+├── manifest.json              # 数据清单（MOD列表、语言、数据类型）
+├── weapon/<ModName>/<locale>.csv
+├── apparel/<ModName>/<locale>.csv
+└── material/<ModName>/<locale>.csv
+
+tools/xml_def_data_parser/     # RimWorld XML 数据提取工具
+├── config.ts                  # MOD 路径配置
+├── tool.ts                    # 主解析器
+├── weaponParser.ts            # 武器解析
+├── apparelParser.ts           # 服装解析
+├── materialParser.ts          # 材料解析
+├── baseParser.ts              # 基础解析与继承处理
+├── projectileParser.ts        # 投射物解析
+└── README.template.md         # 生成 README 的模板
 ```
 
 ## 技术栈
@@ -142,6 +174,7 @@ src/
 - **前端框架**：Vue 3 (Composition API + `<script setup>`)
 - **类型系统**：TypeScript 5.9（严格模式）
 - **UI 组件库**：Element Plus 2.11
+- **国际化**：vue-i18n（支持中文/英文切换）
 - **图表库**：
   - Chart.js 4.5 + vue-chartjs 5.3（2D 曲线）
   - Plotly.js 3.3（3D 曲面）
@@ -153,19 +186,47 @@ src/
 
 ### 添加 Mod 数据
 
-在对应目录下添加新的 CSV 文件即可：
+项目使用 `tools/xml_def_data_parser/` 工具从 RimWorld 的 XML 定义文件中提取数据：
 
-```
-src/utils/weapon_data/MyMod.csv
-src/utils/clothing_data/MyMod.csv
-src/utils/material_data/MyMod.csv
-```
+1. 编辑 `tools/xml_def_data_parser/config.ts`，添加 MOD 配置：
 
-数据解析器会自动加载所有 CSV 文件。
+   ```typescript
+   {
+     path: 'D:\\SteamLibrary\\steamapps\\workshop\\content\\294100\\<MOD_ID>',
+     sourceUrl: 'https://steamcommunity.com/sharedfiles/filedetails/?id=<MOD_ID>',
+     enabled: true,
+   }
+   ```
+
+2. 运行解析器：
+
+   ```powershell
+   npm run parse-mod
+   ```
+
+3. 工具会自动：
+   - 解析 MOD 的 XML 定义文件
+   - 处理继承关系（ParentName）
+   - 提取多语言翻译
+   - 生成 CSV 文件到 `public/data/`
+   - 更新 `manifest.json`
+   - 生成带有来源归属的 `README.md`
+
+### 数据源系统
+
+- **Manifest 驱动**：`public/data/manifest.json` 记录所有可用的 MOD、语言和数据类型
+- **自动合并**：Core、Royalty、Ideology、Biotech、Anomaly、Odyssey 会被合并为 "Vanilla"
+- **多语言支持**：每个 MOD 可以有多个语言版本的 CSV（如 `zh-CN.csv`、`en-US.csv`）
 
 ### 修改计算逻辑
 
 核心计算函数位于 `src/utils/*Calculations.ts`，包含详细的 JSDoc 注释和游戏机制说明。
+
+### 添加新语言
+
+1. 在 `src/i18n/locales/` 下创建新的 JSON 文件（如 `ja-JP.json`）
+2. 在 `src/i18n/index.ts` 中导入并注册
+3. 更新 `LanguageSelector.vue`（如需要）
 
 ### 常见的坑
 
@@ -182,26 +243,24 @@ src/utils/material_data/MyMod.csv
 
 ## 许可证
 
-### TL;DR
+### 法典绪言
 
-关于数据起源的圣典誓约
-
-此计算仪典中一切数值皆溯源于 Tynan 所赐之官方 XML 典藏。  
-未触凡俗文献（CC-BY-SA），故不受其羁绊。  
-以 MIT 之契约，赐诸信徒自由修习。
+此计算仪典以 MIT 之契约，赐诸信徒自由修习。
+然其中一切数值皆溯源于 Tynan 所赐之官方 XML 典藏。  
+圣典之契，仅约束吾所编之代码、算式之实现、与数据之架构。
+至于兵戎衣铠之名与诸身躯部位之称，皆出自 Tynan 之典籍，不属敝人可予之许可，仍循其原有之法。
 
 ### 正经的许可证说明
 
-本项目使用的所有武器、护甲与材料数值均来自 RimWorld 官方游戏的 Defs/XML 文件（包括英文原始 Defs 与官方中文本地化 XML），由项目内的数据提取脚本提取并整理为csv。
-这些数值属于 事实性游戏数据（factual data），不受著作权保护。
-
 本项目以 MIT 协议开源。
 
-> 注： [RimWorld 灰机 Wiki](https://rimworld.huijiwiki.com) 是国内优秀的 RimWorld 社区，在开发数据提取脚本的过程中，其 SMW 查询接口极大方便了数据对照与验证，使我得以快速检查脚本输出是否有缺失和冗余，对此表示感谢。
+MIT 许可仅适用于本项目的源代码、计算逻辑的实现方式，以及生成的数据结构格式。
+本项目中出现的武器、护甲、材料等名称均来自 RimWorld 原作，其著作权归 Ludeon Studios 所有，不在 MIT 授权范围内。
 
 ## RimWorld 原版数据速查
 
-> 如果您怀疑预设数据存在问题，可以使用如下链接查询
+> 如果您怀疑预设数据存在问题，可以使用如下链接查询  
+> [RimWorld 灰机 Wiki](https://rimworld.huijiwiki.com) 是国内优秀的 RimWorld 社区，在开发数据提取脚本的过程中，其 SMW 查询接口极大方便了数据对照与验证，使我得以快速检查脚本输出是否有缺失和冗余，对此表示感谢。
 
 - **武器数据**：[远程武器查询](<https://rimworld.huijiwiki.com/wiki/%E7%89%B9%E6%AE%8A:%E8%AF%A2%E9%97%AE/mainlabel%3D%E5%90%8D%E7%A7%B0/format%3Dtable/link%3D-20subject/sort%3D/order%3Dasc/offset%3D0/limit%3D100/-5B-5B%E5%88%86%E7%B1%BB:%E8%BF%9C%E7%A8%8B%E6%AD%A6%E5%99%A8-5D-5D/-3F%E5%BC%B9%E8%8D%AF%E4%BC%A4%E5%AE%B3/-3F%E6%8A%A4%E7%94%B2%E7%A9%BF%E9%80%8F/-3F%E6%8A%91%E6%AD%A2%E8%83%BD%E5%8A%9B/-3F%E7%9E%84%E5%87%86%E6%97%B6%E9%97%B4/-3F%E8%BF%9C%E7%A8%8B%E5%86%B7%E5%8D%B4%E6%97%B6%E9%97%B4%3D%E5%86%B7%E5%8D%B4%E6%97%B6%E9%97%B4/-3F%E5%B0%84%E7%A8%8B%3D%E5%B0%84%E7%A8%8B(tiles)/-3F%E8%BF%9E%E5%8F%91%E6%95%B0%E9%87%8F/-3F%E8%BF%9E%E5%8F%91%E9%97%B4%E9%9A%94tick%E6%95%B0%3D%E8%BF%9E%E5%8F%91%E9%97%B4%E9%9A%94(ticks)/-3F%E7%B2%BE%E5%BA%A6%EF%BC%88%E8%B4%B4%E8%BF%91%EF%BC%89/-3F%E7%B2%BE%E5%BA%A6%EF%BC%88%E8%BF%91%EF%BC%89/-3F%E7%B2%BE%E5%BA%A6%EF%BC%88%E4%B8%AD%EF%BC%89/-3F%E7%B2%BE%E5%BA%A6%EF%BC%88%E8%BF%9C%EF%BC%89/-3F%E4%BB%B7%E5%80%BC%3D%E5%B8%82%E5%9C%BA%E4%BB%B7%E5%80%BC>)
 - **衣物数据**：[衣物查询](https://rimworld.huijiwiki.com/wiki/%E7%89%B9%E6%AE%8A:%E8%AF%A2%E9%97%AE/mainlabel%3D%E5%90%8D%E7%A7%B0/format%3Dtable/link%3D-20subject/sort%3D/order%3Dasc/offset%3D0/limit%3D500/-5B-5B%E5%88%86%E7%B1%BB:%E8%A1%A3%E7%89%A9-5D-5D/-3F%E5%88%86%E7%B1%BB/-3F%E6%8F%8F%E8%BF%B0/-3F%E6%9D%90%E8%B4%A8/-3F%E6%8A%A4%E7%94%B2-20-2D-20%E6%9D%90%E6%96%99%E7%B3%BB%E6%95%B0/-3F%E6%8A%A4%E7%94%B2-20-2D-20%E5%88%A9%E5%99%A8/-3F%E6%8A%A4%E7%94%B2-20-2D-20%E9%92%9D%E5%99%A8/-3F%E6%8A%A4%E7%94%B2-20-2D-20%E7%83%AD%E8%83%BD/-3F%E8%A6%86%E7%9B%96/-3F%E5%B1%82/-3F%E4%BB%B7%E5%80%BC%3D%E5%B8%82%E5%9C%BA%E4%BB%B7%E5%80%BC)
@@ -214,11 +273,13 @@ src/utils/material_data/MyMod.csv
 
 ## TODO
 
-- [ ] 看看能不能米利拉帝国的数据导进来
+- [ ] 看看能不能把第三方MOD的数据导进来
   - [x] 武器数据加载
   - [x] 服装数据加载
   - [x] 材料数据加载
-  - [ ] 开个CC协议的仓库存CC协议的mod数据
+  - [x] XML 数据提取工具
+  - [x] 开个CC协议的仓库存CC协议的mod数据
+  - [ ] 让
 - [x] 用更灵活的splitter而非固定宽度布局
 - [x] 减小input，增大slider
 - [x] 加俩截图
