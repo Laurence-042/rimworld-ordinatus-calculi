@@ -39,6 +39,30 @@ export interface ClothingDataSource {
 }
 
 /**
+ * 通用的字段解析函数
+ */
+const parseFloatField = (value: string | undefined): number | undefined => {
+  if (!value || value.trim() === '') return undefined
+  return parseFloat(value.trim())
+}
+
+const parseStringArrayField = (value: string | undefined): string[] | undefined => {
+  if (!value || value.trim() === '') return undefined
+  return splitDelimitedString(value.trim())
+}
+
+/**
+ * 通用的分隔字符串解析函数
+ * 用于处理逗号/顿号分隔的字符串
+ */
+const splitDelimitedString = (value: string): string[] => {
+  return value
+    .split(/[,，、]/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
+/**
  * 解析衣物CSV数据
  */
 export async function parseClothingDataFromCSV(csvContent: string): Promise<ClothingPreset[]> {
@@ -55,34 +79,15 @@ export async function parseClothingDataFromCSV(csvContent: string): Promise<Clot
               }
 
               // 解析直接护甲值 (CSV中已经是小数格式 0-2)
-              const armorBlunt = row['armorBlunt']?.trim()
-              const armorSharp = row['armorSharp']?.trim()
-              const armorHeat = row['armorHeat']?.trim()
-
-              if (armorBlunt && armorBlunt !== '') {
-                clothing.armorBlunt = parseFloat(armorBlunt)
-              }
-              if (armorSharp && armorSharp !== '') {
-                clothing.armorSharp = parseFloat(armorSharp)
-              }
-              if (armorHeat && armorHeat !== '') {
-                clothing.armorHeat = parseFloat(armorHeat)
-              }
+              clothing.armorBlunt = parseFloatField(row['armorBlunt'])
+              clothing.armorSharp = parseFloatField(row['armorSharp'])
+              clothing.armorHeat = parseFloatField(row['armorHeat'])
 
               // 解析材料系数
-              const materialCoeff = row['materialCoefficient']?.trim()
-              if (materialCoeff && materialCoeff !== '') {
-                clothing.materialCoefficient = parseFloat(materialCoeff)
-              }
+              clothing.materialCoefficient = parseFloatField(row['materialCoefficient'])
 
               // 解析接受的材质
-              const materials = row['acceptedMaterials']?.trim()
-              if (materials) {
-                clothing.acceptedMaterials = materials
-                  .split(/[、，,]/)
-                  .map((m) => m.trim())
-                  .filter(Boolean)
-              }
+              clothing.acceptedMaterials = parseStringArrayField(row['acceptedMaterials'])
 
               // 解析覆盖部位
               const coverage = row['bodyPartCoverage']?.trim()
@@ -129,10 +134,7 @@ const seenBodyPartStrings = new Set<string>()
  * CSV中存储的是BodyPart枚举值，用逗号或顿号分隔
  */
 function parseBodyParts(coverageStr: string): BodyPart[] {
-  const parts = coverageStr
-    .split(/[,，、]/)
-    .map((part) => part.trim())
-    .filter(Boolean)
+  const parts = splitDelimitedString(coverageStr)
 
   const bodyParts = new Set<BodyPart>()
   for (const partStr of parts) {
@@ -155,10 +157,7 @@ function parseBodyParts(coverageStr: string): BodyPart[] {
  * CSV中存储的是ApparelLayer枚举数值（0-5），用逗号或顿号分隔
  */
 function parseApparelLayers(layersStr: string): ApparelLayer[] {
-  const layers = layersStr
-    .split(/[,，、]/)
-    .map((layer) => layer.trim())
-    .filter(Boolean)
+  const layers = splitDelimitedString(layersStr)
 
   const apparelLayers: ApparelLayer[] = []
   for (const layerStr of layers) {

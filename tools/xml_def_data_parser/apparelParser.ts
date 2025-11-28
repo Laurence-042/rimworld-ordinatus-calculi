@@ -238,9 +238,9 @@ export class ApparelParser {
       armorSharp: BaseParserUtils.formatNumber(clothing.armorRatingSharp),
       armorHeat: BaseParserUtils.formatNumber(clothing.armorRatingHeat),
       materialCoefficient: BaseParserUtils.formatNumber(clothing.stuffEffectMultiplierArmor),
-      acceptedMaterials: clothing.stuffCategories?.join('、') || '',
-      bodyPartCoverage: bodyPartCoverage.join('、'), // BodyPart枚举值用顿号分隔
-      apparelLayers: apparelLayers.map((l) => l.toString()).join('、'), // ApparelLayer数值用顿号分隔
+      acceptedMaterials: clothing.stuffCategories?.join(',') || '',
+      bodyPartCoverage: bodyPartCoverage.join(','), // BodyPart枚举值用逗号分隔
+      apparelLayers: apparelLayers.map((l) => l.toString()).join(','), // ApparelLayer数值用逗号分隔
     }
 
     return row
