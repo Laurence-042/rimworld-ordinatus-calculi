@@ -16,6 +16,7 @@ import { ApparelQualityMultipliers } from '@/types/quality'
 
 /**
  * 获取应用品质系数后的护甲值
+ * 根据 RimWorld 源码，护甲值限制在0-200%
  *
  * @param layer - 护甲层
  * @param damageType - 伤害类型
@@ -34,7 +35,9 @@ export function getActualArmorValue(layer: ArmorLayer, damageType: DamageType): 
     baseArmor = layer.armorHeat
   }
 
-  return baseArmor * armorMultiplier
+  const value = baseArmor * armorMultiplier
+  // Clamp 到0-200%
+  return Math.max(0, Math.min(2, value))
 }
 
 /**

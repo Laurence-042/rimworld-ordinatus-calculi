@@ -1,5 +1,5 @@
 import { getWeaponDataSources as loadWeaponDataSources } from './weaponDataParser'
-import type { WeaponDataSource, WeaponParams, WeaponPreset } from '@/types/weapon'
+import type { WeaponDataSource, WeaponParams } from '@/types/weapon'
 import { WeaponQualityMultipliers } from '@/types/quality'
 import i18n from '@/i18n'
 import type { Ref } from 'vue'
@@ -56,12 +56,14 @@ export function calculateHitChance(params: WeaponParams, targetDistance: number)
   const qualityMultipliers = WeaponQualityMultipliers[quality]
   const accuracyMultiplier = qualityMultipliers.rangedAccuracy
 
-  // 转换为 0-1 范围并应用品质系数
+  // 转换为 0-1 范围并应用品质系数，然后 clamp 到 0-1
+  // 根据 RimWorld 源码，AdjustedAccuracy 返回的值会被用于插值
+  const clamp01 = (v: number) => Math.max(0, Math.min(1, v))
   const accuracies = {
-    long: (accuracyLong / 100) * accuracyMultiplier,
-    medium: (accuracyMedium / 100) * accuracyMultiplier,
-    short: (accuracyShort / 100) * accuracyMultiplier,
-    touch: (accuracyTouch / 100) * accuracyMultiplier,
+    long: clamp01((accuracyLong / 100) * accuracyMultiplier),
+    medium: clamp01((accuracyMedium / 100) * accuracyMultiplier),
+    short: clamp01((accuracyShort / 100) * accuracyMultiplier),
+    touch: clamp01((accuracyTouch / 100) * accuracyMultiplier),
   }
 
   let value: number
@@ -150,13 +152,16 @@ export function calculateMaxDPS(params: WeaponParams): number {
 
 /**
  * 获取应用品质系数后的护甲穿透值
+ * 根据 RimWorld 源码，穿甲值限制在0-200%
  *
  * @param params - 武器参数
  * @returns 实际护甲穿透值 (0-200)
  */
 export function getActualArmorPenetration(params: WeaponParams): number {
   const qualityMultipliers = WeaponQualityMultipliers[params.quality]
-  return params.armorPenetration * qualityMultipliers.rangedArmorPenetration
+  const value = params.armorPenetration * qualityMultipliers.rangedArmorPenetration
+  // Clamp 到0-200%
+  return Math.max(0, Math.min(200, value))
 }
 
 /**
@@ -172,6 +177,7 @@ export function getActualDamage(params: WeaponParams): number {
 
 /**
  * 获取应用品质系数后的精度值
+ * 根据 RimWorld 源码，精度值限制在0-100%
  *
  * @param params - 武器参数
  * @returns 实际精度值对象 { touch, short, medium, long }，值为 0-100 范围
@@ -184,11 +190,12 @@ export function getActualAccuracies(params: WeaponParams): {
 } {
   const qualityMultipliers = WeaponQualityMultipliers[params.quality]
   const multiplier = qualityMultipliers.rangedAccuracy
+  // Clamp 到0-100%
   return {
-    touch: params.accuracyTouch * multiplier,
-    short: params.accuracyShort * multiplier,
-    medium: params.accuracyMedium * multiplier,
-    long: params.accuracyLong * multiplier,
+    touch: Math.max(0, Math.min(100, params.accuracyTouch * multiplier)),
+    short: Math.max(0, Math.min(100, params.accuracyShort * multiplier)),
+    medium: Math.max(0, Math.min(100, params.accuracyMedium * multiplier)),
+    long: Math.max(0, Math.min(100, params.accuracyLong * multiplier)),
   }
 }
 
