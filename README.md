@@ -31,6 +31,8 @@
 
 ## 快速开始
 
+[Demo](https://laurence-042.github.io/project/rimworld-ordinatus-calculi/demo/)
+
 ### 环境要求
 
 - Node.js `^20.19.0` 或 `>=22.12.0`

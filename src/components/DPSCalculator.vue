@@ -463,7 +463,6 @@ watch(locale, async () => {
           :title="t('weapon.maxWeaponsReached')"
           :description="t('weapon.maxWeaponsHint')"
         />
-        />
       </el-splitter-panel>
       <!-- 右侧：结果显示 -->
       <el-splitter-panel class="right-panel">
