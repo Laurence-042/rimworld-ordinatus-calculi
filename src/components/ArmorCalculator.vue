@@ -988,7 +988,7 @@ watch(locale, async () => {
                   <el-form-item :label="t('armor.usedMaterial')">
                     <el-radio-group v-model="layer.selectedMaterial">
                       <el-radio-button
-                        value="metal"
+                        :value="MaterialTag.Metallic"
                         :disabled="
                           layer.supportedMaterials &&
                           !layer.supportedMaterials.includes(MaterialTag.Metallic)
@@ -997,7 +997,7 @@ watch(locale, async () => {
                         {{ t('materialType.Metallic') }}
                       </el-radio-button>
                       <el-radio-button
-                        value="wood"
+                        :value="MaterialTag.Woody"
                         :disabled="
                           layer.supportedMaterials &&
                           !layer.supportedMaterials.includes(MaterialTag.Woody)
@@ -1006,7 +1006,7 @@ watch(locale, async () => {
                         {{ t('materialType.Woody') }}
                       </el-radio-button>
                       <el-radio-button
-                        value="leather"
+                        :value="MaterialTag.Leathery"
                         :disabled="
                           layer.supportedMaterials &&
                           !layer.supportedMaterials.includes(MaterialTag.Leathery)
@@ -1015,7 +1015,7 @@ watch(locale, async () => {
                         {{ t('materialType.Leathery') }}
                       </el-radio-button>
                       <el-radio-button
-                        value="fabric"
+                        :value="MaterialTag.Fabric"
                         :disabled="
                           layer.supportedMaterials &&
                           !layer.supportedMaterials.includes(MaterialTag.Fabric)
