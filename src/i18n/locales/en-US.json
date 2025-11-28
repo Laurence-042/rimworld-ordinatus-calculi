@@ -117,7 +117,7 @@
         "dependOnMaterial": "Depend on Material",
         "addArmorSet": "Add Armor Set for Comparison",
         "maxSetsReached": "Maximum Sets Reached (2)",
-        "maxSetsDescription": "3D surface mode supports up to 2 armor sets for comparison with intersection display. To compare other sets, please remove existing ones first.",
+        "maxSetsDescription": "Up to 2 armor sets can be compared. To compare other sets, please remove existing ones first.",
         "defaultSetName": "Armor Set {n}",
         "defaultApparelName": "Custom Apparel (Click to Select Preset)",
         "presetDoubleBulletproof": "Double Bulletproof Set",

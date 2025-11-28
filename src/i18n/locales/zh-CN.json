@@ -117,7 +117,7 @@
         "dependOnMaterial": "依赖材料",
         "addArmorSet": "添加护甲套装进行对比",
         "maxSetsReached": "已达到最大套装数量（2个）",
-        "maxSetsDescription": "3D曲面模式最多支持2个护甲套装对比并显示交线。如需对比其他套装，请先删除现有套装。",
+        "maxSetsDescription": "最多支持2个护甲套装进行对比。如需对比其他套装，请先删除现有套装。",
         "defaultSetName": "护甲套装 {n}",
         "defaultApparelName": "自定义服装（点击以选择预设）",
         "presetDoubleBulletproof": "双层防弹套",
