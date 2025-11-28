@@ -113,10 +113,10 @@ const activeMaterialPanels = ref<MaterialTag[]>([])
 const materialTypes = computed(
   () =>
     [
-      { tag: MaterialTag.Metallic, name: MaterialTag.Metallic, label: t('materialType.metal') },
-      { tag: MaterialTag.Woody, name: MaterialTag.Woody, label: t('materialType.wood') },
-      { tag: MaterialTag.Leathery, name: MaterialTag.Leathery, label: t('materialType.leather') },
-      { tag: MaterialTag.Fabric, name: MaterialTag.Fabric, label: t('materialType.fabric') },
+      { tag: MaterialTag.Metallic, name: MaterialTag.Metallic, label: t('materialType.Metallic') },
+      { tag: MaterialTag.Woody, name: MaterialTag.Woody, label: t('materialType.Woody') },
+      { tag: MaterialTag.Leathery, name: MaterialTag.Leathery, label: t('materialType.Leathery') },
+      { tag: MaterialTag.Fabric, name: MaterialTag.Fabric, label: t('materialType.Fabric') },
     ] as const,
 )
 

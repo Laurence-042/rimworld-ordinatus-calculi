@@ -155,14 +155,10 @@
         "heat": "热能"
     },
     "materialType": {
-        "metal": "金属材料",
-        "wood": "木材材料",
-        "leather": "皮革材料",
-        "fabric": "织物材料",
-        "metalButton": "金属",
-        "woodButton": "木材",
-        "leatherButton": "皮革",
-        "fabricButton": "织物"
+        "Metallic": "金属",
+        "Woody": "木材",
+        "Leathery": "皮革",
+        "Fabric": "织物"
     },
     "apparelLayer": {
         "skin": "贴身",

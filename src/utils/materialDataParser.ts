@@ -1,31 +1,9 @@
 import Papa from 'papaparse'
-import {
-  type MaterialData,
-  type MaterialDataSource,
-  MaterialTag,
-  parseMaterialTags,
-} from '@/types/material'
+import { type MaterialData, type MaterialDataSource, MaterialTag } from '@/types/material'
 
 // 重新导出类型供外部使用
 export type { MaterialData, MaterialDataSource }
 export { MaterialTag }
-
-/**
- * 解析百分比字符串为数值（0-2范围）
- * 例如："100%" -> 1.0, "200%" -> 2.0
- */
-function parsePercentage(value: string): number {
-  if (!value) return 0
-
-  // 移除百分号和其他非数字字符（保留小数点和负号）
-  const numStr = value.replace(/[^\d.-]/g, '')
-  const num = parseFloat(numStr)
-
-  if (isNaN(num)) return 0
-
-  // 转换为0-2范围（假设输入是百分比）
-  return num / 100
-}
 
 /**
  * 解析纯数值字符串（0-2范围，直接使用）
@@ -38,22 +16,9 @@ function parseNumeric(value: string): number {
 }
 
 /**
- * XML原始材料类别到MaterialTag枚举的映射
- * 现在枚举值本身就是XML原始值，所以这个映射主要用于类型转换
- */
-const STUFF_CATEGORY_MAP: Record<string, MaterialTag> = {
-  Metallic: MaterialTag.Metallic,
-  Woody: MaterialTag.Woody,
-  Leathery: MaterialTag.Leathery,
-  Fabric: MaterialTag.Fabric,
-  // 兼容可能的变体
-  Stony: MaterialTag.Metallic, // 石材材质在游戏中通常归类为金属性质
-}
-
-/**
- * 解析材料标签列表（逗号分隔的MaterialTag枚举值或XML原始category）
- * 例如："Metallic,Woody" -> [MaterialTag.Metal, MaterialTag.Wood]
- * 或："metal,fabric" -> [MaterialTag.Metal, MaterialTag.Fabric]（兼容旧格式）
+ * 解析材料标签列表（逗号分隔的MaterialTag枚举值）
+ * 例如："Metallic,Woody" -> [MaterialTag.Metallic, MaterialTag.Woody]
+ * 注意：由于枚举值现在就是XML原始值，直接验证即可
  */
 function parseCategoryTags(value: string): MaterialTag[] {
   if (!value || !value.trim()) return []
@@ -62,17 +27,12 @@ function parseCategoryTags(value: string): MaterialTag[] {
   const parts = value.split(',').map((s) => s.trim())
 
   for (const part of parts) {
-    // 先尝试映射XML原始category（如"Metallic" -> MaterialTag.Metal）
-    const mappedTag = STUFF_CATEGORY_MAP[part]
-    if (mappedTag) {
-      tags.push(mappedTag)
-      continue
-    }
-
-    // 如果映射失败，尝试直接匹配MaterialTag枚举值（兼容旧格式）
-    const tag = part as MaterialTag
-    if (Object.values(MaterialTag).includes(tag)) {
-      tags.push(tag)
+    // 直接验证是否为有效的MaterialTag枚举值
+    if (Object.values(MaterialTag).includes(part as MaterialTag)) {
+      tags.push(part as MaterialTag)
+    } else if (part === 'Stony') {
+      // 特殊处理：石材归类为金属性质
+      tags.push(MaterialTag.Metallic)
     }
   }
 
@@ -89,43 +49,16 @@ export async function parseMaterialDataFromCSV(csvContent: string): Promise<Mate
         try {
           const materialData = results.data
             .filter((row) => {
-              // 支持中文列名（旧格式）或英文列名（XML生成格式）
-              const name = row['名称'] || row['label']
+              const name = row['label']
               return name && name.trim()
             })
             .map((row) => {
-              // 判断是旧格式（中文列名）还是新格式（英文列名）
-              const isLegacyFormat = '名称' in row
-
-              let name: string
-              let tags: MaterialTag[]
-              let armorSharp: number
-              let armorBlunt: number
-              let armorHeat: number
-
-              if (isLegacyFormat) {
-                // 旧格式：中文列名，百分比格式，从描述性分类中解析标签
-                name = row['名称']!.trim()
-                const category = row['分类'] || ''
-                tags = parseMaterialTags(category)
-                armorSharp = parsePercentage(row['护甲 - 利器']?.trim() || '0%')
-                armorBlunt = parsePercentage(row['护甲 - 钝器']?.trim() || '0%')
-                armorHeat = parsePercentage(row['护甲 - 热能']?.trim() || '0%')
-              } else {
-                // 新格式：英文列名，数值格式，从categories字段解析标签
-                name = row['label']!.trim()
-                tags = parseCategoryTags(row['categories'] || '')
-                armorSharp = parseNumeric(row['armorSharp'] || '0')
-                armorBlunt = parseNumeric(row['armorBlunt'] || '0')
-                armorHeat = parseNumeric(row['armorHeat'] || '0')
-              }
-
               const material: MaterialData = {
-                name,
-                armorSharp,
-                armorBlunt,
-                armorHeat,
-                tags,
+                name: row['label']!.trim(),
+                armorSharp: parseNumeric(row['armorSharp'] || '0'),
+                armorBlunt: parseNumeric(row['armorBlunt'] || '0'),
+                armorHeat: parseNumeric(row['armorHeat'] || '0'),
+                tags: parseCategoryTags(row['categories'] || ''),
               }
 
               return material
@@ -253,23 +186,6 @@ export async function getMaterialDataSources(
         label: modName,
         materials: groupedMaterials,
       })
-    }
-
-    // 如果没有找到任何数据，尝试加载旧版 Vanilla.csv（后备方案）
-    if (dataSources.length === 0 && locale === 'zh-CN') {
-      try {
-        const vanillaCSV = await import('./material_data/Vanilla.csv?raw')
-        const vanillaMaterials = await parseMaterialDataFromCSV(vanillaCSV.default)
-        const groupedMaterials = groupMaterialsByTags(vanillaMaterials)
-
-        dataSources.push({
-          id: 'vanilla',
-          label: 'Vanilla',
-          materials: groupedMaterials,
-        })
-      } catch (error) {
-        console.error('Failed to load legacy Vanilla.csv:', error)
-      }
     }
   } catch (error) {
     console.error('Failed to load material data sources:', error)

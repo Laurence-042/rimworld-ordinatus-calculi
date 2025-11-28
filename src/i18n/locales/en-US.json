@@ -155,14 +155,10 @@
         "heat": "Heat"
     },
     "materialType": {
-        "metal": "Metal Materials",
-        "wood": "Wood Materials",
-        "leather": "Leather Materials",
-        "fabric": "Fabric Materials",
-        "metalButton": "Metal",
-        "woodButton": "Wood",
-        "leatherButton": "Leather",
-        "fabricButton": "Fabric"
+        "Metallic": "Metal",
+        "Woody": "Wood",
+        "Leathery": "Leather",
+        "Fabric": "Fabric"
     },
     "apparelLayer": {
         "skin": "Skin",

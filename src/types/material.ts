@@ -18,7 +18,7 @@ export enum MaterialTag {
 }
 
 /**
- * 材料标签名称映射（中文/英文 → 枚举）
+ * 材料标签名称映射（用于从服装CSV的acceptedMaterials解析）
  */
 export const MaterialTagNames: Record<string, MaterialTag> = {
   // XML原始值
@@ -26,83 +26,13 @@ export const MaterialTagNames: Record<string, MaterialTag> = {
   Woody: MaterialTag.Woody,
   Leathery: MaterialTag.Leathery,
   Fabric: MaterialTag.Fabric,
-  // 中文
+  // 中文名称（服装CSV中的acceptedMaterials字段）
   金属: MaterialTag.Metallic,
   木材: MaterialTag.Woody,
   木: MaterialTag.Woody,
   皮革: MaterialTag.Leathery,
   织物: MaterialTag.Fabric,
   纤维: MaterialTag.Fabric,
-  // 兼容旧值
-  metal: MaterialTag.Metallic,
-  Metal: MaterialTag.Metallic,
-  wood: MaterialTag.Woody,
-  Wood: MaterialTag.Woody,
-  leather: MaterialTag.Leathery,
-  Leather: MaterialTag.Leathery,
-  fabric: MaterialTag.Fabric,
-  cloth: MaterialTag.Fabric,
-  Cloth: MaterialTag.Fabric,
-}
-
-/**
- * 获取材料标签的显示名称
- */
-export function getMaterialTagName(tag: MaterialTag): string {
-  const names: Record<MaterialTag, string> = {
-    [MaterialTag.Metallic]: '金属',
-    [MaterialTag.Woody]: '木材',
-    [MaterialTag.Leathery]: '皮革',
-    [MaterialTag.Fabric]: '织物',
-  }
-  return names[tag] || '未知'
-}
-
-/**
- * 根据分类字符串解析材料标签
- */
-export function parseMaterialTags(category: string): MaterialTag[] {
-  const tags: MaterialTag[] = []
-  const lowerCategory = category.toLowerCase()
-
-  // XML原始值（优先匹配）
-  if (category === 'Metallic' || lowerCategory.includes('metallic')) {
-    tags.push(MaterialTag.Metallic)
-  }
-  if (category === 'Woody' || lowerCategory.includes('woody')) {
-    tags.push(MaterialTag.Woody)
-  }
-  if (category === 'Leathery' || lowerCategory.includes('leathery')) {
-    tags.push(MaterialTag.Leathery)
-  }
-  if (category === 'Fabric' || lowerCategory.includes('fabric')) {
-    tags.push(MaterialTag.Fabric)
-  }
-
-  // 兼容旧格式
-  if (lowerCategory.includes('金属') || lowerCategory.includes('metal')) {
-    tags.push(MaterialTag.Metallic)
-  }
-  if (
-    lowerCategory.includes('木材') ||
-    lowerCategory.includes('木') ||
-    lowerCategory.includes('wood')
-  ) {
-    tags.push(MaterialTag.Woody)
-  }
-  if (lowerCategory.includes('皮革') || lowerCategory.includes('leather')) {
-    tags.push(MaterialTag.Leathery)
-  }
-  if (
-    lowerCategory.includes('织物') ||
-    lowerCategory.includes('纤维') ||
-    lowerCategory.includes('cloth')
-  ) {
-    tags.push(MaterialTag.Fabric)
-  }
-
-  // 去重
-  return Array.from(new Set(tags))
 }
 
 /**
