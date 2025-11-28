@@ -70,8 +70,10 @@
         "mediumAccuracy": "Medium (≤25 tiles)",
         "longAccuracy": "Long (≤40 tiles)",
         "qualityTooltip": "The sliders below use \"Normal Quality\" base values, calculations will automatically apply quality modifiers. If you only know the actual value at a specific quality, set quality to \"Normal\" below and enter that value to ensure calculations use the correct actual value.",
+        "actualStats": "Actual Stats (with Quality Bonus)",
         "calculationResult": "Calculation Result",
         "resultSummary": "Hit Chance: {hitChance}% | Max DPS: {maxDPS} | Armor Penetration: {actualAP}% (Base: {baseAP}%)",
+        "resultSummary2D": "Hit Chance at Current Distance: {hitChance}%",
         "addWeapon": "+ Add Weapon for Comparison",
         "maxWeaponsReached": "Maximum Weapons Reached (2)",
         "maxWeaponsHint": "3D surface mode supports up to 2 weapons for comparison with intersection display. To compare other weapons, please remove existing ones first."

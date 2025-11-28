@@ -7,6 +7,8 @@ import {
   calculateMaxDPS,
   getWeaponDataSources,
   getActualArmorPenetration,
+  getActualDamage,
+  getActualAccuracies,
 } from '@/utils/weaponCalculations'
 import type { Weapon, WeaponDataSource } from '@/types/weapon'
 import { QualityCategory, getQualityOptions } from '@/types/quality'
@@ -140,7 +142,9 @@ const getWeaponStats = (weapon: Weapon) => {
   const hitChance = calculateHitChance(weapon, targetDistance.value)
   const maxDPS = calculateMaxDPS(weapon)
   const armorPenetration = getActualArmorPenetration(weapon)
-  return { hitChance, maxDPS, armorPenetration }
+  const damage = getActualDamage(weapon)
+  const accuracies = getActualAccuracies(weapon)
+  return { hitChance, maxDPS, armorPenetration, damage, accuracies }
 }
 
 // 生命周期
@@ -357,17 +361,66 @@ watch(locale, async () => {
               />
             </el-form-item>
 
+            <!-- 实际数值显示（含品质加成） -->
+            <el-alert :closable="false" type="success" style="margin-top: 10px">
+              <template #title>
+                <span class="actual-stats-label">{{ t('weapon.actualStats') }}</span>
+              </template>
+              <template #default>
+                <div class="actual-stats-grid">
+                  <div class="stat-row">
+                    <span class="stat-label">{{ t('weapon.damage') }}:</span>
+                    <span class="stat-value">{{ getWeaponStats(weapon).damage.toFixed(1) }}</span>
+                  </div>
+                  <div class="stat-row">
+                    <span class="stat-label">{{ t('weapon.armorPenetrationShort') }}:</span>
+                    <span class="stat-value"
+                      >{{ getWeaponStats(weapon).armorPenetration.toFixed(1) }}%</span
+                    >
+                  </div>
+                  <div class="stat-row">
+                    <span class="stat-label">{{ t('weapon.accuracyTouch') }}:</span>
+                    <span class="stat-value"
+                      >{{ getWeaponStats(weapon).accuracies.touch.toFixed(1) }}%</span
+                    >
+                  </div>
+                  <div class="stat-row">
+                    <span class="stat-label">{{ t('weapon.accuracyShort') }}:</span>
+                    <span class="stat-value"
+                      >{{ getWeaponStats(weapon).accuracies.short.toFixed(1) }}%</span
+                    >
+                  </div>
+                  <div class="stat-row">
+                    <span class="stat-label">{{ t('weapon.accuracyMedium') }}:</span>
+                    <span class="stat-value"
+                      >{{ getWeaponStats(weapon).accuracies.medium.toFixed(1) }}%</span
+                    >
+                  </div>
+                  <div class="stat-row">
+                    <span class="stat-label">{{ t('weapon.accuracyLong') }}:</span>
+                    <span class="stat-value"
+                      >{{ getWeaponStats(weapon).accuracies.long.toFixed(1) }}%</span
+                    >
+                  </div>
+                  <div class="stat-row">
+                    <span class="stat-label">{{ t('weapon.maxDPS') }}:</span>
+                    <span class="stat-value highlight">{{
+                      getWeaponStats(weapon).maxDPS.toFixed(2)
+                    }}</span>
+                  </div>
+                </div>
+              </template>
+            </el-alert>
+
             <el-alert
               v-if="chartMode === '2d'"
               :title="t('weapon.calculationResult')"
-              type="success"
+              type="info"
               :closable="false"
+              style="margin-top: 10px"
               :description="
-                t('weapon.resultSummary', {
+                t('weapon.resultSummary2D', {
                   hitChance: (getWeaponStats(weapon).hitChance * 100).toFixed(2),
-                  maxDPS: getWeaponStats(weapon).maxDPS.toFixed(2),
-                  actualAP: getWeaponStats(weapon).armorPenetration.toFixed(1),
-                  baseAP: weapon.armorPenetration,
                 })
               "
             />
@@ -545,5 +598,38 @@ watch(locale, async () => {
   .right-panel {
     min-height: 600px;
   }
+}
+
+/* 实际数值显示样式 */
+.actual-stats-label {
+  font-weight: 600;
+}
+
+.actual-stats-grid {
+  display: grid;
+  gap: 8px 16px;
+  grid-template-columns: repeat(2, 1fr);
+  margin-top: 8px;
+}
+
+.stat-row {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.stat-label {
+  color: #606266;
+}
+
+.stat-value {
+  color: #409eff;
+  font-weight: 500;
+}
+
+.stat-value.highlight {
+  color: #67c23a;
+  font-size: 1.1em;
+  font-weight: 600;
 }
 </style>

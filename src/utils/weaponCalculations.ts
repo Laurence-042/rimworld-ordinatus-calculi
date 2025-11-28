@@ -159,6 +159,39 @@ export function getActualArmorPenetration(params: WeaponParams): number {
   return params.armorPenetration * qualityMultipliers.rangedArmorPenetration
 }
 
+/**
+ * 获取应用品质系数后的伤害值
+ *
+ * @param params - 武器参数
+ * @returns 实际伤害值
+ */
+export function getActualDamage(params: WeaponParams): number {
+  const qualityMultipliers = WeaponQualityMultipliers[params.quality]
+  return params.damage * qualityMultipliers.rangedDamage
+}
+
+/**
+ * 获取应用品质系数后的精度值
+ *
+ * @param params - 武器参数
+ * @returns 实际精度值对象 { touch, short, medium, long }，值为 0-100 范围
+ */
+export function getActualAccuracies(params: WeaponParams): {
+  touch: number
+  short: number
+  medium: number
+  long: number
+} {
+  const qualityMultipliers = WeaponQualityMultipliers[params.quality]
+  const multiplier = qualityMultipliers.rangedAccuracy
+  return {
+    touch: params.accuracyTouch * multiplier,
+    short: params.accuracyShort * multiplier,
+    medium: params.accuracyMedium * multiplier,
+    long: params.accuracyLong * multiplier,
+  }
+}
+
 // 缓存
 let cachedDataSources: WeaponDataSource[] | null = null
 

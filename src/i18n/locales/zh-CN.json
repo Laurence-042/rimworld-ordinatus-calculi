@@ -70,8 +70,10 @@
         "mediumAccuracy": "中 (≤25格)",
         "longAccuracy": "远 (≤40格)",
         "qualityTooltip": "下方滑块使用的是\"普通品质\"的基础值，计算会自动套用对应品质加成。若您只知道某特定品质下的实际数值，可在下方将品质设为\"普通\"，再填写该数值，即可确保计算使用正确的实际数值。",
+        "actualStats": "实际数值（含品质加成）",
         "calculationResult": "计算结果",
         "resultSummary": "命中率: {hitChance}% | 最大DPS: {maxDPS} | 护甲穿透: {actualAP}% (基础: {baseAP}%)",
+        "resultSummary2D": "当前距离命中率: {hitChance}%",
         "addWeapon": "+ 添加武器进行对比",
         "maxWeaponsReached": "已达到最大武器数量（2个）",
         "maxWeaponsHint": "3D曲面模式最多支持2个武器对比并显示交线。如需对比其他武器，请先删除现有武器。"
