@@ -1,4 +1,4 @@
-﻿defName,label,armorBlunt,armorSharp,armorHeat,materialCoefficient,acceptedMaterials,bodyPartCoverage,apparelLayers
+﻿defName,label,baseArmorSharp,baseArmorBlunt,baseArmorHeat,materialCoefficient,acceptedMaterials,bodyPartCoverage,apparelLayers
 Apparel_KidRomper,kid romper,,,,0.2,"Fabric,Leathery","Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg",0
 Apparel_KidShirt,kid shirt,,,,0.2,"Fabric,Leathery","Torso,LeftShoulder,RightShoulder",0
 Apparel_KidPants,kid pants,,,,0.2,"Fabric,Leathery","LeftLeg,RightLeg",0
@@ -8,13 +8,13 @@ Apparel_KidHelmet,kid helmet,,,,0.5,Metallic,,4
 Apparel_AirwireHeadset,airwire headset,,,,,,,4
 Apparel_ArrayHeadset,array headset,,,,,,,4
 Apparel_IntegratorHeadset,integrator headset,0,0,0,,,,4
-Apparel_ArmorHelmetMechCommander,mechcommander helmet,0.3,0.69,0.345,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
-Apparel_ArmorHelmetMechlordHelmet,mechlord helmet,0.4,0.92,0.46,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
-Apparel_GasMask,gas mask,0.3,0.18,,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
+Apparel_ArmorHelmetMechCommander,mechcommander helmet,0.69,0.3,0.345,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
+Apparel_ArmorHelmetMechlordHelmet,mechlord helmet,0.92,0.4,0.46,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
+Apparel_GasMask,gas mask,0.18,0.3,,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
 Apparel_HeavyShield,heavy shield unit,,,,,,Torso,1
 Apparel_PackControl,control pack,,,,,,Waist,3
 Apparel_PackBandwidth,bandwidth pack,,,,,,Waist,3
 Apparel_PackTox,tox pack,,,,,,Waist,3
-Apparel_MechlordSuit,mechlord suit,0.4,0.92,0.46,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg","1,2"
+Apparel_MechlordSuit,mechlord suit,0.92,0.4,0.46,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg","1,2"
 Apparel_Bandolier,heavy bandolier,,,,0.1,"Fabric,Leathery",Torso,2
 Apparel_Sash,sash,,,,0.1,"Fabric,Leathery",Torso,1

@@ -28,11 +28,11 @@ export function getActualArmorValue(layer: ArmorLayer, damageType: DamageType): 
 
   let baseArmor: number
   if (damageType === DamageType.Blunt) {
-    baseArmor = layer.armorBlunt
+    baseArmor = layer.baseArmorBlunt
   } else if (damageType === DamageType.Sharp) {
-    baseArmor = layer.armorSharp
+    baseArmor = layer.baseArmorSharp
   } else {
-    baseArmor = layer.armorHeat
+    baseArmor = layer.baseArmorHeat
   }
 
   const value = baseArmor * armorMultiplier
@@ -513,9 +513,9 @@ export function calculateMultiLayerDamageReduction(
       layerCount: uniqueLayers.length,
       layers: uniqueLayers.map((l) => ({
         name: l.itemName,
-        sharp: l.armorSharp,
-        blunt: l.armorBlunt,
-        heat: l.armorHeat,
+        sharp: l.baseArmorSharp,
+        blunt: l.baseArmorBlunt,
+        heat: l.baseArmorHeat,
       })),
       finalStates,
     })

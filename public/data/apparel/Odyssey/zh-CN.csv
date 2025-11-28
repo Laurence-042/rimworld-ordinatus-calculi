@@ -1,5 +1,5 @@
-﻿defName,label,armorBlunt,armorSharp,armorHeat,materialCoefficient,acceptedMaterials,bodyPartCoverage,apparelLayers
-Apparel_VacsuitHelmet,真空头盔,0.24,0.52,0.66,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
+﻿defName,label,baseArmorSharp,baseArmorBlunt,baseArmorHeat,materialCoefficient,acceptedMaterials,bodyPartCoverage,apparelLayers
+Apparel_VacsuitHelmet,真空头盔,0.52,0.24,0.66,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
 Apparel_CerebrexNode,主脑节点,,,,,,Waist,3
-Apparel_Vacsuit,真空服,0.25,0.52,0.66,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg","1,2"
-Apparel_VacsuitChildren,儿童真空服,0.2,0.52,0.66,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg","1,2"
+Apparel_Vacsuit,真空服,0.52,0.25,0.66,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg","1,2"
+Apparel_VacsuitChildren,儿童真空服,0.52,0.2,0.66,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg","1,2"

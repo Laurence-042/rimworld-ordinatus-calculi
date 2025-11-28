@@ -40,18 +40,16 @@ export const ApparelLayerNames: Record<string, ApparelLayer> = {
 export interface ArmorLayer {
   /** 衣物名称 */
   itemName: string
-  /** 利器护甲值 (0-2) */
-  armorSharp: number
-  /** 钝器护甲值 (0-2) */
-  armorBlunt: number
-  /** 热能护甲值 (0-2) */
-  armorHeat: number
+  /** 基础利器护甲值 (0-200百分比)，不依赖材料 */
+  baseArmorSharp: number
+  /** 基础钝器护甲值 (0-200百分比)，不依赖材料 */
+  baseArmorBlunt: number
+  /** 基础热能护甲值 (0-300百分比)，不依赖材料 */
+  baseArmorHeat: number
   /** 品质等级 */
   quality: QualityCategory
-  /** 是否依赖材料计算护甲 */
-  useMaterial?: boolean
-  /** 材料系数 (0-2) */
-  materialCoefficient?: number
+  /** 材料系数 (0-2)，用于计算材料护甲加成 */
+  materialCoefficient: number
   /** 使用的全局材料类型 */
   selectedMaterial?: MaterialTag
   /** 支持的材料类型（从预设加载） */

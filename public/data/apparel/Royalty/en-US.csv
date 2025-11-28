@@ -1,11 +1,11 @@
-﻿defName,label,armorBlunt,armorSharp,armorHeat,materialCoefficient,acceptedMaterials,bodyPartCoverage,apparelLayers
+﻿defName,label,baseArmorSharp,baseArmorBlunt,baseArmorHeat,materialCoefficient,acceptedMaterials,bodyPartCoverage,apparelLayers
 Apparel_PackJump,jump pack,,,,,,Waist,3
 Apparel_PackBroadshield,low-shield pack,,,,,,Waist,3
 Apparel_PsyfocusHelmet,eltex helmet,0.09,0.09,0.27,,,,4
 Apparel_EltexSkullcap,eltex skullcap,,,,,,,4
-Apparel_PsyfocusShirt,eltex shirt,0,0.07,0.04,,,"Torso,LeftShoulder,RightShoulder",0
-Apparel_PsyfocusVest,eltex vest,0,0.07,0.04,,,"Torso,Neck,LeftShoulder,RightShoulder",1
-Apparel_PsyfocusRobe,eltex robe,0,0.07,0.04,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg",2
+Apparel_PsyfocusShirt,eltex shirt,0.07,0,0.04,,,"Torso,LeftShoulder,RightShoulder",0
+Apparel_PsyfocusVest,eltex vest,0.07,0,0.04,,,"Torso,Neck,LeftShoulder,RightShoulder",1
+Apparel_PsyfocusRobe,eltex robe,0.07,0,0.04,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg",2
 Apparel_ShirtRuffle,formal shirt,,,,0.2,"Fabric,Leathery","LeftArm,RightArm,Neck",0
 Apparel_Corset,corset,,,,0.2,"Fabric,Leathery",Torso,1
 Apparel_VestRoyal,formal vest,,,,0.2,"Fabric,Leathery",Torso,1
@@ -16,13 +16,13 @@ Apparel_Coronet,coronet,,,,,Metallic,,4
 Apparel_Crown,crown,,,,,Metallic,,4
 Apparel_CrownStellic,stellic crown,,,,,Metallic,,4
 Apparel_Beret,beret,,,,,"Fabric,Leathery",,4
-Apparel_ArmorReconPrestige,prestige recon armor,0.4,0.92,0.46,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg","1,2"
-Apparel_ArmorHelmetReconPrestige,prestige recon helmet,0.4,0.92,0.46,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
-Apparel_ArmorMarinePrestige,prestige marine armor,0.45,1.06,0.54,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg","1,2"
-Apparel_ArmorMarineHelmetPrestige,prestige marine helmet,0.45,1.06,0.54,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
-Apparel_ArmorCataphract,cataphract armor,0.5,1.2,0.6,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg","1,2"
-Apparel_ArmorHelmetCataphract,cataphract helmet,0.5,1.2,0.6,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
-Apparel_ArmorCataphractPrestige,prestige cataphract armor,0.5,1.2,0.6,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg","1,2"
-Apparel_ArmorHelmetCataphractPrestige,prestige cataphract helmet,0.5,1.2,0.6,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
-Apparel_ArmorLocust,locust armor,0.35,0.87,0.41,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg","1,2"
+Apparel_ArmorReconPrestige,prestige recon armor,0.92,0.4,0.46,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg","1,2"
+Apparel_ArmorHelmetReconPrestige,prestige recon helmet,0.92,0.4,0.46,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
+Apparel_ArmorMarinePrestige,prestige marine armor,1.06,0.45,0.54,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg","1,2"
+Apparel_ArmorMarineHelmetPrestige,prestige marine helmet,1.06,0.45,0.54,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
+Apparel_ArmorCataphract,cataphract armor,1.2,0.5,0.6,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg","1,2"
+Apparel_ArmorHelmetCataphract,cataphract helmet,1.2,0.5,0.6,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
+Apparel_ArmorCataphractPrestige,prestige cataphract armor,1.2,0.5,0.6,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg","1,2"
+Apparel_ArmorHelmetCataphractPrestige,prestige cataphract helmet,1.2,0.5,0.6,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
+Apparel_ArmorLocust,locust armor,0.87,0.35,0.41,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg","1,2"
 Apparel_Gunlink,gunlink,0,0,0,,,,4

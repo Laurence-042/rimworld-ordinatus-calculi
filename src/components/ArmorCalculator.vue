@@ -148,12 +148,11 @@ const addArmorSet = () => {
     layers: [
       {
         itemName: t('armor.defaultApparelName'),
-        armorSharp: 50,
-        armorBlunt: 20,
-        armorHeat: 20,
+        baseArmorSharp: 50,
+        baseArmorBlunt: 20,
+        baseArmorHeat: 20,
         quality: QualityCategory.Masterwork,
-        useMaterial: false,
-        materialCoefficient: 1.0,
+        materialCoefficient: 0,
         selectedMaterial: MaterialTag.Fabric,
         supportedMaterials: [
           MaterialTag.Metallic,
@@ -180,12 +179,11 @@ const removeArmorSet = (id: number) => {
 const addLayer = (armorSet: ArmorSet) => {
   armorSet.layers.push({
     itemName: t('armor.defaultApparelName'),
-    armorSharp: 50,
-    armorBlunt: 20,
-    armorHeat: 20,
+    baseArmorSharp: 50,
+    baseArmorBlunt: 20,
+    baseArmorHeat: 20,
     quality: QualityCategory.Masterwork,
-    useMaterial: false,
-    materialCoefficient: 1.0,
+    materialCoefficient: 0,
     selectedMaterial: MaterialTag.Fabric,
     supportedMaterials: [
       MaterialTag.Metallic,
@@ -206,36 +204,32 @@ const removeLayer = (armorSet: ArmorSet, index: number) => {
   }
 }
 
-// 计算层的实际护甲值（考虑材料依赖和品质）
+// 计算层的实际护甲值（考虑基础护甲、材料加成和品质）
+// 最终护甲 = 基础护甲 + 材料系数 × 材料护甲值
 const getLayerActualArmor = (layer: ArmorSet['layers'][number]) => {
-  let baseArmor = {
-    armorSharp: layer.armorSharp,
-    armorBlunt: layer.armorBlunt,
-    armorHeat: layer.armorHeat,
-  }
+  // 基础护甲值（百分比）
+  let totalArmorSharp = layer.baseArmorSharp
+  let totalArmorBlunt = layer.baseArmorBlunt
+  let totalArmorHeat = layer.baseArmorHeat
 
-  // 如果使用材料，先计算材料护甲值
-  if (layer.useMaterial && layer.materialCoefficient && layer.selectedMaterial) {
+  // 如果有材料系数，加上材料护甲加成
+  if (layer.materialCoefficient > 0 && layer.selectedMaterial) {
     const material = globalMaterials.value[layer.selectedMaterial]
     if (material) {
-      // 材料系数 × 材料护甲值
-      baseArmor = {
-        armorSharp: layer.materialCoefficient * material.armorSharp,
-        armorBlunt: layer.materialCoefficient * material.armorBlunt,
-        armorHeat: layer.materialCoefficient * material.armorHeat,
-      }
-    } else {
-      // 如果没有材料，返回0
-      baseArmor = { armorSharp: 0, armorBlunt: 0, armorHeat: 0 }
+      // 基础护甲 + 材料系数 × 材料护甲值
+      totalArmorSharp += layer.materialCoefficient * material.armorSharp
+      totalArmorBlunt += layer.materialCoefficient * material.armorBlunt
+      totalArmorHeat += layer.materialCoefficient * material.armorHeat
     }
   }
 
   // 应用品质系数到护甲值
   const actualArmorLayer = {
     ...layer,
-    armorSharp: baseArmor.armorSharp / 100, // 转换为0-2范围
-    armorBlunt: baseArmor.armorBlunt / 100,
-    armorHeat: baseArmor.armorHeat / 100,
+    // 这里需要传入合并后的护甲值（转换为0-2范围）
+    baseArmorSharp: totalArmorSharp / 100,
+    baseArmorBlunt: totalArmorBlunt / 100,
+    baseArmorHeat: totalArmorHeat / 100,
   }
 
   return {
@@ -348,19 +342,28 @@ const loadClothingPreset = (layer: ArmorSet['layers'][number], preset: ClothingD
   // 设置默认品质为大师级
   layer.quality = QualityCategory.Masterwork
 
-  if (preset.materialCoefficient !== undefined && preset.materialCoefficient > 0) {
-    // 使用材料计算
-    layer.useMaterial = true
-    layer.materialCoefficient = preset.materialCoefficient
+  // 设置基础护甲值（转换为百分比）
+  layer.baseArmorSharp = (preset.baseArmorSharp || 0) * 100
+  layer.baseArmorBlunt = (preset.baseArmorBlunt || 0) * 100
+  layer.baseArmorHeat = (preset.baseArmorHeat || 0) * 100
+
+  // 设置材料系数
+  layer.materialCoefficient = preset.materialCoefficient || 0
+
+  // 如果有材料系数，设置支持的材料
+  if (layer.materialCoefficient > 0) {
     layer.supportedMaterials = parseAcceptedMaterials(preset.acceptedMaterials)
     // 选择第一个支持的材料
     layer.selectedMaterial = layer.supportedMaterials[0]
   } else {
-    // 直接输入护甲值
-    layer.useMaterial = false
-    layer.armorSharp = (preset.armorSharp || 0) * 100
-    layer.armorBlunt = (preset.armorBlunt || 0) * 100
-    layer.armorHeat = (preset.armorHeat || 0) * 100
+    // 没有材料系数时，不限制材料选择但默认不使用
+    layer.supportedMaterials = [
+      MaterialTag.Metallic,
+      MaterialTag.Woody,
+      MaterialTag.Leathery,
+      MaterialTag.Fabric,
+    ]
+    layer.selectedMaterial = MaterialTag.Fabric
   }
 }
 
@@ -511,12 +514,11 @@ onMounted(async () => {
       // 添加防弹夹克层
       const jacketLayer: ArmorSet['layers'][number] = {
         itemName: bulletproofJacket.label,
-        armorSharp: 0,
-        armorBlunt: 0,
-        armorHeat: 0,
+        baseArmorSharp: 0,
+        baseArmorBlunt: 0,
+        baseArmorHeat: 0,
         quality: QualityCategory.Masterwork,
-        useMaterial: false,
-        materialCoefficient: 1.0,
+        materialCoefficient: 0,
         selectedMaterial: MaterialTag.Fabric,
         supportedMaterials: [
           MaterialTag.Metallic,
@@ -535,12 +537,11 @@ onMounted(async () => {
       // 添加防弹背心层
       const vestLayer: ArmorSet['layers'][number] = {
         itemName: bulletproofVest.label,
-        armorSharp: 0,
-        armorBlunt: 0,
-        armorHeat: 0,
+        baseArmorSharp: 0,
+        baseArmorBlunt: 0,
+        baseArmorHeat: 0,
         quality: QualityCategory.Masterwork,
-        useMaterial: false,
-        materialCoefficient: 1.0,
+        materialCoefficient: 0,
         selectedMaterial: MaterialTag.Fabric,
         supportedMaterials: [
           MaterialTag.Metallic,
@@ -574,12 +575,11 @@ onMounted(async () => {
 
       const marineLayer: ArmorSet['layers'][number] = {
         itemName: marineArmor.label,
-        armorSharp: 0,
-        armorBlunt: 0,
-        armorHeat: 0,
+        baseArmorSharp: 0,
+        baseArmorBlunt: 0,
+        baseArmorHeat: 0,
         quality: QualityCategory.Masterwork,
-        useMaterial: false,
-        materialCoefficient: 1.0,
+        materialCoefficient: 0,
         selectedMaterial: MaterialTag.Fabric,
         supportedMaterials: [
           MaterialTag.Metallic,
@@ -928,104 +928,97 @@ watch(locale, async () => {
                   />
                 </el-form-item>
 
-                <el-form-item :label="t('armor.armorSource')">
-                  <el-radio-group v-model="layer.useMaterial">
-                    <el-radio-button :value="false">{{ t('armor.fixedValue') }}</el-radio-button>
-                    <el-radio-button :value="true">{{
-                      t('armor.dependOnMaterial')
-                    }}</el-radio-button>
-                  </el-radio-group>
+                <!-- 基础护甲值（始终显示） -->
+                <el-form-item :label="t('armor.baseArmorSharp')">
+                  <SliderInput
+                    v-model="layer.baseArmorSharp"
+                    :min="0"
+                    :max="200"
+                    :step="1"
+                    :format-tooltip="(val: number) => `${val}%`"
+                    unit="%"
+                  />
                 </el-form-item>
 
-                <template v-if="!layer.useMaterial">
-                  <el-form-item :label="t('armor.armorSharp')">
-                    <SliderInput
-                      v-model="layer.armorSharp"
-                      :min="0"
-                      :max="200"
-                      :step="1"
-                      :format-tooltip="(val: number) => `${val}%`"
-                      unit="%"
-                    />
-                  </el-form-item>
+                <el-form-item :label="t('armor.baseArmorBlunt')">
+                  <SliderInput
+                    v-model="layer.baseArmorBlunt"
+                    :min="0"
+                    :max="200"
+                    :step="1"
+                    :format-tooltip="(val: number) => `${val}%`"
+                    unit="%"
+                  />
+                </el-form-item>
 
-                  <el-form-item :label="t('armor.armorBlunt')">
-                    <SliderInput
-                      v-model="layer.armorBlunt"
-                      :min="0"
-                      :max="200"
-                      :step="1"
-                      :format-tooltip="(val: number) => `${val}%`"
-                      unit="%"
-                    />
-                  </el-form-item>
+                <el-form-item :label="t('armor.baseArmorHeat')">
+                  <SliderInput
+                    v-model="layer.baseArmorHeat"
+                    :min="0"
+                    :max="300"
+                    :step="1"
+                    :format-tooltip="(val: number) => `${val}%`"
+                    unit="%"
+                  />
+                </el-form-item>
 
-                  <el-form-item :label="t('armor.armorHeat')">
-                    <SliderInput
-                      v-model="layer.armorHeat"
-                      :min="0"
-                      :max="300"
-                      :step="1"
-                      :format-tooltip="(val: number) => `${val}%`"
-                      unit="%"
-                    />
-                  </el-form-item>
-                </template>
+                <!-- 材料加成（始终显示） -->
+                <el-form-item :label="t('armor.materialCoefficient')">
+                  <SliderInput
+                    v-model="layer.materialCoefficient"
+                    :min="0"
+                    :max="2"
+                    :step="0.01"
+                    :precision="2"
+                    :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
+                    unit="x"
+                  />
+                </el-form-item>
 
-                <template v-else>
-                  <el-form-item :label="t('armor.materialCoefficient')">
-                    <SliderInput
-                      v-model="layer.materialCoefficient!"
-                      :min="0"
-                      :max="2"
-                      :step="0.01"
-                      :precision="2"
-                      :format-tooltip="(val: number) => `${(val * 100).toFixed(0)}%`"
-                      unit="x"
-                    />
-                  </el-form-item>
-
-                  <el-form-item :label="t('armor.usedMaterial')">
-                    <el-radio-group v-model="layer.selectedMaterial">
-                      <el-radio-button
-                        :value="MaterialTag.Metallic"
-                        :disabled="
-                          layer.supportedMaterials &&
-                          !layer.supportedMaterials.includes(MaterialTag.Metallic)
-                        "
-                      >
-                        {{ t('materialType.Metallic') }}
-                      </el-radio-button>
-                      <el-radio-button
-                        :value="MaterialTag.Woody"
-                        :disabled="
-                          layer.supportedMaterials &&
-                          !layer.supportedMaterials.includes(MaterialTag.Woody)
-                        "
-                      >
-                        {{ t('materialType.Woody') }}
-                      </el-radio-button>
-                      <el-radio-button
-                        :value="MaterialTag.Leathery"
-                        :disabled="
-                          layer.supportedMaterials &&
-                          !layer.supportedMaterials.includes(MaterialTag.Leathery)
-                        "
-                      >
-                        {{ t('materialType.Leathery') }}
-                      </el-radio-button>
-                      <el-radio-button
-                        :value="MaterialTag.Fabric"
-                        :disabled="
-                          layer.supportedMaterials &&
-                          !layer.supportedMaterials.includes(MaterialTag.Fabric)
-                        "
-                      >
-                        {{ t('materialType.Fabric') }}
-                      </el-radio-button>
-                    </el-radio-group>
-                  </el-form-item>
-                </template>
+                <!-- 材料选择（仅在材料系数>0时启用） -->
+                <el-form-item :label="t('armor.usedMaterial')">
+                  <el-radio-group
+                    v-model="layer.selectedMaterial"
+                    :disabled="layer.materialCoefficient <= 0"
+                  >
+                    <el-radio-button
+                      :value="MaterialTag.Metallic"
+                      :disabled="
+                        layer.supportedMaterials &&
+                        !layer.supportedMaterials.includes(MaterialTag.Metallic)
+                      "
+                    >
+                      {{ t('materialType.Metallic') }}
+                    </el-radio-button>
+                    <el-radio-button
+                      :value="MaterialTag.Woody"
+                      :disabled="
+                        layer.supportedMaterials &&
+                        !layer.supportedMaterials.includes(MaterialTag.Woody)
+                      "
+                    >
+                      {{ t('materialType.Woody') }}
+                    </el-radio-button>
+                    <el-radio-button
+                      :value="MaterialTag.Leathery"
+                      :disabled="
+                        layer.supportedMaterials &&
+                        !layer.supportedMaterials.includes(MaterialTag.Leathery)
+                      "
+                    >
+                      {{ t('materialType.Leathery') }}
+                    </el-radio-button>
+                    <el-radio-button
+                      :value="MaterialTag.Fabric"
+                      :disabled="
+                        layer.supportedMaterials &&
+                        !layer.supportedMaterials.includes(MaterialTag.Fabric)
+                      "
+                    >
+                      {{ t('materialType.Fabric') }}
+                    </el-radio-button>
+                  </el-radio-group>
+                </el-form-item>
 
                 <!-- 实际护甲值显示 -->
                 <el-alert :closable="false" type="success" style="margin-top: 10px">

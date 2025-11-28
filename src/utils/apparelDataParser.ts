@@ -17,9 +17,13 @@ import { useExtendedDataSourceManager } from './extendedDataSourceManager'
 export interface ClothingData {
   defName: string
   label: string
-  armorBlunt?: number
-  armorSharp?: number
-  armorHeat?: number
+  /** 基础钓器护甲 (0-2)，不依赖材料 */
+  baseArmorSharp?: number
+  /** 基础钝器护甲 (0-2)，不依赖材料 */
+  baseArmorBlunt?: number
+  /** 基础热能护甲 (0-2)，不依赖材料 */
+  baseArmorHeat?: number
+  /** 材料系数 (0-2)，用于计算材料护甲加成 */
   materialCoefficient?: number
   acceptedMaterials?: string[]
   bodyPartCoverage?: BodyPart[]
@@ -43,9 +47,9 @@ export interface ClothingDataSource {
 interface ApparelCSVRow extends Record<string, string> {
   defName: string
   label: string
-  armorBlunt: string
-  armorSharp: string
-  armorHeat: string
+  baseArmorSharp: string
+  baseArmorBlunt: string
+  baseArmorHeat: string
   materialCoefficient: string
   acceptedMaterials: string
   bodyPartCoverage: string
@@ -97,9 +101,9 @@ async function parseApparelCSV(csvContent: string): Promise<ClothingData[]> {
       const clothing: ClothingData = {
         defName: row.defName.trim(),
         label: row.label?.trim() || row.defName.trim(),
-        armorBlunt: parseOptionalNumeric(row.armorBlunt),
-        armorSharp: parseOptionalNumeric(row.armorSharp),
-        armorHeat: parseOptionalNumeric(row.armorHeat),
+        baseArmorSharp: parseOptionalNumeric(row.baseArmorSharp),
+        baseArmorBlunt: parseOptionalNumeric(row.baseArmorBlunt),
+        baseArmorHeat: parseOptionalNumeric(row.baseArmorHeat),
         materialCoefficient: parseOptionalNumeric(row.materialCoefficient),
         acceptedMaterials: parseOptionalDelimitedString(row.acceptedMaterials),
         bodyPartCoverage: row.bodyPartCoverage ? parseBodyParts(row.bodyPartCoverage) : undefined,

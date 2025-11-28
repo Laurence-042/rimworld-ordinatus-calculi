@@ -31,9 +31,13 @@ export interface ApparelThingDefNode extends BaseThingDefNode {
 export interface ClothingCSVData extends Record<string, string> {
   defName: string
   label: string
-  armorBlunt: string
-  armorSharp: string
-  armorHeat: string
+  /** 基础钓器护甲 (ArmorRating_Sharp) */
+  baseArmorSharp: string
+  /** 基础钝器护甲 (ArmorRating_Blunt) */
+  baseArmorBlunt: string
+  /** 基础热能护甲 (ArmorRating_Heat) */
+  baseArmorHeat: string
+  /** 材料系数 (StuffEffectMultiplierArmor) */
   materialCoefficient: string
   acceptedMaterials: string
   bodyPartCoverage: string
@@ -234,9 +238,9 @@ export class ApparelParser {
     const row: ClothingCSVData = {
       defName: clothing.defName || '',
       label: label,
-      armorBlunt: BaseParserUtils.formatNumber(clothing.armorRatingBlunt),
-      armorSharp: BaseParserUtils.formatNumber(clothing.armorRatingSharp),
-      armorHeat: BaseParserUtils.formatNumber(clothing.armorRatingHeat),
+      baseArmorSharp: BaseParserUtils.formatNumber(clothing.armorRatingSharp),
+      baseArmorBlunt: BaseParserUtils.formatNumber(clothing.armorRatingBlunt),
+      baseArmorHeat: BaseParserUtils.formatNumber(clothing.armorRatingHeat),
       materialCoefficient: BaseParserUtils.formatNumber(clothing.stuffEffectMultiplierArmor),
       acceptedMaterials: clothing.stuffCategories?.join(',') || '',
       bodyPartCoverage: bodyPartCoverage.join(','), // BodyPart枚举值用逗号分隔
@@ -261,9 +265,9 @@ export class ApparelParser {
     const headers = [
       'defName',
       'label',
-      'armorBlunt',
-      'armorSharp',
-      'armorHeat',
+      'baseArmorSharp',
+      'baseArmorBlunt',
+      'baseArmorHeat',
       'materialCoefficient',
       'acceptedMaterials',
       'bodyPartCoverage',

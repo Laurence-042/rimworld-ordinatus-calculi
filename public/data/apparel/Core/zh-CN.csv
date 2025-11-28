@@ -1,4 +1,4 @@
-﻿defName,label,armorBlunt,armorSharp,armorHeat,materialCoefficient,acceptedMaterials,bodyPartCoverage,apparelLayers
+﻿defName,label,baseArmorSharp,baseArmorBlunt,baseArmorHeat,materialCoefficient,acceptedMaterials,bodyPartCoverage,apparelLayers
 Apparel_ShieldBelt,护盾腰带,,,,,,Waist,3
 Apparel_CowboyHat,牛仔帽,,,,0.2,"Fabric,Leathery",,4
 Apparel_BowlerHat,圆顶礼帽,,,,0.2,"Fabric,Leathery",,4
@@ -8,8 +8,8 @@ Apparel_WarMask,战争面具,,,,0.3,Woody,"Head,LeftEye,RightEye,LeftEar,RightEa
 Apparel_WarVeil,面罩,,,,0.2,Fabric,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
 Apparel_SimpleHelmet,简易头盔,,,,0.5,Metallic,,4
 Apparel_AdvancedHelmet,防弹头盔,,,,0.7,Metallic,,4
-Apparel_PowerArmorHelmet,海军头盔,0.45,1.06,0.54,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
-Apparel_ArmorHelmetRecon,斥候头盔,0.4,0.92,0.46,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
+Apparel_PowerArmorHelmet,海军头盔,1.06,0.45,0.54,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
+Apparel_ArmorHelmetRecon,斥候头盔,0.92,0.4,0.46,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
 Apparel_PsychicFoilHelmet,心灵防护头盔,0.09,0.09,0.27,,,,4
 Apparel_HatHood,兜帽,,,,0.2,"Fabric,Leathery",,4
 Apparel_ClothMask,毒污口罩,,,,0.2,Fabric,,4
@@ -23,10 +23,10 @@ Apparel_CollarShirt,衬衫,,,,0.2,"Fabric,Leathery","Torso,Neck,LeftShoulder,Rig
 Apparel_Duster,防尘大衣,,,,0.3,"Fabric,Leathery","Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg",2
 Apparel_Jacket,夹克,,,,0.3,"Fabric,Leathery","Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm",2
 Apparel_PlateArmor,板甲,,,,0.9,"Metallic,Woody","Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg","1,2"
-Apparel_FlakVest,防弹背心,0.36,1,0.27,,,"Torso,Neck",1
-Apparel_FlakPants,防弹裤,0.08,0.55,0.1,,,"LeftLeg,RightLeg","0,1"
-Apparel_FlakJacket,防弹夹克,0.08,0.55,0.1,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm",2
-Apparel_PowerArmor,海军装甲,0.45,1.06,0.54,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg","1,2"
-Apparel_ArmorRecon,斥候装甲,0.4,0.92,0.46,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg","1,2"
+Apparel_FlakVest,防弹背心,1,0.36,0.27,,,"Torso,Neck",1
+Apparel_FlakPants,防弹裤,0.55,0.08,0.1,,,"LeftLeg,RightLeg","0,1"
+Apparel_FlakJacket,防弹夹克,0.55,0.08,0.1,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm",2
+Apparel_PowerArmor,海军装甲,1.06,0.45,0.54,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg","1,2"
+Apparel_ArmorRecon,斥候装甲,0.92,0.4,0.46,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg","1,2"
 Apparel_Cape,披肩,,,,0.3,"Fabric,Leathery","Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg",2
 Apparel_Robe,robe,,,,0.2,"Fabric,Leathery","Torso,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg",2

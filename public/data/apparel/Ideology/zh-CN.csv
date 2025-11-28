@@ -1,4 +1,4 @@
-﻿defName,label,armorBlunt,armorSharp,armorHeat,materialCoefficient,acceptedMaterials,bodyPartCoverage,apparelLayers
+﻿defName,label,baseArmorSharp,baseArmorBlunt,baseArmorHeat,materialCoefficient,acceptedMaterials,bodyPartCoverage,apparelLayers
 Apparel_Headwrap,裹头巾,,,,0.25,Fabric,,4
 Apparel_Broadwrap,头巾,,,,0.25,Fabric,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw,Neck,LeftShoulder,RightShoulder",4
 Apparel_VisageMask,假面,,,,0.3,"Woody,Metallic","Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4

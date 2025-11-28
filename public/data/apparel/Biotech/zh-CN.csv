@@ -1,4 +1,4 @@
-﻿defName,label,armorBlunt,armorSharp,armorHeat,materialCoefficient,acceptedMaterials,bodyPartCoverage,apparelLayers
+﻿defName,label,baseArmorSharp,baseArmorBlunt,baseArmorHeat,materialCoefficient,acceptedMaterials,bodyPartCoverage,apparelLayers
 Apparel_KidRomper,儿童连衫裤,,,,0.2,"Fabric,Leathery","Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg",0
 Apparel_KidShirt,儿童衬衫,,,,0.2,"Fabric,Leathery","Torso,LeftShoulder,RightShoulder",0
 Apparel_KidPants,儿童裤子,,,,0.2,"Fabric,Leathery","LeftLeg,RightLeg",0
@@ -8,13 +8,13 @@ Apparel_KidHelmet,儿童头盔,,,,0.5,Metallic,,4
 Apparel_AirwireHeadset,无线耳机,,,,,,,4
 Apparel_ArrayHeadset,矩阵耳机,,,,,,,4
 Apparel_IntegratorHeadset,集成耳机,0,0,0,,,,4
-Apparel_ArmorHelmetMechCommander,机械指挥官头盔,0.3,0.69,0.345,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
-Apparel_ArmorHelmetMechlordHelmet,机械领主头盔,0.4,0.92,0.46,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
-Apparel_GasMask,毒污面具,0.3,0.18,,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
+Apparel_ArmorHelmetMechCommander,机械指挥官头盔,0.69,0.3,0.345,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
+Apparel_ArmorHelmetMechlordHelmet,机械领主头盔,0.92,0.4,0.46,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
+Apparel_GasMask,毒污面具,0.18,0.3,,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
 Apparel_HeavyShield,重型护盾装置,,,,,,Torso,1
 Apparel_PackControl,数控背包,,,,,,Waist,3
 Apparel_PackBandwidth,带宽背包,,,,,,Waist,3
 Apparel_PackTox,毒气背包,,,,,,Waist,3
-Apparel_MechlordSuit,机械领主装甲,0.4,0.92,0.46,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg","1,2"
+Apparel_MechlordSuit,机械领主装甲,0.92,0.4,0.46,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg","1,2"
 Apparel_Bandolier,重型弹药背包,,,,0.1,"Fabric,Leathery",Torso,2
 Apparel_Sash,肩带,,,,0.1,"Fabric,Leathery",Torso,1

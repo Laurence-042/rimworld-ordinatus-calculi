@@ -1,4 +1,4 @@
-﻿defName,label,armorBlunt,armorSharp,armorHeat,materialCoefficient,acceptedMaterials,bodyPartCoverage,apparelLayers
+﻿defName,label,baseArmorSharp,baseArmorBlunt,baseArmorHeat,materialCoefficient,acceptedMaterials,bodyPartCoverage,apparelLayers
 Apparel_ShieldBelt,shield belt,,,,,,Waist,3
 Apparel_CowboyHat,cowboy hat,,,,0.2,"Fabric,Leathery",,4
 Apparel_BowlerHat,bowler hat,,,,0.2,"Fabric,Leathery",,4
@@ -8,8 +8,8 @@ Apparel_WarMask,war mask,,,,0.3,Woody,"Head,LeftEye,RightEye,LeftEar,RightEar,No
 Apparel_WarVeil,veil,,,,0.2,Fabric,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
 Apparel_SimpleHelmet,simple helmet,,,,0.5,Metallic,,4
 Apparel_AdvancedHelmet,flak helmet,,,,0.7,Metallic,,4
-Apparel_PowerArmorHelmet,marine helmet,0.45,1.06,0.54,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
-Apparel_ArmorHelmetRecon,recon helmet,0.4,0.92,0.46,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
+Apparel_PowerArmorHelmet,marine helmet,1.06,0.45,0.54,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
+Apparel_ArmorHelmetRecon,recon helmet,0.92,0.4,0.46,,,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
 Apparel_PsychicFoilHelmet,psychic foil helmet,0.09,0.09,0.27,,,,4
 Apparel_HatHood,hood,,,,0.2,"Fabric,Leathery",,4
 Apparel_ClothMask,face mask,,,,0.2,Fabric,,4
@@ -23,10 +23,10 @@ Apparel_CollarShirt,button-down shirt,,,,0.2,"Fabric,Leathery","Torso,Neck,LeftS
 Apparel_Duster,duster,,,,0.3,"Fabric,Leathery","Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg",2
 Apparel_Jacket,jacket,,,,0.3,"Fabric,Leathery","Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm",2
 Apparel_PlateArmor,plate armor,,,,0.9,"Metallic,Woody","Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg","1,2"
-Apparel_FlakVest,flak vest,0.36,1,0.27,,,"Torso,Neck",1
-Apparel_FlakPants,flak pants,0.08,0.55,0.1,,,"LeftLeg,RightLeg","0,1"
-Apparel_FlakJacket,flak jacket,0.08,0.55,0.1,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm",2
-Apparel_PowerArmor,marine armor,0.45,1.06,0.54,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg","1,2"
-Apparel_ArmorRecon,recon armor,0.4,0.92,0.46,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg","1,2"
+Apparel_FlakVest,flak vest,1,0.36,0.27,,,"Torso,Neck",1
+Apparel_FlakPants,flak pants,0.55,0.08,0.1,,,"LeftLeg,RightLeg","0,1"
+Apparel_FlakJacket,flak jacket,0.55,0.08,0.1,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm",2
+Apparel_PowerArmor,marine armor,1.06,0.45,0.54,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg","1,2"
+Apparel_ArmorRecon,recon armor,0.92,0.4,0.46,,,"Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg","1,2"
 Apparel_Cape,cape,,,,0.3,"Fabric,Leathery","Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg",2
 Apparel_Robe,robe,,,,0.2,"Fabric,Leathery","Torso,LeftShoulder,RightShoulder,LeftArm,RightArm,LeftLeg,RightLeg",2

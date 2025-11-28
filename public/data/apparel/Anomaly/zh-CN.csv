@@ -1,4 +1,4 @@
-﻿defName,label,armorBlunt,armorSharp,armorHeat,materialCoefficient,acceptedMaterials,bodyPartCoverage,apparelLayers
+﻿defName,label,baseArmorSharp,baseArmorBlunt,baseArmorHeat,materialCoefficient,acceptedMaterials,bodyPartCoverage,apparelLayers
 Apparel_CultistMask,仪式面具,,,,0.3,Bioferrite,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
 Apparel_CeremonialCultistMask,仪式兜帽,,,,0.4,Fabric,"Head,LeftEye,RightEye,LeftEar,RightEar,Nose,Jaw",4
 Apparel_LabCoat,实验服,,,,0.2,"Fabric,Leathery","Torso,Neck,LeftShoulder,RightShoulder,LeftArm,RightArm",2
