@@ -27,18 +27,6 @@ export interface BaseThingDefNode {
 }
 
 /**
- * 投射物节点
- */
-export interface ProjectileNode {
-  defName: string
-  damageAmountBase?: number
-  armorPenetrationBase?: number
-  stoppingPower?: number
-
-  rawData?: unknown
-}
-
-/**
  * 语言映射配置
  */
 export const LANGUAGE_MAP: Record<string, string> = {
@@ -154,43 +142,6 @@ export class BaseParserUtils {
     }
 
     return stats
-  }
-
-  /**
-   * 判断是否为投射物定义
-   */
-  static isProjectile(xmlNode: Record<string, unknown>): boolean {
-    return (
-      xmlNode.projectile !== undefined ||
-      xmlNode.thingClass === 'Bullet' ||
-      xmlNode.category === 'Projectile'
-    )
-  }
-
-  /**
-   * 解析投射物节点
-   */
-  static parseProjectile(xmlNode: Record<string, unknown>): ProjectileNode | null {
-    const defName = this.getStringValue(xmlNode, 'defName')
-    if (!defName) {
-      return null
-    }
-
-    const projectile: ProjectileNode = {
-      defName,
-      rawData: xmlNode,
-    }
-
-    if (this.isRecord(xmlNode.projectile)) {
-      const proj = xmlNode.projectile as Record<string, unknown>
-      projectile.damageAmountBase = this.parseFloat(proj.damageAmountBase || proj.DamageAmountBase)
-      projectile.armorPenetrationBase = this.parseFloat(
-        proj.armorPenetrationBase || proj.ArmorPenetrationBase,
-      )
-      projectile.stoppingPower = this.parseFloat(proj.stoppingPower || proj.StoppingPower)
-    }
-
-    return projectile
   }
 
   /**

@@ -3,7 +3,8 @@ import * as path from 'path'
 import { parseStringPromise } from 'xml2js'
 import { DataSourceType, DATA_SOURCE_PATHS } from '../../src/utils/dataSourceConfig'
 import { MOD_CONFIGS, OUTPUT_DIR_OVERRIDE, DEBUG_OPTIONS } from './config'
-import { BaseThingDefNode, ProjectileNode, BaseParserUtils, LANGUAGE_MAP } from './baseParser'
+import { BaseThingDefNode, BaseParserUtils, LANGUAGE_MAP } from './baseParser'
+import { ProjectileNode, ProjectileParser } from './projectileParser'
 import { WeaponThingDefNode, isWeaponNode, WeaponParser } from './weaponParser'
 import { ApparelThingDefNode, isApparelNode, ApparelParser } from './apparelParser'
 
@@ -398,13 +399,13 @@ class ModDataParser {
     this.thingDefMap.set(identifier, finalNode)
 
     // 如果是子弹定义（投射物必须有defName才能被引用）
-    if (defName && BaseParserUtils.isProjectile(xmlNode)) {
+    if (defName && ProjectileParser.isProjectile(xmlNode)) {
       this.parseProjectile(xmlNode)
     }
   }
 
   private parseProjectile(xmlNode: Record<string, unknown>): void {
-    const projectile = BaseParserUtils.parseProjectile(xmlNode)
+    const projectile = ProjectileParser.parseProjectile(xmlNode)
     if (projectile) {
       this.projectileMap.set(projectile.defName, projectile)
     }
