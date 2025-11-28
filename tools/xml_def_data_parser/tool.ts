@@ -41,6 +41,16 @@ interface ModMetadata {
   customOutputName?: string
 }
 
+/**
+ * 单个MOD的数据集合
+ */
+interface ModDataCollection {
+  name: string
+  outputName: string
+  // 记录此MOD定义的节点标识符（不包括继承的节点）
+  ownedIdentifiers: Set<string>
+}
+
 class ModDataParser {
   // 全局共享的数据映射（跨所有MOD）
   private thingDefMap: Map<string, ThingDefNode> = new Map()
@@ -50,8 +60,8 @@ class ModDataParser {
   // 当前正在处理的MOD信息
   private currentMod: ModMetadata = { name: '', dir: '' }
 
-  // 记录每个MOD的输出信息
-  private modOutputs: Array<{ name: string; outputName: string }> = []
+  // 记录每个MOD的数据集合
+  private modDataCollections: ModDataCollection[] = []
 
   constructor() {
     // 构造函数不再需要参数，改为批量处理所有MOD
@@ -87,9 +97,22 @@ class ModDataParser {
    */
   private async parseMod(modDir: string, customOutputName?: string): Promise<void> {
     const modName = this.extractModName(modDir, customOutputName)
+    const outputName = customOutputName || modName
+
     this.currentMod = { name: modName, dir: modDir, customOutputName }
 
     console.log(`开始解析MOD: ${modName}`)
+
+    // 创建此MOD的数据集合并立即添加到数组（以便 parseThingDef 中能访问到）
+    const modCollection: ModDataCollection = {
+      name: modName,
+      outputName: outputName,
+      ownedIdentifiers: new Set<string>(),
+    }
+    this.modDataCollections.push(modCollection)
+
+    // 记录解析前的节点数量
+    const beforeCount = this.thingDefMap.size
 
     // 1. 扫描所有XML文件
     const xmlFiles = this.scanXMLFiles(modDir)
@@ -100,16 +123,15 @@ class ModDataParser {
       return
     }
 
-    // 2. 解析所有XML文件，建立映射关系
+    // 2. 解析所有XML文件，建立映射关系（解析过程中会自动添加到 ownedIdentifiers）
     for (const xmlFile of xmlFiles) {
       await this.parseXMLFile(xmlFile)
     }
 
+    console.log(`  此MOD定义了 ${this.thingDefMap.size - beforeCount} 个新节点`)
+
     // 3. 解析语言文件
     await this.parseLanguageFiles()
-
-    // 记录此MOD的输出信息
-    this.modOutputs.push({ name: modName, outputName: customOutputName || modName })
   }
 
   /**
@@ -143,10 +165,10 @@ class ModDataParser {
     console.log('阶段 3: 生成CSV文件')
     console.log('='.repeat(60))
 
-    for (const modOutput of this.modOutputs) {
-      console.log(`\n生成 ${modOutput.name} 的数据文件...`)
-      await this.generateWeaponCSV(modOutput.outputName)
-      await this.generateClothingCSV(modOutput.outputName)
+    for (const modCollection of this.modDataCollections) {
+      console.log(`\n生成 ${modCollection.name} 的数据文件...`)
+      await this.generateWeaponCSV(modCollection)
+      await this.generateClothingCSV(modCollection)
     }
   }
 
@@ -376,6 +398,8 @@ class ModDataParser {
     const weaponProps = WeaponParser.parseWeaponProperties(xmlNode)
     // 尝试解析服装属性
     const apparelProps = ApparelParser.parseApparelProperties(xmlNode)
+    // 尝试解析投射物属性
+    const projectileProps = ProjectileParser.parseProjectileProperties(xmlNode)
 
     let finalNode: ThingDefNode
 
@@ -398,16 +422,15 @@ class ModDataParser {
 
     this.thingDefMap.set(identifier, finalNode)
 
-    // 如果是子弹定义（投射物必须有defName才能被引用）
-    if (defName && ProjectileParser.isProjectile(xmlNode)) {
-      this.parseProjectile(xmlNode)
+    // 如果是投射物定义，单独存储到 projectileMap
+    if (projectileProps) {
+      this.projectileMap.set(projectileProps.defName, projectileProps)
     }
-  }
 
-  private parseProjectile(xmlNode: Record<string, unknown>): void {
-    const projectile = ProjectileParser.parseProjectile(xmlNode)
-    if (projectile) {
-      this.projectileMap.set(projectile.defName, projectile)
+    // 记录此节点属于当前正在解析的MOD（添加到最后一个 modDataCollection）
+    if (this.modDataCollections.length > 0) {
+      const currentCollection = this.modDataCollections[this.modDataCollections.length - 1]
+      currentCollection.ownedIdentifiers.add(identifier)
     }
   }
 
@@ -485,11 +508,13 @@ class ModDataParser {
     }
   }
 
-  private async generateWeaponCSV(modName: string): Promise<void> {
+  private async generateWeaponCSV(modCollection: ModDataCollection): Promise<void> {
     const weapons: WeaponThingDefNode[] = []
 
-    for (const node of this.thingDefMap.values()) {
-      if (isWeaponNode(node)) {
+    // 只收集此MOD自己定义的节点
+    for (const identifier of modCollection.ownedIdentifiers) {
+      const node = this.thingDefMap.get(identifier)
+      if (node && isWeaponNode(node)) {
         weapons.push(node)
       }
     }
@@ -502,7 +527,7 @@ class ModDataParser {
     }
 
     // 创建 MOD 专用目录
-    const modOutputDir = path.join(WEAPON_OUTPUT_DIR, modName)
+    const modOutputDir = path.join(WEAPON_OUTPUT_DIR, modCollection.outputName)
     if (!fs.existsSync(modOutputDir)) {
       fs.mkdirSync(modOutputDir, { recursive: true })
     }
@@ -522,11 +547,13 @@ class ModDataParser {
     }
   }
 
-  private async generateClothingCSV(modName: string): Promise<void> {
+  private async generateClothingCSV(modCollection: ModDataCollection): Promise<void> {
     const clothing: ApparelThingDefNode[] = []
 
-    for (const node of this.thingDefMap.values()) {
-      if (isApparelNode(node)) {
+    // 只收集此MOD自己定义的节点
+    for (const identifier of modCollection.ownedIdentifiers) {
+      const node = this.thingDefMap.get(identifier)
+      if (node && isApparelNode(node)) {
         clothing.push(node)
       }
     }
@@ -539,7 +566,7 @@ class ModDataParser {
     }
 
     // 创建 MOD 专用目录
-    const modOutputDir = path.join(APPAREL_OUTPUT_DIR, modName)
+    const modOutputDir = path.join(APPAREL_OUTPUT_DIR, modCollection.outputName)
     if (!fs.existsSync(modOutputDir)) {
       fs.mkdirSync(modOutputDir, { recursive: true })
     }

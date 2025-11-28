@@ -5,7 +5,8 @@
 
 import * as fs from 'fs'
 import * as path from 'path'
-import { BaseThingDefNode, ProjectileNode, BaseParserUtils } from './baseParser'
+import { BaseThingDefNode, BaseParserUtils } from './baseParser'
+import { ProjectileNode } from './projectileParser'
 
 /**
  * CSV 武器数据接口（对应 weapon_info.csv 的列）

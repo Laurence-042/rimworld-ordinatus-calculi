@@ -18,6 +18,15 @@ export interface ProjectileNode {
 }
 
 /**
+ * 类型守卫：判断是否为投射物节点
+ */
+export function isProjectileNode(node: unknown): node is ProjectileNode {
+  return (
+    BaseParserUtils.isRecord(node) && typeof (node as Record<string, unknown>).defName === 'string'
+  )
+}
+
+/**
  * 投射物解析器
  */
 export class ProjectileParser {
@@ -33,11 +42,15 @@ export class ProjectileParser {
   }
 
   /**
-   * 解析投射物节点
+   * 从 XML 节点解析投射物属性
+   * @param xmlNode XML节点
+   * @returns 如果是有效的投射物定义则返回 ProjectileNode，否则返回 null
    */
-  static parseProjectile(xmlNode: Record<string, unknown>): ProjectileNode | null {
+  static parseProjectileProperties(xmlNode: Record<string, unknown>): ProjectileNode | null {
     const defName = BaseParserUtils.getStringValue(xmlNode, 'defName')
-    if (!defName) {
+
+    // 投射物必须有 defName 才能被引用
+    if (!defName || !this.isProjectile(xmlNode)) {
       return null
     }
 
