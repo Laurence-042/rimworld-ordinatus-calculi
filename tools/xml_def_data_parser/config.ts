@@ -65,4 +65,6 @@ export const DEBUG_OPTIONS = {
   dumpRawNodes: false,
   /** 是否跳过CSV生成（仅测试解析） */
   skipCSVGeneration: false,
+  /** 输出到其他目录 */
+  outputDirectory: '',
 }

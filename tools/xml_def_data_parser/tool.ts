@@ -14,7 +14,16 @@ import { ApparelThingDefNode, isApparelNode, ApparelParser } from './apparelPars
 import { MaterialThingDefNode, isMaterialNode, MaterialParser } from './materialParser'
 
 // 数据输出目录（public/data/）
-const PUBLIC_DATA_DIR = path.join(__dirname, '..', '..', 'public', 'data')
+function resolveOutputDir(): string {
+  const outputDir = DEBUG_OPTIONS.outputDirectory || 'data'
+  // 如果是绝对路径，直接使用；否则相对于 public 目录
+  if (path.isAbsolute(outputDir)) {
+    return outputDir
+  }
+  return path.join(__dirname, '..', '..', 'public', outputDir)
+}
+
+const PUBLIC_DATA_DIR = resolveOutputDir()
 const WEAPON_OUTPUT_DIR = path.join(PUBLIC_DATA_DIR, 'weapon')
 const APPAREL_OUTPUT_DIR = path.join(PUBLIC_DATA_DIR, 'apparel')
 const MATERIAL_OUTPUT_DIR = path.join(PUBLIC_DATA_DIR, 'material')
