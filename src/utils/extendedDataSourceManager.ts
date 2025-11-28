@@ -47,7 +47,7 @@ const STORAGE_KEY = 'rimworld-calculator-extended-sources'
 /** 默认数据源 URL */
 const DEFAULT_SOURCE: ExtendedDataSource = {
   id: 'default-extra',
-  name: 'Extra Data (GitHub)',
+  name: 'ROC',
   manifestUrl:
     'https://raw.githubusercontent.com/Laurence-042/rimworld-ordinatus-calculi-extra-data/refs/heads/main/manifest.json',
   enabled: true,
@@ -297,8 +297,9 @@ class ExtendedDataSourceManager {
    */
   async getExtendedModsForType(
     type: DataSourceType,
-  ): Promise<{ sourceId: string; baseUrl: string; mod: ModDataConfig }[]> {
-    const results: { sourceId: string; baseUrl: string; mod: ModDataConfig }[] = []
+  ): Promise<{ sourceId: string; sourceName: string; baseUrl: string; mod: ModDataConfig }[]> {
+    const results: { sourceId: string; sourceName: string; baseUrl: string; mod: ModDataConfig }[] =
+      []
 
     for (const source of this.getEnabledSources()) {
       const manifest = this.state.manifestCache.get(source.id)
@@ -307,7 +308,7 @@ class ExtendedDataSourceManager {
       const baseUrl = getBaseUrlFromManifest(source.manifestUrl)
       for (const mod of manifest.mods) {
         if (mod.types.includes(type)) {
-          results.push({ sourceId: source.id, baseUrl, mod })
+          results.push({ sourceId: source.id, sourceName: source.name, baseUrl, mod })
         }
       }
     }
@@ -365,7 +366,7 @@ class ExtendedDataSourceManager {
     const extendedMods = await this.getExtendedModsForType(type)
 
     // 并行加载所有扩展 CSV
-    const loadPromises = extendedMods.map(async ({ sourceId, baseUrl, mod }) => {
+    const loadPromises = extendedMods.map(async ({ sourceId, sourceName, baseUrl, mod }) => {
       // 优先使用请求的语言，否则使用第一个可用语言
       let targetLocale = locale
       if (!mod.locales.includes(locale)) {
@@ -379,8 +380,8 @@ class ExtendedDataSourceManager {
 
       const content = await this.loadExtendedCSV(sourceId, baseUrl, type, mod.name, targetLocale)
       if (content) {
-        // 使用 sourceId:modName 作为 key 避免与内置数据冲突
-        return { key: `${sourceId}:${mod.name}`, content }
+        // 使用 sourceName:modName 作为 key，方便显示时使用数据源名称
+        return { key: `${sourceName}:${mod.name}`, content }
       }
       return null
     })

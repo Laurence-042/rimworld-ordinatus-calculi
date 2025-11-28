@@ -146,11 +146,11 @@ export async function getWeaponDataSources(locale: string): Promise<WeaponDataSo
         const weapons = await parseWeaponCSV(csvContent)
         if (weapons.length === 0) continue
 
-        // key 格式: sourceId:modName
+        // key 格式: sourceName:modName
         const parts = key.split(':')
-        const sourceId = parts[0] || 'unknown'
+        const sourceName = parts[0] || 'unknown'
         const modName = parts.slice(1).join(':') || 'unknown'
-        const extendedSourceId = `extended:${sourceId}:${normalizeModName(modName)}`
+        const extendedSourceId = `extended:${sourceName}:${normalizeModName(modName)}`
 
         if (!extendedSourceMap.has(extendedSourceId)) {
           extendedSourceMap.set(extendedSourceId, [])
@@ -163,13 +163,14 @@ export async function getWeaponDataSources(locale: string): Promise<WeaponDataSo
 
     // 添加扩展数据源
     for (const [sourceId, weapons] of extendedSourceMap.entries()) {
-      // 从 sourceId 提取显示名称 (格式: extended:sourceId:modName)
+      // 从 sourceId 提取显示名称 (格式: extended:sourceName:modName)
       const parts = sourceId.split(':')
-      const displayName = parts.length >= 3 ? parts.slice(2).join(':') : sourceId
+      const sourceName = parts.length >= 2 ? parts[1] : 'Extended'
+      const modName = parts.length >= 3 ? parts.slice(2).join(':') : sourceId
 
       dataSources.push({
         id: sourceId,
-        label: `[Extended] ${displayName}`,
+        label: `[${sourceName}] ${modName}`,
         weapons,
         isExtended: true,
       })
