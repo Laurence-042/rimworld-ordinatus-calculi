@@ -7,26 +7,12 @@
         "githubLink": "View source on GitHub"
     },
     "common": {
-        "weapon": "Weapon",
-        "armor": "Armor",
-        "damage": "Damage",
-        "range": "Range",
-        "accuracy": "Accuracy",
-        "quality": "Quality",
         "add": "Add",
-        "remove": "Remove",
         "reset": "Reset",
-        "calculate": "Calculate",
-        "export": "Export",
-        "import": "Import",
-        "close": "Close",
         "confirm": "Confirm",
         "cancel": "Cancel",
         "save": "Save",
-        "delete": "Delete",
-        "edit": "Edit",
-        "copy": "Copy",
-        "clear": "Clear"
+        "edit": "Edit"
     },
     "quality": {
         "label": "Quality",
@@ -175,25 +161,10 @@
     },
     "calculator": {
         "dps": {
-            "title": "Weapon DPS Calculator",
-            "description": "Compare multiple weapons' DPS across armor values",
-            "addWeapon": "Add Weapon",
-            "weaponList": "Weapon List",
-            "dpsChart": "DPS Chart",
-            "dpsSurface": "DPS 3D Surface",
-            "armorValue": "Armor Value",
-            "distance": "Distance",
-            "noWeapons": "No weapons yet, please add weapons to start"
+            "title": "Weapon DPS Calculator"
         },
         "armor": {
-            "title": "Armor Calculator",
-            "description": "Evaluate armor combinations against various weapons",
-            "addArmor": "Add Armor",
-            "armorSet": "Armor Set",
-            "attackParams": "Attack Parameters",
-            "damageDistribution": "Damage Distribution",
-            "armorChart": "Armor Chart",
-            "noArmor": "No armor yet, please add armor to start"
+            "title": "Armor Calculator"
         }
     },
     "chart": {
@@ -247,19 +218,8 @@
         "second": "s",
         "silver": "silver"
     },
-    "tooltip": {
-        "armorPenetration": "Weapon's ability to penetrate armor, range 0%-200%",
-        "warmUp": "Aiming time before firing",
-        "cooldown": "Cooldown time after shooting",
-        "burstCount": "Number of shots per attack",
-        "burstTicks": "Time between burst shots",
-        "stoppingPower": "Ability to knock back enemies",
-        "quality": "Item quality affects damage, accuracy and armor values"
-    },
     "error": {
-        "loadFailed": "Load Failed",
-        "invalidData": "Invalid Data",
-        "networkError": "Network Error"
+        "invalidData": "Invalid data"
     },
     "dataSource": {
         "title": "Extended Data Source Settings",

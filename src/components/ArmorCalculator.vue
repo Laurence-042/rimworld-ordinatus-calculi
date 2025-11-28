@@ -994,7 +994,7 @@ watch(locale, async () => {
                           !layer.supportedMaterials.includes(MaterialTag.Metallic)
                         "
                       >
-                        {{ t('materialType.metalButton') }}
+                        {{ t('materialType.Metallic') }}
                       </el-radio-button>
                       <el-radio-button
                         value="wood"
@@ -1003,7 +1003,7 @@ watch(locale, async () => {
                           !layer.supportedMaterials.includes(MaterialTag.Woody)
                         "
                       >
-                        {{ t('materialType.woodButton') }}
+                        {{ t('materialType.Woody') }}
                       </el-radio-button>
                       <el-radio-button
                         value="leather"
@@ -1012,7 +1012,7 @@ watch(locale, async () => {
                           !layer.supportedMaterials.includes(MaterialTag.Leathery)
                         "
                       >
-                        {{ t('materialType.leatherButton') }}
+                        {{ t('materialType.Leathery') }}
                       </el-radio-button>
                       <el-radio-button
                         value="fabric"
@@ -1021,7 +1021,7 @@ watch(locale, async () => {
                           !layer.supportedMaterials.includes(MaterialTag.Fabric)
                         "
                       >
-                        {{ t('materialType.fabricButton') }}
+                        {{ t('materialType.Fabric') }}
                       </el-radio-button>
                     </el-radio-group>
                   </el-form-item>
