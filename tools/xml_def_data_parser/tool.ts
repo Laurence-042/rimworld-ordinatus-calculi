@@ -70,7 +70,9 @@ const APPAREL_LAYER_MAP: Record<string, ApparelLayer> = {
  * 包含所有ThingDef共有的属性
  */
 interface BaseThingDefNode {
-  defName?: string
+  identifier: string // 并非xml节点信息，而是程序内部使用的唯一标识符
+  name?: string // 节点标识符，用于继承关系
+  defName?: string // 游戏内物品ID，通常只有叶节点持有
   parentName?: string
   label?: string
   description?: string
@@ -427,22 +429,24 @@ class ModDataParser {
   }
 
   private parseThingDef(xmlNode: Record<string, unknown>): void {
+    const name = this.getStringValue(xmlNode, 'Name')
     const defName = this.getStringValue(xmlNode, 'defName')
-    if (!defName) {
+    const identifier = name || defName
+
+    if (!identifier) {
       return
     }
 
     // 创建基础节点
     const baseNode: BaseThingDefNode = {
-      defName,
+      identifier,
+      name,
+      defName, // defName可能为undefined，这是正常的（抽象节点没有defName）
       parentName:
         this.getStringValue(xmlNode, 'ParentName') || this.getStringValue(xmlNode, 'parentName'),
       label: this.getStringValue(xmlNode, 'label'),
       description: this.getStringValue(xmlNode, 'description'),
-      abstract:
-        (this.isRecord(xmlNode.Name) &&
-          (xmlNode.Name as Record<string, unknown>).attr === 'True') ||
-        (this.isRecord(xmlNode.attr) && xmlNode.attr.Abstract === 'True'),
+      abstract: this.getStringValue(xmlNode, 'Abstract') === 'True',
       children: new Set(),
       resolved: false,
       rawData: xmlNode,
@@ -531,7 +535,8 @@ class ModDataParser {
       tempData.apparelLayers ||
       tempData.bodyPartGroups ||
       tempData.armorRatingSharp !== undefined ||
-      tempData.armorRatingBlunt !== undefined
+      tempData.armorRatingBlunt !== undefined ||
+      tempData.armorRatingHeat !== undefined
     ) {
       // 创建衣物节点
       const apparelNode: ApparelThingDefNode = {
@@ -551,10 +556,11 @@ class ModDataParser {
       finalNode = baseNode
     }
 
-    this.thingDefMap.set(defName, finalNode)
+    // 函数入口做了检查，两个不会同时为undefined
+    this.thingDefMap.set(identifier, finalNode)
 
-    // 如果是子弹定义
-    if (this.isProjectile(xmlNode)) {
+    // 如果是子弹定义（投射物必须有defName才能被引用）
+    if (defName && this.isProjectile(xmlNode)) {
       this.parseProjectile(xmlNode)
     }
   }
@@ -631,12 +637,12 @@ class ModDataParser {
   private resolveInheritance(): void {
     console.log('开始解析继承关系...')
 
-    // 建立父子关系
+    // 建立父子关系（使用identifier）
     for (const node of this.thingDefMap.values()) {
-      if (node.parentName && node.defName) {
+      if (node.parentName) {
         const parent = this.thingDefMap.get(node.parentName)
         if (parent) {
-          parent.children.add(node.defName)
+          parent.children.add(node.identifier)
         }
       }
     }
@@ -819,9 +825,11 @@ class ModDataParser {
     }
 
     // 获取翻译后的label（如果有翻译数据）
-    let label = weapon.label || weapon.defName || ''
-    if (translations && weapon.defName) {
-      const translationKey = `${weapon.defName}.label`
+    // 翻译键使用defName或identifier
+    let label = weapon.label || weapon.defName || weapon.identifier || ''
+    const keyForTranslation = weapon.defName || weapon.identifier
+    if (translations && keyForTranslation) {
+      const translationKey = `${keyForTranslation}.label`
       const translatedLabel = translations.get(translationKey)
       if (translatedLabel) {
         label = translatedLabel
@@ -953,9 +961,11 @@ class ModDataParser {
     translations: Map<string, string> | null,
   ): ClothingCSVData {
     // 获取翻译后的label（如果有翻译数据）
-    let label = clothing.label || clothing.defName || ''
-    if (translations && clothing.defName) {
-      const translationKey = `${clothing.defName}.label`
+    // 翻译键使用defName或identifier
+    let label = clothing.label || clothing.defName || clothing.identifier || ''
+    const keyForTranslation = clothing.defName || clothing.identifier
+    if (translations && keyForTranslation) {
+      const translationKey = `${keyForTranslation}.label`
       const translatedLabel = translations.get(translationKey)
       if (translatedLabel) {
         label = translatedLabel
