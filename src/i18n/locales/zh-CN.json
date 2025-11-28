@@ -112,6 +112,7 @@
         "armorSourceHint": "下方滑块使用的是<strong>\"普通品质\"</strong>的基础值，计算会自动套用对应品质加成。",
         "armorSourceTooltip": "下方滑块使用的是<strong>\"普通品质\"</strong>的基础值，计算会自动套用对应品质加成。<br>若您只知道某特定品质下的实际数值，可在下方将品质设为\"普通\"，再填写该数值，即可确保计算使用正确的实际数值。",
         "calculatedArmor": "计算护甲",
+        "actualArmor": "实际护甲（含品质加成）",
         "fixedValue": "固定数值",
         "dependOnMaterial": "依赖材料",
         "addArmorSet": "添加护甲套装进行对比",

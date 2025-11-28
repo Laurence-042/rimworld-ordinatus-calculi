@@ -112,6 +112,7 @@
         "armorSourceHint": "The sliders below use <strong>\"Normal Quality\"</strong> base values, calculations will automatically apply quality modifiers.",
         "armorSourceTooltip": "The sliders below use <strong>\"Normal Quality\"</strong> base values, calculations will automatically apply quality modifiers.<br>If you only know the actual value for a specific quality level, set the quality below to \"Normal\" and enter that value to ensure the calculation uses the correct actual value.",
         "calculatedArmor": "Calculated Armor",
+        "actualArmor": "Actual Armor (with Quality Bonus)",
         "fixedValue": "Fixed Value",
         "dependOnMaterial": "Depend on Material",
         "addArmorSet": "Add Armor Set for Comparison",

@@ -1025,24 +1025,30 @@ watch(locale, async () => {
                       </el-radio-button>
                     </el-radio-group>
                   </el-form-item>
-
-                  <el-alert
-                    v-if="layer.useMaterial"
-                    :closable="false"
-                    type="info"
-                    style="margin-top: 10px"
-                  >
-                    <template #title>
-                      {{ t('armor.calculatedArmor') }} =
-                      {{
-                        (() => {
-                          const armor = getLayerActualArmor(layer)
-                          return `${t('damageType.sharp')}${armor.armorSharp.toFixed(0)}% ${t('damageType.blunt')}${armor.armorBlunt.toFixed(0)}% ${t('damageType.heat')}${armor.armorHeat.toFixed(0)}%`
-                        })()
-                      }}
-                    </template>
-                  </el-alert>
                 </template>
+
+                <!-- 实际护甲值显示 -->
+                <el-alert :closable="false" type="success" style="margin-top: 10px">
+                  <template #title>
+                    <span class="actual-armor-label">{{ t('armor.actualArmor') }}</span>
+                  </template>
+                  <template #default>
+                    <div class="actual-armor-values">
+                      <span class="armor-value sharp">
+                        {{ t('damageType.sharp') }}:
+                        {{ getLayerActualArmor(layer).armorSharp.toFixed(1) }}%
+                      </span>
+                      <span class="armor-value blunt">
+                        {{ t('damageType.blunt') }}:
+                        {{ getLayerActualArmor(layer).armorBlunt.toFixed(1) }}%
+                      </span>
+                      <span class="armor-value heat">
+                        {{ t('damageType.heat') }}:
+                        {{ getLayerActualArmor(layer).armorHeat.toFixed(1) }}%
+                      </span>
+                    </div>
+                  </template>
+                </el-alert>
               </el-form>
 
               <el-divider v-if="layerIndex < armorSet.layers.length - 1" />
@@ -1406,5 +1412,33 @@ watch(locale, async () => {
 :deep(.el-tree-node.is-current > .el-tree-node__content) {
   background-color: #e6f7ff;
   font-weight: 600;
+}
+
+/* 实际护甲值样式 */
+.actual-armor-label {
+  font-weight: 600;
+}
+
+.actual-armor-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.armor-value {
+  font-weight: 500;
+}
+
+.armor-value.sharp {
+  color: #f56c6c;
+}
+
+.armor-value.blunt {
+  color: #909399;
+}
+
+.armor-value.heat {
+  color: #e6a23c;
 }
 </style>
