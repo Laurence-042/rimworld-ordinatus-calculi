@@ -69,7 +69,7 @@ function generateArmorReductionCurve(armorSet: ArmorSet) {
     damageStates: Array<{ damageMultiplier: number; probability: number }>
   }> = []
 
-  for (let pen = 0; pen <= 100; pen += 1) {
+  for (let pen = 0; pen <= 200; pen += 1) {
     const result = calculateMultiLayerDamageReduction(filteredLayers, {
       armorPenetration: pen / 100,
       damageType: props.damageType,
@@ -192,7 +192,7 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
         font: { size: 14 },
       },
       min: 0,
-      max: 100,
+      max: 200,
       ticks: {
         stepSize: 10,
         callback: (value) => `${value}%`,

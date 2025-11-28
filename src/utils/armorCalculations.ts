@@ -404,9 +404,20 @@ export function calculateMultiLayerDamageReduction(
       const halfArmor = effectiveArmor / 2
 
       // 三种随机判定结果及其概率
-      const deflectProb = Math.min(halfArmor / 100, 100) // 随机数 < 护甲/2：完全偏转
-      const halfDamageProb = Math.min((Math.min(effectiveArmor, 100) - halfArmor) / 100, 100) // 护甲/2 <= 随机数 < 护甲：伤害减半
-      const noPenetrationProb = 1 - (deflectProb + halfDamageProb) // 随机数 >= 护甲：护甲无效
+      // RimWorld 机制：随机数范围 0-100
+      // - 随机数 < min(护甲/2, 100)：完全偏转（0伤害）
+      // - min(护甲/2, 100) <= 随机数 < min(护甲, 100)：减半伤害
+      // - 随机数 >= min(护甲, 100)：穿透（全伤害）
+      //
+      // 护甲值范围：0-200%
+      // 当护甲 > 100 时，穿透概率为 0
+      // 当护甲 > 200 时，偏转阈值 = 100，减半概率也为 0（100% 偏转）
+      const cappedArmor = Math.min(effectiveArmor, 100) // 护甲判定上限 100
+      const cappedHalfArmor = Math.min(halfArmor, 100) // 偏转阈值上限 100（当护甲 >= 200 时）
+
+      const deflectProb = cappedHalfArmor / 100 // 随机数 < min(护甲/2, 100)：完全偏转
+      const halfDamageProb = Math.max(0, cappedArmor - cappedHalfArmor) / 100 // 偏转阈值 <= 随机数 < 护甲：伤害减半
+      const penetrationProb = (100 - cappedArmor) / 100 // 随机数 >= 护甲：护甲无效
 
       // 情况1：伤害被完全偏转（0伤害）
       if (deflectProb > 0) {
@@ -428,10 +439,10 @@ export function calculateMultiLayerDamageReduction(
       }
 
       // 情况3：护甲无效，伤害完全穿透
-      if (noPenetrationProb > 0) {
+      if (penetrationProb > 0) {
         newStates.push({
           damageMultiplier: state.damageMultiplier,
-          probability: state.probability * noPenetrationProb,
+          probability: state.probability * penetrationProb,
           damageType: state.damageType,
         })
       }
