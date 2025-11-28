@@ -176,9 +176,14 @@ class ModDataParser {
     this.resolveInheritance()
     console.log()
 
+    // 清理旧的输出目录
+    console.log('阶段 3: 清理旧的输出目录...')
+    this.cleanOutputDirectories()
+    console.log()
+
     // 为每个MOD生成CSV
     console.log('='.repeat(60))
-    console.log('阶段 3: 生成CSV文件')
+    console.log('阶段 4: 生成CSV文件')
     console.log('='.repeat(60))
 
     for (const modCollection of this.modDataCollections) {
@@ -186,6 +191,30 @@ class ModDataParser {
       await this.generateWeaponCSV(modCollection)
       await this.generateClothingCSV(modCollection)
       await this.generateMaterialCSV(modCollection)
+    }
+  }
+
+  /**
+   * 清理所有MOD的输出目录
+   */
+  private cleanOutputDirectories(): void {
+    for (const modCollection of this.modDataCollections) {
+      const dirs = [
+        path.join(WEAPON_OUTPUT_DIR, modCollection.outputName),
+        path.join(APPAREL_OUTPUT_DIR, modCollection.outputName),
+        path.join(MATERIAL_OUTPUT_DIR, modCollection.outputName),
+      ]
+
+      for (const dir of dirs) {
+        if (fs.existsSync(dir)) {
+          // 删除目录下的所有文件
+          const files = fs.readdirSync(dir)
+          for (const file of files) {
+            fs.unlinkSync(path.join(dir, file))
+          }
+          console.log(`  已清理: ${dir}`)
+        }
+      }
     }
   }
 
