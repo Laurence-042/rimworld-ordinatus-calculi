@@ -1,0 +1,36 @@
+﻿defName,label,armorSharp,armorBlunt,armorHeat,categories
+Silver,silver,0.72,0.36,0.36,Metallic
+Gold,gold,0.72,0.36,0.36,Metallic
+Steel,steel,0.9,0.45,0.6,Metallic
+Plasteel,plasteel,1.14,0.55,0.65,Metallic
+Uranium,uranium,1.08,0.54,0.65,Metallic
+Jade,jade,0.9,0.45,0.54,Stony
+Cloth,cloth,0.36,0,0.18,Fabric
+Synthread,synthread,0.94,0.26,0.9,Fabric
+DevilstrandCloth,devilstrand,1.4,0.36,3,Fabric
+Hyperweave,hyperweave,2,0.54,2.88,Fabric
+WoolSheep,sheep wool,0.36,0,1.1,Fabric
+WoolAlpaca,alpaca wool,0.36,0,1.1,Fabric
+WoolMegasloth,megasloth wool,0.36,0,1.1,Fabric
+WoolMuffalo,muffalo wool,0.36,0,1.1,Fabric
+WoolBison,bison wool,0.36,0,1.1,Fabric
+Leather_Plain,plainleather,0.81,0.24,1.5,Leathery
+Leather_Dog,dog leather,0.81,0.24,1.5,Leathery
+Leather_Wolf,wolfskin,0.81,0.24,1.5,Leathery
+Leather_Panthera,panthera fur,0.81,0.24,1.5,Leathery
+Leather_Camel,camelhide,0.81,0.24,1.5,Leathery
+Leather_Bluefur,bluefur,0.81,0.24,1.5,Leathery
+Leather_Bear,bearskin,0.81,0.24,1.5,Leathery
+Leather_GuineaPig,guinea pig fur,0.81,0.24,1.5,Leathery
+Leather_Human,human leather,0.81,0.24,1.5,Leathery
+Leather_Pig,pigskin,0.81,0.24,1.5,Leathery
+Leather_Light,lightleather,0.81,0.24,1.5,Leathery
+Leather_Bird,birdskin,0.81,0.24,1.5,Leathery
+Leather_Chinchilla,chinchilla fur,0.81,0.24,1.5,Leathery
+Leather_Fox,foxfur,0.81,0.24,1.5,Leathery
+Leather_Lizard,lizardskin,0.81,0.24,1.5,Leathery
+Leather_Elephant,elephant leather,0.81,0.24,1.5,Leathery
+Leather_Heavy,heavy fur,0.81,0.24,1.5,Leathery
+Leather_Rhinoceros,rhinoceros leather,0.81,0.24,1.5,Leathery
+Leather_Thrumbo,thrumbofur,0.81,0.24,1.5,Leathery
+Leather_Patch,patchleather,0.81,0.24,1.5,Leathery

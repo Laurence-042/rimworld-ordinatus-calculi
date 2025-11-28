@@ -1,0 +1,10 @@
+﻿defName,label,armorSharp,armorBlunt,armorHeat,categories
+WoolMastodon,mastodon wool,0.36,0,1.1,Fabric
+WoolMuskox,muskox wool,0.36,0,1.1,Fabric
+Obsidian,obsidian,0.85,0.4,0.7,"Stony,Metallic"
+Leather_Mastodon,mastodon leather,0.81,0.24,1.5,Leathery
+Leather_Sealskin,sealskin,0.81,0.24,1.5,Leathery
+Leather_AlphaThrumbo,thrumbomane,0.81,0.24,1.5,Leathery
+Leather_Mink,mink fur,0.81,0.24,1.5,Leathery
+Leather_Hippo,hippo leather,0.81,0.24,1.5,Leathery
+Leather_Armadillo,armadillo leather,0.81,0.24,1.5,Leathery

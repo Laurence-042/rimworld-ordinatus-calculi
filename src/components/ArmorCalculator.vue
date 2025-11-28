@@ -405,7 +405,7 @@ const convertMaterialToPercentage = (material: MaterialData): MaterialData => {
 // 生命周期
 onMounted(async () => {
   // 加载材料数据
-  materialDataSources.value = await getMaterialDataSources()
+  materialDataSources.value = await getMaterialDataSources(locale.value)
 
   // 加载衣物数据
   clothingDataSources.value = await getApparelDataSources(locale.value)

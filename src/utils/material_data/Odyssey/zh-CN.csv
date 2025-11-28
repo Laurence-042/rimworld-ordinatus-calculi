@@ -1,0 +1,10 @@
+﻿defName,label,armorSharp,armorBlunt,armorHeat,categories
+WoolMastodon,乳齿象毛,0.36,0,1.1,Fabric
+WoolMuskox,麝牛毛,0.36,0,1.1,Fabric
+Obsidian,黑曜石,0.85,0.4,0.7,"Stony,Metallic"
+Leather_Mastodon,乳齿象皮,0.81,0.24,1.5,Leathery
+Leather_Sealskin,海豹皮,0.81,0.24,1.5,Leathery
+Leather_AlphaThrumbo,阿尔法敲击兽皮,0.81,0.24,1.5,Leathery
+Leather_Mink,水貂皮,0.81,0.24,1.5,Leathery
+Leather_Hippo,河马皮,0.81,0.24,1.5,Leathery
+Leather_Armadillo,犰狳皮,0.81,0.24,1.5,Leathery

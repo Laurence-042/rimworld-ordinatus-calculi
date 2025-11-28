@@ -7,6 +7,7 @@ import { BaseThingDefNode, BaseParserUtils, LANGUAGE_MAP } from './baseParser'
 import { ProjectileNode, ProjectileParser } from './projectileParser'
 import { WeaponThingDefNode, isWeaponNode, WeaponParser } from './weaponParser'
 import { ApparelThingDefNode, isApparelNode, ApparelParser } from './apparelParser'
+import { MaterialThingDefNode, isMaterialNode, MaterialParser } from './materialParser'
 
 const DEFAULT_WEAPON_OUTPUT_DIR = path.join(
   __dirname,
@@ -24,13 +25,28 @@ const DEFAULT_APPAREL_OUTPUT_DIR = path.join(
   'utils',
   DATA_SOURCE_PATHS[DataSourceType.Apparel],
 )
+const DEFAULT_MATERIAL_OUTPUT_DIR = path.join(
+  __dirname,
+  '..',
+  '..',
+  'src',
+  'utils',
+  DATA_SOURCE_PATHS[DataSourceType.Material],
+)
 const WEAPON_OUTPUT_DIR = OUTPUT_DIR_OVERRIDE || DEFAULT_WEAPON_OUTPUT_DIR
 const APPAREL_OUTPUT_DIR = OUTPUT_DIR_OVERRIDE
   ? path.join(OUTPUT_DIR_OVERRIDE, '..', DATA_SOURCE_PATHS[DataSourceType.Apparel])
   : DEFAULT_APPAREL_OUTPUT_DIR
+const MATERIAL_OUTPUT_DIR = OUTPUT_DIR_OVERRIDE
+  ? path.join(OUTPUT_DIR_OVERRIDE, '..', DATA_SOURCE_PATHS[DataSourceType.Material])
+  : DEFAULT_MATERIAL_OUTPUT_DIR
 
 // 通用ThingDef节点类型（用于解析时的临时存储）
-type ThingDefNode = BaseThingDefNode | WeaponThingDefNode | ApparelThingDefNode
+type ThingDefNode =
+  | BaseThingDefNode
+  | WeaponThingDefNode
+  | ApparelThingDefNode
+  | MaterialThingDefNode
 
 /**
  * 单个MOD的元数据
@@ -169,6 +185,7 @@ class ModDataParser {
       console.log(`\n生成 ${modCollection.name} 的数据文件...`)
       await this.generateWeaponCSV(modCollection)
       await this.generateClothingCSV(modCollection)
+      await this.generateMaterialCSV(modCollection)
     }
   }
 
@@ -398,6 +415,8 @@ class ModDataParser {
     const weaponProps = WeaponParser.parseWeaponProperties(xmlNode)
     // 尝试解析服装属性
     const apparelProps = ApparelParser.parseApparelProperties(xmlNode)
+    // 尝试解析材料属性
+    const materialProps = MaterialParser.parseMaterialProperties(xmlNode)
     // 尝试解析投射物属性
     const projectileProps = ProjectileParser.parseProjectileProperties(xmlNode)
 
@@ -415,6 +434,12 @@ class ModDataParser {
         ...baseNode,
         ...apparelProps,
       } as ApparelThingDefNode
+    } else if (materialProps) {
+      // 创建材料节点
+      finalNode = {
+        ...baseNode,
+        ...materialProps,
+      } as MaterialThingDefNode
     } else {
       // 未分类的基础节点
       finalNode = baseNode
@@ -506,6 +531,14 @@ class ModDataParser {
         parent as ApparelThingDefNode,
       )
     }
+
+    // 如果父子都是材料节点，继承材料属性
+    if (child.category === 'Material' && parent.category === 'Material') {
+      MaterialParser.inheritMaterialProperties(
+        child as MaterialThingDefNode,
+        parent as MaterialThingDefNode,
+      )
+    }
   }
 
   private async generateWeaponCSV(modCollection: ModDataCollection): Promise<void> {
@@ -581,6 +614,45 @@ class ModDataParser {
         ApparelParser.createClothingRow(node, translations),
       )
       ApparelParser.writeClothingCSV(localizedClothing, modOutputDir, languageCode)
+    }
+  }
+
+  private async generateMaterialCSV(modCollection: ModDataCollection): Promise<void> {
+    const materials: MaterialThingDefNode[] = []
+
+    // 只收集此MOD自己定义的节点
+    for (const identifier of modCollection.ownedIdentifiers) {
+      const node = this.thingDefMap.get(identifier)
+      if (node && isMaterialNode(node)) {
+        materials.push(node)
+      }
+    }
+
+    const validMaterials = MaterialParser.filterValidMaterials(materials)
+    console.log(`  材料: ${validMaterials.length} 个`)
+
+    if (validMaterials.length === 0) {
+      return
+    }
+
+    // 创建 MOD 专用目录
+    const modOutputDir = path.join(MATERIAL_OUTPUT_DIR, modCollection.outputName)
+    if (!fs.existsSync(modOutputDir)) {
+      fs.mkdirSync(modOutputDir, { recursive: true })
+    }
+
+    // 生成默认语言（使用原始label）的CSV
+    const defaultMaterials = validMaterials.map((node) =>
+      MaterialParser.createMaterialRow(node, null),
+    )
+    MaterialParser.writeMaterialCSV(defaultMaterials, modOutputDir, 'en-US')
+
+    // 为每种语言生成单独的CSV
+    for (const [languageCode, translations] of this.languageData.entries()) {
+      const localizedMaterials = validMaterials.map((node) =>
+        MaterialParser.createMaterialRow(node, translations),
+      )
+      MaterialParser.writeMaterialCSV(localizedMaterials, modOutputDir, languageCode)
     }
   }
 }
