@@ -3,7 +3,8 @@
         "title": "RimWorld 计算仪典",
         "subtitleWeapon": "破甲者之歌",
         "subtitleArmor": "留命者之吟",
-        "pageTitle": "Rimworld 武器DPS/护甲效果计算器"
+        "pageTitle": "Rimworld 武器DPS/护甲效果计算器",
+        "githubLink": "在 GitHub 上查看源码"
     },
     "common": {
         "weapon": "武器",
