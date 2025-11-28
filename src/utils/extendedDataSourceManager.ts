@@ -443,6 +443,14 @@ class ExtendedDataSourceManager {
       loading: sources.filter((s) => s.status === 'loading').length,
     }
   }
+
+  /**
+   * 清除 CSV 缓存（用于语言切换时）
+   * 保留 manifest 缓存，因为 manifest 不依赖语言
+   */
+  clearCSVCache(): void {
+    this.state.csvCache.clear()
+  }
 }
 
 // 单例实例

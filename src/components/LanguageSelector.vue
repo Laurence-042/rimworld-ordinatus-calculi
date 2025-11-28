@@ -2,8 +2,10 @@
 import { useI18n } from 'vue-i18n'
 import { computed } from 'vue'
 import { clearWeaponDataSourcesCache } from '@/utils/weaponCalculations'
+import { useExtendedDataSourceManager } from '@/utils/extendedDataSourceManager'
 
 const { locale } = useI18n()
+const extendedManager = useExtendedDataSourceManager()
 
 const currentLocale = computed({
   get: () => locale.value,
@@ -12,8 +14,8 @@ const currentLocale = computed({
     localStorage.setItem('locale', value)
     // 清除武器数据缓存，以便重新加载对应语言的数据
     clearWeaponDataSourcesCache()
-    // 刷新页面以重新加载数据
-    window.location.reload()
+    // 清除扩展数据源的 CSV 缓存
+    extendedManager.clearCSVCache()
   },
 })
 </script>

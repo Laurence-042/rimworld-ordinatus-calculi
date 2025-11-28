@@ -604,6 +604,12 @@ onMounted(async () => {
     addArmorSet()
   }
 })
+
+// 监听语言变化，重新加载数据
+watch(locale, async () => {
+  materialDataSources.value = await getMaterialDataSources(locale.value)
+  clothingDataSources.value = await getApparelDataSources(locale.value)
+})
 </script>
 
 <template>

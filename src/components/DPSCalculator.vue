@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Delete, QuestionFilled } from '@element-plus/icons-vue'
 import {
@@ -14,7 +14,7 @@ import DPSChart from './DPSChart.vue'
 import DPSSurface3D from './DPSSurface3D.vue'
 import SliderInput from './SliderInput.vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 // 常量
 const WEAPON_COLORS = [
@@ -161,6 +161,11 @@ onMounted(async () => {
   if (machinePistolIndex >= 0) {
     applyPreset(weapons.value[1]!, vanillaSource.id, machinePistolIndex)
   }
+})
+
+// 监听语言变化，重新加载数据
+watch(locale, async () => {
+  weaponDataSources.value = await getWeaponDataSources()
 })
 </script>
 
