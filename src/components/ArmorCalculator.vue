@@ -638,7 +638,7 @@ onMounted(async () => {
             </template>
 
             <el-form-item :label="t('armor.globalMaterialPresets')">
-              <el-collapse v-model="activeMaterialPanels" accordion>
+              <el-collapse v-model="activeMaterialPanels" accordion class="material-collapse">
                 <el-collapse-item
                   v-for="materialType in materialTypes"
                   :key="materialType.tag"
@@ -1339,6 +1339,11 @@ onMounted(async () => {
 
 /* 预设选择器容器 */
 .preset-selectors {
+  width: 100%;
+}
+
+/* 材料折叠面板固定宽度 */
+.material-collapse {
   width: 100%;
 }
 
