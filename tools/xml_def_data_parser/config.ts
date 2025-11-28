@@ -24,7 +24,27 @@ export interface ModConfig {
  */
 export const MOD_CONFIGS: ModConfig[] = [
   {
-    path: 'D:\\SteamLibrary\\steamapps\\common\\RimWorld\\Data',
+    path: 'D:\\SteamLibrary\\steamapps\\common\\RimWorld\\Data\\Core',
+    enabled: true,
+  },
+  {
+    path: 'D:\\SteamLibrary\\steamapps\\common\\RimWorld\\Data\\Royalty',
+    enabled: true,
+  },
+  {
+    path: 'D:\\SteamLibrary\\steamapps\\common\\RimWorld\\Data\\Ideology',
+    enabled: true,
+  },
+  {
+    path: 'D:\\SteamLibrary\\steamapps\\common\\RimWorld\\Data\\Biotech',
+    enabled: true,
+  },
+  {
+    path: 'D:\\SteamLibrary\\steamapps\\common\\RimWorld\\Data\\Anomaly',
+    enabled: true,
+  },
+  {
+    path: 'D:\\SteamLibrary\\steamapps\\common\\RimWorld\\Data\\Odyssey',
     enabled: true,
   },
   // 添加更多MOD配置...

@@ -49,10 +49,46 @@ xml_def_data_parser/
 ## 功能特性
 
 - ✅ 解析ThingDef继承树，自动填充父类属性
+- ✅ **跨MOD继承支持**：正确处理MOD间的依赖关系（如继承Core的父节点）
 - ✅ 提取武器统计数据（精度、冷却、连发等）和衣物数据（护甲、层级、覆盖部位）
 - ✅ **多语言支持**：自动生成中文(zh-CN)和英文(en-US)版本的CSV文件
 - ✅ 批量处理多个MOD
 - ✅ **模块化架构**：易于维护和扩展新物品类型
+
+## 📋 MOD配置顺序
+
+**重要**: 配置文件中的MOD顺序决定了继承关系的解析顺序。应该按照依赖关系排列：
+
+```typescript
+export const MOD_CONFIGS: ModConfig[] = [
+  // 1. 基础MOD (Core) 必须最先
+  { path: 'D:\\SteamLibrary\\steamapps\\common\\RimWorld\\Data\\Core' },
+
+  // 2. 官方DLC按发布顺序
+  { path: 'D:\\SteamLibrary\\steamapps\\common\\RimWorld\\Data\\Royalty' },
+  { path: 'D:\\SteamLibrary\\steamapps\\common\\RimWorld\\Data\\Ideology' },
+  { path: 'D:\\SteamLibrary\\steamapps\\common\\RimWorld\\Data\\Biotech' },
+  { path: 'D:\\SteamLibrary\\steamapps\\common\\RimWorld\\Data\\Anomaly' },
+  { path: 'D:\\SteamLibrary\\steamapps\\common\\RimWorld\\Data\\Odyssey' },
+
+  // 3. 第三方MOD放在最后
+  { path: 'D:\\SteamLibrary\\steamapps\\workshop\\content\\294100\\<MOD_ID>' },
+]
+```
+
+**为什么顺序重要？**
+
+工具现在使用**全局共享上下文**解析所有MOD：
+
+1. 按配置顺序依次加载每个MOD的XML定义
+2. 后加载的MOD可以引用先加载的MOD定义的父节点
+3. 所有MOD加载完成后，统一解析继承关系
+4. 最后为每个MOD生成独立的CSV文件
+
+这样可以正确处理跨MOD继承，例如：
+
+- 第三方MOD继承`BaseMakeableGun`（来自Core）
+- DLC武器继承Core的武器基类
 
 ## 快速开始
 
@@ -167,14 +203,178 @@ src/utils/
 - **武器特定**: 修改 `weaponParser.ts`
 - **衣物特定**: 修改 `apparelParser.ts`
 
-## 工作原理
+## 工作原理与解析流程
 
-1. **扫描XML** - 递归扫描MOD目录下所有XML文件
-2. **建立映射** - 解析ThingDef节点，建立defName到节点的映射
-3. **解析语言文件** - 扫描 `Languages/` 目录，提取各语言的翻译数据
-4. **依赖解析** - 根据ParentName建立继承树，递归填充缺失属性
-5. **数据提取** - 识别武器定义，通过defaultProjectile查找子弹数据
-6. **生成CSV** - 组合武器和子弹属性，为每种语言生成对应的CSV文件
+### 三阶段解析架构
+
+工具采用**全局共享上下文**设计，分三个阶段处理所有MOD：
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ 阶段 1: 解析所有MOD的XML定义                                 │
+├─────────────────────────────────────────────────────────────┤
+│  ├─ Core (基础MOD)                                          │
+│  │   ├─ 扫描 1105 个XML文件                                 │
+│  │   ├─ 解析 ThingDef 节点                                  │
+│  │   ├─ 解析 Projectile 节点                                │
+│  │   └─ 解析语言文件 (zh-CN, en-US)                         │
+│  ├─ Royalty                                                 │
+│  │   └─ ... (同上)                                          │
+│  ├─ Ideology                                                │
+│  ├─ Biotech                                                 │
+│  ├─ Anomaly                                                 │
+│  └─ Odyssey                                                 │
+│                                                             │
+│  📊 结果: 全局映射包含所有MOD的节点                          │
+│     - thingDefMap: 2055 个ThingDef                          │
+│     - projectileMap: 74 个Projectile                        │
+│     - languageData: 23397 个翻译条目                        │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│ 阶段 2: 解析跨MOD继承关系                                    │
+├─────────────────────────────────────────────────────────────┤
+│  1. 建立父子关系                                            │
+│     - 遍历所有ThingDef，根据ParentName建立关联              │
+│     - 后加载的MOD可以引用先加载的MOD的父节点                 │
+│                                                             │
+│  2. 递归解析继承                                            │
+│     - 深度优先遍历继承树                                    │
+│     - 子节点继承父节点的未定义属性                           │
+│     - 支持多层继承链 (例: Gun → RangedWeapon → Thing)       │
+│                                                             │
+│  3. 类型特化继承                                            │
+│     - 武器节点: 继承武器专用属性 (精度、射程等)              │
+│     - 衣物节点: 继承衣物专用属性 (护甲、层级等)              │
+│                                                             │
+│  ✅ 继承解析完成，所有节点属性完整                           │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│ 阶段 3: 生成CSV文件                                         │
+├─────────────────────────────────────────────────────────────┤
+│  为每个MOD生成独立的CSV文件:                                 │
+│                                                             │
+│  Core/                                                      │
+│  ├─ weapon_data/Core/                                       │
+│  │   ├─ en-US.csv (74个武器)                               │
+│  │   └─ zh-CN.csv (使用中文翻译)                           │
+│  └─ apparel_data/Core/                                      │
+│      ├─ en-US.csv (97个衣物)                               │
+│      └─ zh-CN.csv                                          │
+│                                                             │
+│  Royalty/ ... (同上结构)                                    │
+│  Ideology/ ...                                              │
+│  Biotech/ ...                                               │
+│  Anomaly/ ...                                               │
+│  Odyssey/ ...                                               │
+│                                                             │
+│  📁 每个MOD的数据独立存储，便于按需加载                      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 核心特性
+
+#### 🔗 跨MOD继承支持
+
+- **全局ThingDef映射**: 所有MOD的节点存储在同一个映射中
+- **顺序敏感**: 按配置文件顺序加载，确保依赖在前
+- **父节点查找**: 后加载的MOD可以引用先加载的MOD定义的父节点
+
+**示例**:
+
+```xml
+<!-- Core MOD -->
+<ThingDef Name="BaseMakeableGun" Abstract="True">
+  <statBases>
+    <RangedWeapon_Cooldown>1.5</RangedWeapon_Cooldown>
+  </statBases>
+</ThingDef>
+
+<!-- 第三方MOD (后加载) -->
+<ThingDef ParentName="BaseMakeableGun">
+  <defName>MyCustomGun</defName>
+  <!-- 会继承 BaseMakeableGun 的所有属性 ✅ -->
+</ThingDef>
+```
+
+#### 🌍 翻译累加合并
+
+- **跨MOD合并**: 所有MOD的翻译合并到全局映射
+- **覆盖策略**: 后加载的翻译覆盖同名条目（支持翻译补丁MOD）
+- **多语言同步**: 为每个MOD生成所有语言的CSV
+
+**翻译累加示例**:
+
+```
+Core 加载:      zh-CN: 11342 个条目
+Royalty 加载:   zh-CN: +1411 → 累计 12744
+Ideology 加载:  zh-CN: +3920 → 累计 16645
+...
+最终:           zh-CN: 23397 个条目 (所有MOD合并)
+```
+
+#### 📦 独立输出管理
+
+- **按MOD分离**: 每个MOD生成独立的CSV文件
+- **灵活加载**: 前端可以按需加载特定MOD的数据
+- **数据源追踪**: 清晰标识数据来源
+
+#### 🔄 继承链完整性
+
+- **多层继承**: 支持任意深度的继承链
+- **属性覆盖**: 子节点可以覆盖父节点的属性
+- **类型特化**: 武器/衣物有各自的继承逻辑
+
+**继承链示例**:
+
+```
+Thing (Core)
+  └─ RangedWeapon (Core)
+      └─ BaseMakeableGun (Core)
+          └─ Milira_ImperiumWeaponBase (Mod A)
+              └─ Milira_MarksmanGaussrifle (Mod A)
+                  ✅ 最终继承所有祖先的属性
+```
+
+### 设计优势
+
+| 特性      | 旧架构         | 新架构      |
+| --------- | -------------- | ----------- |
+| MOD间继承 | ❌ 不支持      | ✅ 完整支持 |
+| 翻译合并  | ❌ 每个MOD独立 | ✅ 全局累加 |
+| 继承解析  | 🔄 每个MOD重复 | ⚡ 统一处理 |
+| 输出结构  | ✅ 独立        | ✅ 独立     |
+| 依赖顺序  | ⚠️ 忽略        | ✅ 严格遵循 |
+
+### 技术实现
+
+**关键代码结构**:
+
+```typescript
+class ModDataParser {
+  // 全局共享映射（跨MOD）
+  private thingDefMap: Map<string, ThingDefNode>
+  private projectileMap: Map<string, ProjectileNode>
+  private languageData: Map<string, Map<string, string>>
+
+  async parseAll(configs: ModConfig[]) {
+    // 阶段1: 依次加载所有MOD
+    for (const config of configs) {
+      await this.parseMod(config.path, config.outputName)
+    }
+
+    // 阶段2: 统一解析继承
+    this.resolveInheritance()
+
+    // 阶段3: 为每个MOD生成CSV
+    for (const mod of this.modOutputs) {
+      await this.generateWeaponCSV(mod.name)
+      await this.generateClothingCSV(mod.name)
+    }
+  }
+}
+```
 
 ## 多语言支持
 

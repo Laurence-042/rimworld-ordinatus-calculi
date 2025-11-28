@@ -31,21 +31,29 @@ const APPAREL_OUTPUT_DIR = OUTPUT_DIR_OVERRIDE
 // 通用ThingDef节点类型（用于解析时的临时存储）
 type ThingDefNode = BaseThingDefNode | WeaponThingDefNode | ApparelThingDefNode
 
+/**
+ * 单个MOD的元数据
+ */
+interface ModMetadata {
+  name: string
+  dir: string
+  customOutputName?: string
+}
+
 class ModDataParser {
+  // 全局共享的数据映射（跨所有MOD）
   private thingDefMap: Map<string, ThingDefNode> = new Map()
   private projectileMap: Map<string, ProjectileNode> = new Map()
   private languageData: Map<string, Map<string, string>> = new Map() // language -> (defName.property -> translation)
-  private modName: string = ''
-  private modDir: string
 
-  constructor(modDir: string, customOutputName?: string) {
-    this.modDir = modDir
-    // 从About.xml获取MOD名称
-    this.extractModName(modDir)
-    // 如果提供了自定义名称，使用自定义名称
-    if (customOutputName) {
-      this.modName = customOutputName
-    }
+  // 当前正在处理的MOD信息
+  private currentMod: ModMetadata = { name: '', dir: '' }
+
+  // 记录每个MOD的输出信息
+  private modOutputs: Array<{ name: string; outputName: string }> = []
+
+  constructor() {
+    // 构造函数不再需要参数，改为批量处理所有MOD
   }
 
   private isRecord(value: unknown): value is Record<string, unknown> {
@@ -56,30 +64,38 @@ class ModDataParser {
     return BaseParserUtils.getStringValue(obj, key)
   }
 
-  private extractModName(modDir: string): void {
+  private extractModName(modDir: string, customOutputName?: string): string {
+    if (customOutputName) {
+      return customOutputName
+    }
+
     const aboutXmlPath = path.join(modDir, 'About', 'About.xml')
     if (fs.existsSync(aboutXmlPath)) {
       const content = fs.readFileSync(aboutXmlPath, 'utf-8')
       const match = content.match(/<name>(.*?)<\/name>/i)
       if (match) {
-        this.modName = match[1].trim().replace(/[^\w\s-]/g, '_')
+        return match[1].trim().replace(/[^\w\s-]/g, '_')
       }
     }
 
-    if (!this.modName) {
-      this.modName = path.basename(modDir)
-    }
+    return path.basename(modDir)
   }
 
-  async parse(): Promise<void> {
-    console.log(`开始解析MOD: ${this.modName}`)
+  /**
+   * 解析单个MOD的XML定义和语言文件
+   */
+  private async parseMod(modDir: string, customOutputName?: string): Promise<void> {
+    const modName = this.extractModName(modDir, customOutputName)
+    this.currentMod = { name: modName, dir: modDir, customOutputName }
+
+    console.log(`开始解析MOD: ${modName}`)
 
     // 1. 扫描所有XML文件
-    const xmlFiles = this.scanXMLFiles(this.modDir)
-    console.log(`找到 ${xmlFiles.length} 个XML文件`)
+    const xmlFiles = this.scanXMLFiles(modDir)
+    console.log(`  找到 ${xmlFiles.length} 个XML文件`)
 
     if (xmlFiles.length === 0) {
-      console.warn('警告：未找到任何XML文件')
+      console.warn('  警告：未找到任何XML文件')
       return
     }
 
@@ -88,21 +104,49 @@ class ModDataParser {
       await this.parseXMLFile(xmlFile)
     }
 
-    console.log(
-      `解析完成: ${this.thingDefMap.size} 个ThingDef, ${this.projectileMap.size} 个Projectile`,
-    )
-
     // 3. 解析语言文件
     await this.parseLanguageFiles()
 
-    // 4. 解析继承关系
+    // 记录此MOD的输出信息
+    this.modOutputs.push({ name: modName, outputName: customOutputName || modName })
+  }
+
+  /**
+   * 批量解析所有MOD，然后统一解析继承关系和生成CSV
+   */
+  async parseAll(configs: Array<{ path: string; outputName?: string }>): Promise<void> {
+    console.log('='.repeat(60))
+    console.log('阶段 1: 解析所有MOD的XML定义')
+    console.log('='.repeat(60))
+
+    // 按顺序解析所有MOD（保证依赖顺序）
+    for (const config of configs) {
+      await this.parseMod(config.path, config.outputName)
+      console.log()
+    }
+
+    console.log('='.repeat(60))
+    console.log(
+      `XML解析完成: ${this.thingDefMap.size} 个ThingDef, ${this.projectileMap.size} 个Projectile`,
+    )
+    console.log('='.repeat(60))
+    console.log()
+
+    // 统一解析继承关系（此时所有MOD的节点都已加载）
+    console.log('阶段 2: 解析跨MOD继承关系...')
     this.resolveInheritance()
+    console.log()
 
-    // 5. 提取武器数据并生成CSV
-    await this.generateWeaponCSV()
+    // 为每个MOD生成CSV
+    console.log('='.repeat(60))
+    console.log('阶段 3: 生成CSV文件')
+    console.log('='.repeat(60))
 
-    // 6. 提取衣物数据并生成CSV
-    await this.generateClothingCSV()
+    for (const modOutput of this.modOutputs) {
+      console.log(`\n生成 ${modOutput.name} 的数据文件...`)
+      await this.generateWeaponCSV(modOutput.outputName)
+      await this.generateClothingCSV(modOutput.outputName)
+    }
   }
 
   private scanXMLFiles(dir: string): string[] {
@@ -160,16 +204,13 @@ class ModDataParser {
   }
 
   private async parseLanguageFiles(): Promise<void> {
-    console.log('开始解析语言文件...')
-
-    const languagesDirs = this.findLanguagesDirectories(this.modDir)
+    const languagesDirs = this.findLanguagesDirectories(this.currentMod.dir)
     if (languagesDirs.length === 0) {
-      console.log('未找到 Languages 目录')
+      console.log('  未找到 Languages 目录')
       return
     }
 
-    console.log(`找到 ${languagesDirs.length} 个 Languages 目录:`)
-    languagesDirs.forEach((dir) => console.log(`  - ${dir}`))
+    console.log(`  找到 ${languagesDirs.length} 个 Languages 目录`)
 
     // 为每种语言创建翻译映射
     const languageTranslations = new Map<string, Map<string, string>>()
@@ -184,12 +225,14 @@ class ModDataParser {
         const languageCode = LANGUAGE_MAP[folder.name]
         if (!languageCode) {
           if (DEBUG_OPTIONS.verbose) {
-            console.log(`跳过不支持的语言: ${folder.name}`)
+            console.log(`    跳过不支持的语言: ${folder.name}`)
           }
           continue
         }
 
-        console.log(`解析语言: ${folder.name} (${languageCode}) 从 ${languagesDir}`)
+        if (DEBUG_OPTIONS.verbose) {
+          console.log(`    解析语言: ${folder.name} (${languageCode})`)
+        }
 
         const languagePath = path.join(languagesDir, folder.name)
         const xmlFiles = this.scanXMLFiles(languagePath)
@@ -207,10 +250,22 @@ class ModDataParser {
       }
     }
 
-    // 将合并后的翻译存储到 languageData
+    // 将合并后的翻译存储到 languageData（累加到全局翻译）
     for (const [languageCode, translations] of languageTranslations.entries()) {
-      this.languageData.set(languageCode, translations)
-      console.log(`  ${languageCode}: 共 ${translations.size} 个翻译条目`)
+      let globalTranslations = this.languageData.get(languageCode)
+      if (!globalTranslations) {
+        globalTranslations = new Map<string, string>()
+        this.languageData.set(languageCode, globalTranslations)
+      }
+
+      // 合并翻译（后加载的MOD会覆盖先加载的同名条目）
+      for (const [key, value] of translations.entries()) {
+        globalTranslations.set(key, value)
+      }
+
+      console.log(
+        `  ${languageCode}: +${translations.size} 个翻译条目 (累计: ${globalTranslations.size})`,
+      )
     }
   }
 
@@ -429,9 +484,7 @@ class ModDataParser {
     }
   }
 
-  private async generateWeaponCSV(): Promise<void> {
-    console.log('开始生成武器CSV...')
-
+  private async generateWeaponCSV(modName: string): Promise<void> {
     const weapons: WeaponThingDefNode[] = []
 
     for (const node of this.thingDefMap.values()) {
@@ -441,15 +494,14 @@ class ModDataParser {
     }
 
     const validWeapons = WeaponParser.filterValidWeapons(weapons)
-    console.log(`找到 ${validWeapons.length} 个武器定义`)
+    console.log(`  武器: ${validWeapons.length} 个`)
 
     if (validWeapons.length === 0) {
-      console.warn('未找到有效的武器定义')
       return
     }
 
     // 创建 MOD 专用目录
-    const modOutputDir = path.join(WEAPON_OUTPUT_DIR, this.modName)
+    const modOutputDir = path.join(WEAPON_OUTPUT_DIR, modName)
     if (!fs.existsSync(modOutputDir)) {
       fs.mkdirSync(modOutputDir, { recursive: true })
     }
@@ -462,7 +514,6 @@ class ModDataParser {
 
     // 为每种语言生成单独的CSV
     for (const [languageCode, translations] of this.languageData.entries()) {
-      console.log(`生成 ${languageCode} 语言的武器CSV...`)
       const localizedWeapons = validWeapons.map((node) =>
         WeaponParser.createWeaponRow(node, this.projectileMap, translations),
       )
@@ -470,9 +521,7 @@ class ModDataParser {
     }
   }
 
-  private async generateClothingCSV(): Promise<void> {
-    console.log('开始生成衣物CSV...')
-
+  private async generateClothingCSV(modName: string): Promise<void> {
     const clothing: ApparelThingDefNode[] = []
 
     for (const node of this.thingDefMap.values()) {
@@ -482,15 +531,14 @@ class ModDataParser {
     }
 
     const validClothing = ApparelParser.filterValidApparel(clothing)
-    console.log(`找到 ${validClothing.length} 个衣物定义`)
+    console.log(`  衣物: ${validClothing.length} 个`)
 
     if (validClothing.length === 0) {
-      console.warn('未找到有效的衣物定义')
       return
     }
 
     // 创建 MOD 专用目录
-    const modOutputDir = path.join(APPAREL_OUTPUT_DIR, this.modName)
+    const modOutputDir = path.join(APPAREL_OUTPUT_DIR, modName)
     if (!fs.existsSync(modOutputDir)) {
       fs.mkdirSync(modOutputDir, { recursive: true })
     }
@@ -501,7 +549,6 @@ class ModDataParser {
 
     // 为每种语言生成单独的CSV
     for (const [languageCode, translations] of this.languageData.entries()) {
-      console.log(`生成 ${languageCode} 语言的衣物CSV...`)
       const localizedClothing = validClothing.map((node) =>
         ApparelParser.createClothingRow(node, translations),
       )
@@ -513,7 +560,7 @@ class ModDataParser {
 // 主函数
 async function main() {
   console.log('='.repeat(60))
-  console.log('RimWorld MOD 武器数据解析工具')
+  console.log('RimWorld MOD 数据解析工具')
   console.log('='.repeat(60))
   console.log()
 
@@ -525,55 +572,54 @@ async function main() {
     process.exit(1)
   }
 
-  console.log(`将解析 ${enabledConfigs.length} 个MOD:`)
-  enabledConfigs.forEach((config, index) => {
-    console.log(`  ${index + 1}. ${config.path}`)
-  })
-  console.log()
-
-  let successCount = 0
-  let failCount = 0
+  // 验证所有MOD目录存在
+  const validConfigs = []
+  let invalidCount = 0
 
   for (const config of enabledConfigs) {
-    try {
-      console.log('-'.repeat(60))
-
-      // 检查目录是否存在
-      if (!fs.existsSync(config.path)) {
-        console.error(`❌ MOD目录不存在: ${config.path}`)
-        console.log('   请检查路径是否正确')
-        failCount++
-        continue
-      }
-
-      const parser = new ModDataParser(config.path, config.outputName)
-
-      if (DEBUG_OPTIONS.verbose) {
-        console.log(`📂 MOD路径: ${config.path}`)
-      }
-
-      await parser.parse()
-
-      if (!DEBUG_OPTIONS.skipCSVGeneration) {
-        console.log('✅ 解析成功')
-        successCount++
-      }
-    } catch (error) {
-      console.error(`❌ 解析失败:`, error instanceof Error ? error.message : error)
-      if (DEBUG_OPTIONS.verbose && error instanceof Error) {
-        console.error(error.stack)
-      }
-      failCount++
+    if (!fs.existsSync(config.path)) {
+      console.error(`❌ MOD目录不存在: ${config.path}`)
+      invalidCount++
+    } else {
+      validConfigs.push(config)
     }
-
-    console.log()
   }
 
-  console.log('='.repeat(60))
-  console.log(`解析完成！成功: ${successCount}, 失败: ${failCount}`)
-  console.log('='.repeat(60))
+  if (validConfigs.length === 0) {
+    console.error('错误：没有有效的MOD配置')
+    process.exit(1)
+  }
 
-  if (failCount > 0) {
+  console.log(`将按顺序解析 ${validConfigs.length} 个MOD:`)
+  validConfigs.forEach((config, index) => {
+    const modName = path.basename(config.path)
+    console.log(`  ${index + 1}. ${modName} (${config.path})`)
+  })
+
+  if (invalidCount > 0) {
+    console.warn(`\n⚠️  跳过 ${invalidCount} 个无效路径\n`)
+  }
+  console.log()
+
+  try {
+    const parser = new ModDataParser()
+    await parser.parseAll(validConfigs)
+
+    console.log()
+    console.log('='.repeat(60))
+    console.log('✅ 所有MOD解析完成！')
+    console.log('='.repeat(60))
+  } catch (error) {
+    console.error()
+    console.error('='.repeat(60))
+    console.error('❌ 解析失败:', error instanceof Error ? error.message : error)
+    console.error('='.repeat(60))
+
+    if (DEBUG_OPTIONS.verbose && error instanceof Error) {
+      console.error('\n堆栈跟踪:')
+      console.error(error.stack)
+    }
+
     process.exit(1)
   }
 }

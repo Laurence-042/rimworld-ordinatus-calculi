@@ -1,0 +1,98 @@
+﻿defName,label,armorBlunt,armorSharp,armorHeat,materialCoefficient,acceptedMaterials,bodyPartCoverage,apparelLayers
+Apparel_ShieldBelt,shield belt,,,,,,Waist,3
+Apparel_CowboyHat,cowboy hat,,,,0.2,Fabric、Leathery,,4
+Apparel_BowlerHat,bowler hat,,,,0.2,Fabric、Leathery,,4
+Apparel_TribalHeaddress,tribal headdress,,,,0.2,Fabric,,4
+Apparel_Tuque,tuque,,,,0.2,Fabric,,4
+Apparel_WarMask,war mask,,,,0.3,Woody,Head、LeftEye、RightEye、LeftEar、RightEar、Nose、Jaw,4
+Apparel_WarVeil,veil,,,,0.2,Fabric,Head、LeftEye、RightEye、LeftEar、RightEar、Nose、Jaw,4
+Apparel_SimpleHelmet,simple helmet,,,,0.5,Metallic,,4
+Apparel_AdvancedHelmet,flak helmet,,,,0.7,Metallic,,4
+Apparel_PowerArmorHelmet,marine helmet,0.45,1.06,0.54,,,Head、LeftEye、RightEye、LeftEar、RightEar、Nose、Jaw,4
+Apparel_ArmorHelmetRecon,recon helmet,0.4,0.92,0.46,,,Head、LeftEye、RightEye、LeftEar、RightEar、Nose、Jaw,4
+Apparel_PsychicFoilHelmet,psychic foil helmet,0.09,0.09,0.27,,,,4
+Apparel_HatHood,hood,,,,0.2,Fabric、Leathery,,4
+Apparel_ClothMask,face mask,,,,0.2,Fabric,,4
+Apparel_SmokepopBelt,smokepop pack,,,,,,Waist,3
+Apparel_FirefoampopPack,firefoam pop pack,,,,,,Waist,3
+Apparel_TribalA,tribalwear,,,,0.2,Fabric、Leathery,Torso、LeftLeg、RightLeg,0
+Apparel_Parka,parka,,,,0.2,Fabric、Leathery,Torso、Neck、LeftShoulder、RightShoulder、LeftArm、RightArm,2
+Apparel_Pants,pants,,,,0.2,Fabric、Leathery,LeftLeg、RightLeg,0
+Apparel_BasicShirt,T-shirt,,,,0.2,Fabric、Leathery,Torso、LeftShoulder、RightShoulder,0
+Apparel_CollarShirt,button-down shirt,,,,0.2,Fabric、Leathery,Torso、Neck、LeftShoulder、RightShoulder、LeftArm、RightArm,0
+Apparel_Duster,duster,,,,0.3,Fabric、Leathery,Torso、Neck、LeftShoulder、RightShoulder、LeftArm、RightArm、LeftLeg、RightLeg,2
+Apparel_Jacket,jacket,,,,0.3,Fabric、Leathery,Torso、Neck、LeftShoulder、RightShoulder、LeftArm、RightArm,2
+Apparel_PlateArmor,plate armor,,,,0.9,Metallic、Woody,Torso、Neck、LeftShoulder、RightShoulder、LeftArm、RightArm、LeftLeg、RightLeg,1、2
+Apparel_FlakVest,flak vest,0.36,1,0.27,,,Torso、Neck,1
+Apparel_FlakPants,flak pants,0.08,0.55,0.1,,,LeftLeg、RightLeg,0、1
+Apparel_FlakJacket,flak jacket,0.08,0.55,0.1,,,Torso、Neck、LeftShoulder、RightShoulder、LeftArm、RightArm,2
+Apparel_PowerArmor,marine armor,0.45,1.06,0.54,,,Torso、Neck、LeftShoulder、RightShoulder、LeftArm、RightArm、LeftLeg、RightLeg,1、2
+Apparel_ArmorRecon,recon armor,0.4,0.92,0.46,,,Torso、Neck、LeftShoulder、RightShoulder、LeftArm、RightArm、LeftLeg、RightLeg,1、2
+Apparel_Cape,cape,,,,0.3,Fabric、Leathery,Torso、Neck、LeftShoulder、RightShoulder、LeftArm、RightArm、LeftLeg、RightLeg,2
+Apparel_Robe,robe,,,,0.2,Fabric、Leathery,Torso、LeftShoulder、RightShoulder、LeftArm、RightArm、LeftLeg、RightLeg,2
+Apparel_PackJump,jump pack,,,,,,Waist,3
+Apparel_PackBroadshield,low-shield pack,,,,,,Waist,3
+Apparel_PsyfocusHelmet,eltex helmet,0.09,0.09,0.27,,,,4
+Apparel_EltexSkullcap,eltex skullcap,,,,,,,4
+Apparel_PsyfocusShirt,eltex shirt,0,0.07,0.04,,,Torso、LeftShoulder、RightShoulder,0
+Apparel_PsyfocusVest,eltex vest,0,0.07,0.04,,,Torso、Neck、LeftShoulder、RightShoulder,1
+Apparel_PsyfocusRobe,eltex robe,0,0.07,0.04,,,Torso、Neck、LeftShoulder、RightShoulder、LeftArm、RightArm、LeftLeg、RightLeg,2
+Apparel_ShirtRuffle,formal shirt,,,,0.2,Fabric、Leathery,LeftArm、RightArm、Neck,0
+Apparel_Corset,corset,,,,0.2,Fabric、Leathery,Torso,1
+Apparel_VestRoyal,formal vest,,,,0.2,Fabric、Leathery,Torso,1
+Apparel_RobeRoyal,prestige robe,,,,0.2,Fabric、Leathery,Torso、Neck、LeftShoulder、RightShoulder、LeftArm、RightArm、LeftLeg、RightLeg,2
+Apparel_HatLadies,ladies hat,,,,,,,4
+Apparel_HatTop,top hat,,,,,,,4
+Apparel_Coronet,coronet,,,,,Metallic,,4
+Apparel_Crown,crown,,,,,Metallic,,4
+Apparel_CrownStellic,stellic crown,,,,,Metallic,,4
+Apparel_Beret,beret,,,,,Fabric、Leathery,,4
+Apparel_ArmorReconPrestige,prestige recon armor,0.4,0.92,0.46,,,Torso、Neck、LeftShoulder、RightShoulder、LeftArm、RightArm、LeftLeg、RightLeg,1、2
+Apparel_ArmorHelmetReconPrestige,prestige recon helmet,0.4,0.92,0.46,,,Head、LeftEye、RightEye、LeftEar、RightEar、Nose、Jaw,4
+Apparel_ArmorMarinePrestige,prestige marine armor,0.45,1.06,0.54,,,Torso、Neck、LeftShoulder、RightShoulder、LeftArm、RightArm、LeftLeg、RightLeg,1、2
+Apparel_ArmorMarineHelmetPrestige,prestige marine helmet,0.45,1.06,0.54,,,Head、LeftEye、RightEye、LeftEar、RightEar、Nose、Jaw,4
+Apparel_ArmorCataphract,cataphract armor,0.5,1.2,0.6,,,Torso、Neck、LeftShoulder、RightShoulder、LeftArm、RightArm、LeftLeg、RightLeg,1、2
+Apparel_ArmorHelmetCataphract,cataphract helmet,0.5,1.2,0.6,,,Head、LeftEye、RightEye、LeftEar、RightEar、Nose、Jaw,4
+Apparel_ArmorCataphractPrestige,prestige cataphract armor,0.5,1.2,0.6,,,Torso、Neck、LeftShoulder、RightShoulder、LeftArm、RightArm、LeftLeg、RightLeg,1、2
+Apparel_ArmorHelmetCataphractPrestige,prestige cataphract helmet,0.5,1.2,0.6,,,Head、LeftEye、RightEye、LeftEar、RightEar、Nose、Jaw,4
+Apparel_ArmorLocust,locust armor,0.35,0.87,0.41,,,Torso、Neck、LeftShoulder、RightShoulder、LeftArm、RightArm、LeftLeg、RightLeg,1、2
+Apparel_Gunlink,gunlink,0,0,0,,,,4
+Apparel_Headwrap,headwrap,,,,0.25,Fabric,,4
+Apparel_Broadwrap,broadwrap,,,,0.25,Fabric,Head、LeftEye、RightEye、LeftEar、RightEar、Nose、Jaw、Neck、LeftShoulder、RightShoulder,4
+Apparel_VisageMask,visage mask,,,,0.3,Woody、Metallic,Head、LeftEye、RightEye、LeftEar、RightEar、Nose、Jaw,4
+Apparel_Slicecap,slicecap,,,,0.1,Woody、Metallic,,4
+Apparel_Collar,slave collar,,,,0,Metallic、Leathery,Neck,4
+Apparel_AuthorityCap,authority cap,,,,0.2,Fabric、Leathery,,4
+Apparel_Tailcap,tailcap,,,,0.2,Leathery,,4
+Apparel_Shadecone,shadecone,,,,0.2,Fabric、Leathery,,4
+Apparel_Flophat,flophat,,,,0.2,Fabric,,4
+Apparel_BodyStrap,slave body strap,,,,0.1,Fabric、Leathery,Torso,2
+Apparel_Burka,burka,,,,0.2,Fabric,Head、LeftEye、RightEye、LeftEar、RightEar、Nose、Jaw、Neck、LeftShoulder、RightShoulder、Torso、LeftLeg、RightLeg、LeftArm、RightArm,2
+Apparel_TortureCrown,torture crown,,,,0.15,Metallic、Woody,,4
+Apparel_Blindfold,blindfold,,,,0.1,Fabric,LeftEye、RightEye,5
+Apparel_KidRomper,kid romper,,,,0.2,Fabric、Leathery,Torso、Neck、LeftShoulder、RightShoulder、LeftArm、RightArm、LeftLeg、RightLeg,0
+Apparel_KidShirt,kid shirt,,,,0.2,Fabric、Leathery,Torso、LeftShoulder、RightShoulder,0
+Apparel_KidPants,kid pants,,,,0.2,Fabric、Leathery,LeftLeg、RightLeg,0
+Apparel_KidParka,kid parka,,,,0.2,Fabric、Leathery,Torso、Neck、LeftShoulder、RightShoulder、LeftArm、RightArm,2
+Apparel_KidTribal,kid tribalwear,,,,0.2,Fabric、Leathery,Torso、LeftLeg、RightLeg,0
+Apparel_KidHelmet,kid helmet,,,,0.5,Metallic,,4
+Apparel_AirwireHeadset,airwire headset,,,,,,,4
+Apparel_ArrayHeadset,array headset,,,,,,,4
+Apparel_IntegratorHeadset,integrator headset,0,0,0,,,,4
+Apparel_ArmorHelmetMechCommander,mechcommander helmet,0.3,0.69,0.345,,,Head、LeftEye、RightEye、LeftEar、RightEar、Nose、Jaw,4
+Apparel_ArmorHelmetMechlordHelmet,mechlord helmet,0.4,0.92,0.46,,,Head、LeftEye、RightEye、LeftEar、RightEar、Nose、Jaw,4
+Apparel_GasMask,gas mask,0.3,0.18,,,,Head、LeftEye、RightEye、LeftEar、RightEar、Nose、Jaw,4
+Apparel_HeavyShield,heavy shield unit,,,,,,Torso,1
+Apparel_PackControl,control pack,,,,,,Waist,3
+Apparel_PackBandwidth,bandwidth pack,,,,,,Waist,3
+Apparel_PackTox,tox pack,,,,,,Waist,3
+Apparel_MechlordSuit,mechlord suit,0.4,0.92,0.46,,,Torso、Neck、LeftShoulder、RightShoulder、LeftArm、RightArm、LeftLeg、RightLeg,1、2
+Apparel_Bandolier,heavy bandolier,,,,0.1,Fabric、Leathery,Torso,2
+Apparel_Sash,sash,,,,0.1,Fabric、Leathery,Torso,1
+Apparel_CultistMask,ritual mask,,,,0.3,Bioferrite,Head、LeftEye、RightEye、LeftEar、RightEar、Nose、Jaw,4
+Apparel_CeremonialCultistMask,ceremonial hood,,,,0.4,Fabric,Head、LeftEye、RightEye、LeftEar、RightEar、Nose、Jaw,4
+Apparel_LabCoat,lab coat,,,,0.2,Fabric、Leathery,Torso、Neck、LeftShoulder、RightShoulder、LeftArm、RightArm,2
+Apparel_VacsuitHelmet,vacsuit helmet,0.24,0.52,0.66,,,Head、LeftEye、RightEye、LeftEar、RightEar、Nose、Jaw,4
+Apparel_CerebrexNode,cerebrex node,,,,,,Waist,3
+Apparel_Vacsuit,vacsuit,0.25,0.52,0.66,,,Torso、Neck、LeftShoulder、RightShoulder、LeftArm、RightArm、LeftLeg、RightLeg,1、2
+Apparel_VacsuitChildren,kid vacsuit,0.2,0.52,0.66,,,Torso、Neck、LeftShoulder、RightShoulder、LeftArm、RightArm、LeftLeg、RightLeg,1、2
