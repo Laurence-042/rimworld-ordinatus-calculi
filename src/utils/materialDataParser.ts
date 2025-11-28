@@ -39,12 +39,15 @@ function parseNumeric(value: string): number {
 
 /**
  * XML原始材料类别到MaterialTag枚举的映射
+ * 现在枚举值本身就是XML原始值，所以这个映射主要用于类型转换
  */
 const STUFF_CATEGORY_MAP: Record<string, MaterialTag> = {
-  Metallic: MaterialTag.Metal,
-  Woody: MaterialTag.Wood,
-  Leathery: MaterialTag.Leather,
+  Metallic: MaterialTag.Metallic,
+  Woody: MaterialTag.Woody,
+  Leathery: MaterialTag.Leathery,
   Fabric: MaterialTag.Fabric,
+  // 兼容可能的变体
+  Stony: MaterialTag.Metallic, // 石材材质在游戏中通常归类为金属性质
 }
 
 /**
@@ -151,15 +154,15 @@ export async function parseMaterialDataFromCSV(csvContent: string): Promise<Mate
  */
 function groupMaterialsByTags(materials: MaterialData[]): MaterialDataSource['materials'] {
   const grouped: MaterialDataSource['materials'] = {
-    [MaterialTag.Metal]: [],
-    [MaterialTag.Wood]: [],
-    [MaterialTag.Leather]: [],
+    [MaterialTag.Metallic]: [],
+    [MaterialTag.Woody]: [],
+    [MaterialTag.Leathery]: [],
     [MaterialTag.Fabric]: [],
   }
 
   materials.forEach((material) => {
     // 检查是否同时拥有皮革和织物标签
-    const hasLeather = material.tags.includes(MaterialTag.Leather)
+    const hasLeather = material.tags.includes(MaterialTag.Leathery)
     const hasFabric = material.tags.includes(MaterialTag.Fabric)
 
     material.tags.forEach((tag) => {

@@ -5,7 +5,6 @@
 
 import * as fs from 'fs'
 import * as path from 'path'
-import { MaterialTag } from '../../src/types/material'
 import { BaseThingDefNode, BaseParserUtils } from './baseParser'
 
 /**
@@ -40,16 +39,6 @@ export interface MaterialCSVData extends Record<string, string> {
  */
 export function isMaterialNode(node: BaseThingDefNode): node is MaterialThingDefNode {
   return node.category === 'Material'
-}
-
-/**
- * 材料类别映射（RimWorld XML -> MaterialTag枚举）
- */
-export const STUFF_CATEGORY_MAP: Record<string, MaterialTag> = {
-  Metallic: MaterialTag.Metal,
-  Woody: MaterialTag.Wood,
-  Leathery: MaterialTag.Leather,
-  Fabric: MaterialTag.Fabric,
 }
 
 /**

@@ -65,31 +65,31 @@ const selectedClothingDataSourceId = ref<string>('Vanilla')
 
 // 全局材料 - 使用 MaterialData 类型
 const globalMaterials = ref<{
-  [MaterialTag.Metal]: MaterialData
-  [MaterialTag.Wood]: MaterialData
-  [MaterialTag.Leather]: MaterialData
+  [MaterialTag.Metallic]: MaterialData
+  [MaterialTag.Woody]: MaterialData
+  [MaterialTag.Leathery]: MaterialData
   [MaterialTag.Fabric]: MaterialData
 }>({
-  [MaterialTag.Metal]: {
+  [MaterialTag.Metallic]: {
     name: '钢铁',
     armorSharp: 100,
     armorBlunt: 36,
     armorHeat: 27,
-    tags: [MaterialTag.Metal],
+    tags: [MaterialTag.Metallic],
   },
-  [MaterialTag.Wood]: {
+  [MaterialTag.Woody]: {
     name: '木材',
     armorSharp: 54,
     armorBlunt: 18,
     armorHeat: 9,
-    tags: [MaterialTag.Wood],
+    tags: [MaterialTag.Woody],
   },
-  [MaterialTag.Leather]: {
+  [MaterialTag.Leathery]: {
     name: '普通皮革',
     armorSharp: 112,
     armorBlunt: 24,
     armorHeat: 35,
-    tags: [MaterialTag.Leather],
+    tags: [MaterialTag.Leathery],
   },
   [MaterialTag.Fabric]: {
     name: '合成纤维',
@@ -113,10 +113,10 @@ const activeMaterialPanels = ref<MaterialTag[]>([])
 const materialTypes = computed(
   () =>
     [
-      { tag: MaterialTag.Metal, name: 'metal', label: t('materialType.metal') },
-      { tag: MaterialTag.Wood, name: 'wood', label: t('materialType.wood') },
-      { tag: MaterialTag.Leather, name: 'leather', label: t('materialType.leather') },
-      { tag: MaterialTag.Fabric, name: 'fabric', label: t('materialType.fabric') },
+      { tag: MaterialTag.Metallic, name: MaterialTag.Metallic, label: t('materialType.metal') },
+      { tag: MaterialTag.Woody, name: MaterialTag.Woody, label: t('materialType.wood') },
+      { tag: MaterialTag.Leathery, name: MaterialTag.Leathery, label: t('materialType.leather') },
+      { tag: MaterialTag.Fabric, name: MaterialTag.Fabric, label: t('materialType.fabric') },
     ] as const,
 )
 
@@ -147,9 +147,9 @@ const addArmorSet = () => {
         materialCoefficient: 1.0,
         selectedMaterial: MaterialTag.Fabric,
         supportedMaterials: [
-          MaterialTag.Metal,
-          MaterialTag.Wood,
-          MaterialTag.Leather,
+          MaterialTag.Metallic,
+          MaterialTag.Woody,
+          MaterialTag.Leathery,
           MaterialTag.Fabric,
         ],
         apparelLayers: [ApparelLayer.Outer],
@@ -177,9 +177,9 @@ const addLayer = (armorSet: ArmorSet) => {
     materialCoefficient: 1.0,
     selectedMaterial: MaterialTag.Fabric,
     supportedMaterials: [
-      MaterialTag.Metal,
-      MaterialTag.Wood,
-      MaterialTag.Leather,
+      MaterialTag.Metallic,
+      MaterialTag.Woody,
+      MaterialTag.Leathery,
       MaterialTag.Fabric,
     ],
     apparelLayers: [ApparelLayer.Outer],
@@ -235,7 +235,14 @@ const getLayerActualArmor = (layer: ArmorSet['layers'][number]) => {
 // 当前数据源的材料
 const currentMaterials = computed(() => {
   const source = materialDataSources.value.find((s) => s.id === selectedMaterialDataSourceId.value)
-  return source?.materials || { metal: [], wood: [], leather: [], fabric: [] }
+  return (
+    source?.materials || {
+      [MaterialTag.Metallic]: [],
+      [MaterialTag.Woody]: [],
+      [MaterialTag.Leathery]: [],
+      [MaterialTag.Fabric]: [],
+    }
+  )
 })
 
 // 当前数据源的衣物
@@ -414,27 +421,29 @@ onMounted(async () => {
   const vanillaSource = materialDataSources.value.find((s) => s.id === 'vanilla')
   if (vanillaSource) {
     // 钢铁
-    const steel = vanillaSource.materials.metal.find((m) => m.name === '钢铁')
+    const steel = vanillaSource.materials[MaterialTag.Metallic].find((m) => m.name === '钢铁')
     if (steel) {
-      globalMaterials.value.metal = convertMaterialToPercentage(steel)
+      globalMaterials.value[MaterialTag.Metallic] = convertMaterialToPercentage(steel)
     }
 
     // 合成纤维
-    const synthread = vanillaSource.materials.fabric.find((m) => m.name === '合成纤维')
+    const synthread = vanillaSource.materials[MaterialTag.Fabric].find((m) => m.name === '合成纤维')
     if (synthread) {
-      globalMaterials.value.fabric = convertMaterialToPercentage(synthread)
+      globalMaterials.value[MaterialTag.Fabric] = convertMaterialToPercentage(synthread)
     }
 
     // 普通皮革
-    const plainLeather = vanillaSource.materials.leather.find((m) => m.name === '普通皮革')
+    const plainLeather = vanillaSource.materials[MaterialTag.Leathery].find(
+      (m) => m.name === '普通皮革',
+    )
     if (plainLeather) {
-      globalMaterials.value.leather = convertMaterialToPercentage(plainLeather)
+      globalMaterials.value[MaterialTag.Leathery] = convertMaterialToPercentage(plainLeather)
     }
 
     // 木材
-    const wood = vanillaSource.materials.wood[0]
+    const wood = vanillaSource.materials[MaterialTag.Woody][0]
     if (wood) {
-      globalMaterials.value.wood = convertMaterialToPercentage(wood)
+      globalMaterials.value[MaterialTag.Woody] = convertMaterialToPercentage(wood)
     }
   }
 
@@ -468,9 +477,9 @@ onMounted(async () => {
         materialCoefficient: 1.0,
         selectedMaterial: MaterialTag.Fabric,
         supportedMaterials: [
-          MaterialTag.Metal,
-          MaterialTag.Wood,
-          MaterialTag.Leather,
+          MaterialTag.Metallic,
+          MaterialTag.Woody,
+          MaterialTag.Leathery,
           MaterialTag.Fabric,
         ],
         apparelLayers: bulletproofJacket.data.apparelLayers || [ApparelLayer.Outer],
@@ -490,9 +499,9 @@ onMounted(async () => {
         materialCoefficient: 1.0,
         selectedMaterial: MaterialTag.Fabric,
         supportedMaterials: [
-          MaterialTag.Metal,
-          MaterialTag.Wood,
-          MaterialTag.Leather,
+          MaterialTag.Metallic,
+          MaterialTag.Woody,
+          MaterialTag.Leathery,
           MaterialTag.Fabric,
         ],
         apparelLayers: bulletproofVest.data.apparelLayers || [ApparelLayer.Middle],
@@ -527,9 +536,9 @@ onMounted(async () => {
         materialCoefficient: 1.0,
         selectedMaterial: MaterialTag.Fabric,
         supportedMaterials: [
-          MaterialTag.Metal,
-          MaterialTag.Wood,
-          MaterialTag.Leather,
+          MaterialTag.Metallic,
+          MaterialTag.Woody,
+          MaterialTag.Leathery,
           MaterialTag.Fabric,
         ],
         apparelLayers: marineArmor.data.apparelLayers || [ApparelLayer.Outer, ApparelLayer.Middle],
@@ -883,7 +892,7 @@ onMounted(async () => {
                         value="metal"
                         :disabled="
                           layer.supportedMaterials &&
-                          !layer.supportedMaterials.includes(MaterialTag.Metal)
+                          !layer.supportedMaterials.includes(MaterialTag.Metallic)
                         "
                       >
                         {{ t('materialType.metalButton') }}
@@ -892,7 +901,7 @@ onMounted(async () => {
                         value="wood"
                         :disabled="
                           layer.supportedMaterials &&
-                          !layer.supportedMaterials.includes(MaterialTag.Wood)
+                          !layer.supportedMaterials.includes(MaterialTag.Woody)
                         "
                       >
                         {{ t('materialType.woodButton') }}
@@ -901,7 +910,7 @@ onMounted(async () => {
                         value="leather"
                         :disabled="
                           layer.supportedMaterials &&
-                          !layer.supportedMaterials.includes(MaterialTag.Leather)
+                          !layer.supportedMaterials.includes(MaterialTag.Leathery)
                         "
                       >
                         {{ t('materialType.leatherButton') }}

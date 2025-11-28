@@ -4,36 +4,43 @@
 
 /**
  * 材料标签枚举
+ * 值与RimWorld XML中的stuffProps.categories保持一致
  */
 export enum MaterialTag {
   /** 金属材料 */
-  Metal = 'metal',
+  Metallic = 'Metallic',
   /** 木材材料 */
-  Wood = 'wood',
+  Woody = 'Woody',
   /** 皮革材料 */
-  Leather = 'leather',
+  Leathery = 'Leathery',
   /** 织物材料 */
-  Fabric = 'fabric',
+  Fabric = 'Fabric',
 }
 
 /**
- * 材料标签名称映射（中文 → 枚举）
+ * 材料标签名称映射（中文/英文 → 枚举）
  */
 export const MaterialTagNames: Record<string, MaterialTag> = {
-  金属: MaterialTag.Metal,
-  metal: MaterialTag.Metal,
-  Metal: MaterialTag.Metal,
-  木材: MaterialTag.Wood,
-  wood: MaterialTag.Wood,
-  Wood: MaterialTag.Wood,
-  木: MaterialTag.Wood,
-  皮革: MaterialTag.Leather,
-  leather: MaterialTag.Leather,
-  Leather: MaterialTag.Leather,
+  // XML原始值
+  Metallic: MaterialTag.Metallic,
+  Woody: MaterialTag.Woody,
+  Leathery: MaterialTag.Leathery,
+  Fabric: MaterialTag.Fabric,
+  // 中文
+  金属: MaterialTag.Metallic,
+  木材: MaterialTag.Woody,
+  木: MaterialTag.Woody,
+  皮革: MaterialTag.Leathery,
   织物: MaterialTag.Fabric,
   纤维: MaterialTag.Fabric,
+  // 兼容旧值
+  metal: MaterialTag.Metallic,
+  Metal: MaterialTag.Metallic,
+  wood: MaterialTag.Woody,
+  Wood: MaterialTag.Woody,
+  leather: MaterialTag.Leathery,
+  Leather: MaterialTag.Leathery,
   fabric: MaterialTag.Fabric,
-  Fabric: MaterialTag.Fabric,
   cloth: MaterialTag.Fabric,
   Cloth: MaterialTag.Fabric,
 }
@@ -43,9 +50,9 @@ export const MaterialTagNames: Record<string, MaterialTag> = {
  */
 export function getMaterialTagName(tag: MaterialTag): string {
   const names: Record<MaterialTag, string> = {
-    [MaterialTag.Metal]: '金属',
-    [MaterialTag.Wood]: '木材',
-    [MaterialTag.Leather]: '皮革',
+    [MaterialTag.Metallic]: '金属',
+    [MaterialTag.Woody]: '木材',
+    [MaterialTag.Leathery]: '皮革',
     [MaterialTag.Fabric]: '织物',
   }
   return names[tag] || '未知'
@@ -58,29 +65,44 @@ export function parseMaterialTags(category: string): MaterialTag[] {
   const tags: MaterialTag[] = []
   const lowerCategory = category.toLowerCase()
 
+  // XML原始值（优先匹配）
+  if (category === 'Metallic' || lowerCategory.includes('metallic')) {
+    tags.push(MaterialTag.Metallic)
+  }
+  if (category === 'Woody' || lowerCategory.includes('woody')) {
+    tags.push(MaterialTag.Woody)
+  }
+  if (category === 'Leathery' || lowerCategory.includes('leathery')) {
+    tags.push(MaterialTag.Leathery)
+  }
+  if (category === 'Fabric' || lowerCategory.includes('fabric')) {
+    tags.push(MaterialTag.Fabric)
+  }
+
+  // 兼容旧格式
   if (lowerCategory.includes('金属') || lowerCategory.includes('metal')) {
-    tags.push(MaterialTag.Metal)
+    tags.push(MaterialTag.Metallic)
   }
   if (
     lowerCategory.includes('木材') ||
     lowerCategory.includes('木') ||
     lowerCategory.includes('wood')
   ) {
-    tags.push(MaterialTag.Wood)
+    tags.push(MaterialTag.Woody)
   }
   if (lowerCategory.includes('皮革') || lowerCategory.includes('leather')) {
-    tags.push(MaterialTag.Leather)
+    tags.push(MaterialTag.Leathery)
   }
   if (
     lowerCategory.includes('织物') ||
     lowerCategory.includes('纤维') ||
-    lowerCategory.includes('fabric') ||
     lowerCategory.includes('cloth')
   ) {
     tags.push(MaterialTag.Fabric)
   }
 
-  return tags
+  // 去重
+  return Array.from(new Set(tags))
 }
 
 /**
@@ -90,7 +112,7 @@ export function parseMaterialTags(category: string): MaterialTag[] {
  */
 export function parseAcceptedMaterials(acceptedMaterials?: string[]): MaterialTag[] {
   if (!acceptedMaterials || acceptedMaterials.length === 0) {
-    return [MaterialTag.Metal, MaterialTag.Wood, MaterialTag.Leather, MaterialTag.Fabric]
+    return [MaterialTag.Metallic, MaterialTag.Woody, MaterialTag.Leathery, MaterialTag.Fabric]
   }
 
   const tags: MaterialTag[] = []
@@ -104,7 +126,7 @@ export function parseAcceptedMaterials(acceptedMaterials?: string[]): MaterialTa
 
   return tags.length > 0
     ? tags
-    : [MaterialTag.Metal, MaterialTag.Wood, MaterialTag.Leather, MaterialTag.Fabric]
+    : [MaterialTag.Metallic, MaterialTag.Woody, MaterialTag.Leathery, MaterialTag.Fabric]
 }
 
 /**
@@ -125,9 +147,9 @@ export interface MaterialDataSource {
   id: string
   label: string
   materials: {
-    [MaterialTag.Metal]: MaterialData[]
-    [MaterialTag.Wood]: MaterialData[]
-    [MaterialTag.Leather]: MaterialData[]
+    [MaterialTag.Metallic]: MaterialData[]
+    [MaterialTag.Woody]: MaterialData[]
+    [MaterialTag.Leathery]: MaterialData[]
     [MaterialTag.Fabric]: MaterialData[]
   }
 }

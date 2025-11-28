@@ -3,6 +3,7 @@
  */
 
 import { QualityCategory } from './quality'
+import { MaterialTag } from './material'
 
 /**
  * 服装层级枚举（按从内到外的顺序）
@@ -52,9 +53,9 @@ export interface ArmorLayer {
   /** 材料系数 (0-2) */
   materialCoefficient?: number
   /** 使用的全局材料类型 */
-  selectedMaterial?: 'metal' | 'wood' | 'leather' | 'fabric'
+  selectedMaterial?: MaterialTag
   /** 支持的材料类型（从预设加载） */
-  supportedMaterials?: Array<'metal' | 'wood' | 'leather' | 'fabric'>
+  supportedMaterials?: MaterialTag[]
   /** 服装层级（从CSV加载，可能有多个） */
   apparelLayers: ApparelLayer[]
   /** 覆盖的身体部位（使用BodyPart枚举） */
