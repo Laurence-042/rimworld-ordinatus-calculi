@@ -63,7 +63,8 @@ export function parseAcceptedMaterials(acceptedMaterials?: string[]): MaterialTa
  * 材料数据接口
  */
 export interface MaterialData {
-  name: string
+  defName: string // XML defName
+  label: string // 显示名称
   armorSharp: number // 护甲 - 利器
   armorBlunt: number // 护甲 - 钝器
   armorHeat: number // 护甲 - 热能

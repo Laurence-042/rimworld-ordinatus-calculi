@@ -6,7 +6,7 @@ import { useTimeoutFn } from '@vueuse/core'
 import {
   getApparelDataSources,
   type ClothingDataSource,
-  type ClothingPreset,
+  type ClothingData,
 } from '@/utils/apparelDataParser'
 import {
   getMaterialDataSources,
@@ -61,7 +61,7 @@ const selectedMaterialDataSourceId = ref<string>('vanilla')
 
 // 衣物数据源
 const clothingDataSources = ref<ClothingDataSource[]>([])
-const selectedClothingDataSourceId = ref<string>('Vanilla')
+const selectedClothingDataSourceId = ref<string>('vanilla')
 
 // 全局材料 - 使用 MaterialData 类型
 const globalMaterials = ref<{
@@ -71,28 +71,32 @@ const globalMaterials = ref<{
   [MaterialTag.Fabric]: MaterialData
 }>({
   [MaterialTag.Metallic]: {
-    name: '钢铁',
+    defName: 'Steel',
+    label: '钢铁',
     armorSharp: 100,
     armorBlunt: 36,
     armorHeat: 27,
     tags: [MaterialTag.Metallic],
   },
   [MaterialTag.Woody]: {
-    name: '木材',
+    defName: 'WoodLog',
+    label: '木材',
     armorSharp: 54,
     armorBlunt: 18,
     armorHeat: 9,
     tags: [MaterialTag.Woody],
   },
   [MaterialTag.Leathery]: {
-    name: '普通皮革',
+    defName: 'Leather_Plain',
+    label: '普通皮革',
     armorSharp: 112,
     armorBlunt: 24,
     armorHeat: 35,
     tags: [MaterialTag.Leathery],
   },
   [MaterialTag.Fabric]: {
-    name: '合成纤维',
+    defName: 'Synthread',
+    label: '合成纤维',
     armorSharp: 81,
     armorBlunt: 12,
     armorHeat: 18,
@@ -273,7 +277,8 @@ const startLoadingPreset = () => {
 // 全局材料值变化处理
 const onMaterialValueChange = (materialType: MaterialTag) => {
   if (!isLoadingPreset.value) {
-    globalMaterials.value[materialType].name = '自定义'
+    globalMaterials.value[materialType].defName = 'Custom'
+    globalMaterials.value[materialType].label = '自定义'
   }
 }
 
@@ -290,21 +295,20 @@ const loadMaterialPreset = (materialType: MaterialTag, material: MaterialData) =
 }
 
 // 从衣物预设加载到层
-const loadClothingPreset = (layer: ArmorSet['layers'][number], preset: ClothingPreset) => {
+const loadClothingPreset = (layer: ArmorSet['layers'][number], preset: ClothingData) => {
   startLoadingPreset()
-  const clothing = preset.data
-  layer.itemName = clothing.label
+  layer.itemName = preset.label
 
   // 解析层级信息
-  if (clothing.apparelLayers && clothing.apparelLayers.length > 0) {
-    layer.apparelLayers = clothing.apparelLayers
+  if (preset.apparelLayers && preset.apparelLayers.length > 0) {
+    layer.apparelLayers = preset.apparelLayers
   } else {
     layer.apparelLayers = [ApparelLayer.Outer] // 默认外套层
   }
 
   // 解析覆盖部位信息
-  if (clothing.bodyPartCoverage && clothing.bodyPartCoverage.length > 0) {
-    layer.bodyPartCoverage = clothing.bodyPartCoverage
+  if (preset.bodyPartCoverage && preset.bodyPartCoverage.length > 0) {
+    layer.bodyPartCoverage = preset.bodyPartCoverage
   } else {
     layer.bodyPartCoverage = [BodyPart.Torso] // 默认覆盖躯干
   }
@@ -312,19 +316,19 @@ const loadClothingPreset = (layer: ArmorSet['layers'][number], preset: ClothingP
   // 设置默认品质为大师级
   layer.quality = QualityCategory.Masterwork
 
-  if (clothing.materialCoefficient !== undefined && clothing.materialCoefficient > 0) {
+  if (preset.materialCoefficient !== undefined && preset.materialCoefficient > 0) {
     // 使用材料计算
     layer.useMaterial = true
-    layer.materialCoefficient = clothing.materialCoefficient
-    layer.supportedMaterials = parseAcceptedMaterials(clothing.acceptedMaterials)
+    layer.materialCoefficient = preset.materialCoefficient
+    layer.supportedMaterials = parseAcceptedMaterials(preset.acceptedMaterials)
     // 选择第一个支持的材料
     layer.selectedMaterial = layer.supportedMaterials[0]
   } else {
     // 直接输入护甲值
     layer.useMaterial = false
-    layer.armorSharp = (clothing.armorSharp || 0) * 100
-    layer.armorBlunt = (clothing.armorBlunt || 0) * 100
-    layer.armorHeat = (clothing.armorHeat || 0) * 100
+    layer.armorSharp = (preset.armorSharp || 0) * 100
+    layer.armorBlunt = (preset.armorBlunt || 0) * 100
+    layer.armorHeat = (preset.armorHeat || 0) * 100
   }
 }
 
@@ -421,20 +425,22 @@ onMounted(async () => {
   const vanillaSource = materialDataSources.value.find((s) => s.id === 'vanilla')
   if (vanillaSource) {
     // 钢铁
-    const steel = vanillaSource.materials[MaterialTag.Metallic].find((m) => m.name === '钢铁')
+    const steel = vanillaSource.materials[MaterialTag.Metallic].find((m) => m.defName === 'Steel')
     if (steel) {
       globalMaterials.value[MaterialTag.Metallic] = convertMaterialToPercentage(steel)
     }
 
     // 合成纤维
-    const synthread = vanillaSource.materials[MaterialTag.Fabric].find((m) => m.name === '合成纤维')
+    const synthread = vanillaSource.materials[MaterialTag.Fabric].find(
+      (m) => m.defName === 'Synthread',
+    )
     if (synthread) {
       globalMaterials.value[MaterialTag.Fabric] = convertMaterialToPercentage(synthread)
     }
 
     // 普通皮革
     const plainLeather = vanillaSource.materials[MaterialTag.Leathery].find(
-      (m) => m.name === '普通皮革',
+      (m) => m.defName === 'Leather_Plain',
     )
     if (plainLeather) {
       globalMaterials.value[MaterialTag.Leathery] = convertMaterialToPercentage(plainLeather)
@@ -448,14 +454,14 @@ onMounted(async () => {
   }
 
   // 加载预设护甲套装
-  const vanillaClothingSource = clothingDataSources.value.find((s) => s.id === 'Vanilla')
+  const vanillaClothingSource = clothingDataSources.value.find((s) => s.id === 'vanilla')
   if (vanillaClothingSource) {
     // 第一套：双层防弹套
     const bulletproofJacket = vanillaClothingSource.clothing.find(
-      (c: ClothingPreset) => c.defName === 'Apparel_FlakJacket',
+      (c: ClothingData) => c.defName === 'Apparel_FlakJacket',
     )
     const bulletproofVest = vanillaClothingSource.clothing.find(
-      (c: ClothingPreset) => c.defName === 'Apparel_FlakVest',
+      (c: ClothingData) => c.defName === 'Apparel_FlakVest',
     )
 
     if (bulletproofJacket && bulletproofVest) {
@@ -468,7 +474,7 @@ onMounted(async () => {
 
       // 添加防弹夹克层
       const jacketLayer: ArmorSet['layers'][number] = {
-        itemName: bulletproofJacket.data.label,
+        itemName: bulletproofJacket.label,
         armorSharp: 0,
         armorBlunt: 0,
         armorHeat: 0,
@@ -482,15 +488,15 @@ onMounted(async () => {
           MaterialTag.Leathery,
           MaterialTag.Fabric,
         ],
-        apparelLayers: bulletproofJacket.data.apparelLayers || [ApparelLayer.Outer],
-        bodyPartCoverage: bulletproofJacket.data.bodyPartCoverage || [BodyPart.Torso],
+        apparelLayers: bulletproofJacket.apparelLayers || [ApparelLayer.Outer],
+        bodyPartCoverage: bulletproofJacket.bodyPartCoverage || [BodyPart.Torso],
       }
       loadClothingPreset(jacketLayer, bulletproofJacket)
       doubleBulletproofSet.layers.push(jacketLayer)
 
       // 添加防弹背心层
       const vestLayer: ArmorSet['layers'][number] = {
-        itemName: bulletproofVest.data.label,
+        itemName: bulletproofVest.label,
         armorSharp: 0,
         armorBlunt: 0,
         armorHeat: 0,
@@ -504,8 +510,8 @@ onMounted(async () => {
           MaterialTag.Leathery,
           MaterialTag.Fabric,
         ],
-        apparelLayers: bulletproofVest.data.apparelLayers || [ApparelLayer.Middle],
-        bodyPartCoverage: bulletproofVest.data.bodyPartCoverage || [BodyPart.Torso],
+        apparelLayers: bulletproofVest.apparelLayers || [ApparelLayer.Middle],
+        bodyPartCoverage: bulletproofVest.bodyPartCoverage || [BodyPart.Torso],
       }
       loadClothingPreset(vestLayer, bulletproofVest)
       doubleBulletproofSet.layers.push(vestLayer)
@@ -515,7 +521,7 @@ onMounted(async () => {
 
     // 第二套：单层海军甲
     const marineArmor = vanillaClothingSource.clothing.find(
-      (c: ClothingPreset) => c.defName === 'Apparel_PowerArmor',
+      (c: ClothingData) => c.defName === 'Apparel_PowerArmor',
     )
 
     if (marineArmor) {
@@ -527,7 +533,7 @@ onMounted(async () => {
       }
 
       const marineLayer: ArmorSet['layers'][number] = {
-        itemName: marineArmor.data.label,
+        itemName: marineArmor.label,
         armorSharp: 0,
         armorBlunt: 0,
         armorHeat: 0,
@@ -541,8 +547,8 @@ onMounted(async () => {
           MaterialTag.Leathery,
           MaterialTag.Fabric,
         ],
-        apparelLayers: marineArmor.data.apparelLayers || [ApparelLayer.Outer, ApparelLayer.Middle],
-        bodyPartCoverage: marineArmor.data.bodyPartCoverage || [BodyPart.Torso],
+        apparelLayers: marineArmor.apparelLayers || [ApparelLayer.Outer, ApparelLayer.Middle],
+        bodyPartCoverage: marineArmor.bodyPartCoverage || [BodyPart.Torso],
       }
       loadClothingPreset(marineLayer, marineArmor)
       singleMarineSet.layers.push(marineLayer)
@@ -604,7 +610,7 @@ onMounted(async () => {
               >
                 <el-form-item :label="t('armor.loadPreset')">
                   <el-select
-                    :model-value="globalMaterials[materialType.tag].name"
+                    :model-value="globalMaterials[materialType.tag].label"
                     :placeholder="t('armor.selectMaterialPreset', { type: materialType.label })"
                     style="width: 100%"
                     filterable
@@ -618,8 +624,8 @@ onMounted(async () => {
                   >
                     <el-option
                       v-for="material in currentMaterials[materialType.name]"
-                      :key="material.name"
-                      :label="`${material.name} (${t('damageType.sharp')}${Math.round(material.armorSharp * 100)}% ${t('damageType.blunt')}${Math.round(material.armorBlunt * 100)}% ${t('damageType.heat')}${Math.round(material.armorHeat * 100)}%)`"
+                      :key="material.defName"
+                      :label="`${material.label} (${t('damageType.sharp')}${Math.round(material.armorSharp * 100)}% ${t('damageType.blunt')}${Math.round(material.armorBlunt * 100)}% ${t('damageType.heat')}${Math.round(material.armorHeat * 100)}%)`"
                       :value="material"
                     />
                   </el-select>
@@ -768,7 +774,7 @@ onMounted(async () => {
                     <el-option
                       v-for="clothing in currentClothing"
                       :key="clothing.defName"
-                      :label="clothing.data.label"
+                      :label="clothing.label"
                       :value="clothing"
                     />
                   </el-select>

@@ -1,4 +1,4 @@
-import { loadAllWeaponDataByLocale } from './weaponDataParser'
+import { getWeaponDataSources as loadWeaponDataSources } from './weaponDataParser'
 import type { WeaponDataSource, WeaponParams, WeaponPreset } from '@/types/weapon'
 import { WeaponQualityMultipliers } from '@/types/quality'
 import i18n from '@/i18n'
@@ -167,37 +167,12 @@ let cachedDataSources: WeaponDataSource[] | null = null
  * 根据当前 i18n 语言设置加载对应的 CSV 文件
  */
 async function loadAllWeaponDataSources(): Promise<WeaponDataSource[]> {
-  const dataSources: WeaponDataSource[] = []
-
   // 获取当前语言设置
   const localeRef = i18n.global.locale as unknown as Ref<string>
   const currentLocale = localeRef.value
 
-  // 从 parser 加载所有 MOD 的武器数据
-  const modWeaponsMap = await loadAllWeaponDataByLocale(currentLocale)
-
-  // 转换为 WeaponDataSource 格式
-  for (const [modName, weapons] of modWeaponsMap.entries()) {
-    const weaponPresets: WeaponPreset[] = weapons.map((weapon) => ({
-      defName: weapon.defName,
-      params: weapon.params,
-    }))
-
-    dataSources.push({
-      id: modName.toLowerCase().replace(/[^a-z0-9]/g, '_'),
-      label: modName,
-      weapons: weaponPresets,
-    })
-  }
-
-  // 排序：Vanilla 总是第一个，其余按 Unicode 排序
-  dataSources.sort((a, b) => {
-    if (a.label === 'Vanilla') return -1
-    if (b.label === 'Vanilla') return 1
-    return a.label.localeCompare(b.label)
-  })
-
-  return dataSources
+  // 直接使用新API加载所有武器数据
+  return await loadWeaponDataSources(currentLocale)
 }
 
 // 公共API

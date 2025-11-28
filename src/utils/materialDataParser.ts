@@ -1,30 +1,37 @@
-import Papa from 'papaparse'
 import { type MaterialData, type MaterialDataSource, MaterialTag } from '@/types/material'
+import {
+  DataSourceType,
+  parseCSV,
+  parseNumeric,
+  parseDelimitedString,
+  loadCSVByLocale,
+  normalizeModName,
+} from './csvParserUtils'
 
 // 重新导出类型供外部使用
 export type { MaterialData, MaterialDataSource }
 export { MaterialTag }
 
 /**
- * 解析纯数值字符串（0-2范围，直接使用）
- * 例如："1.14" -> 1.14
+ * CSV材料数据行
  */
-function parseNumeric(value: string): number {
-  if (!value) return 0
-  const num = parseFloat(value.trim())
-  return isNaN(num) ? 0 : num
+interface MaterialCSVRow extends Record<string, string> {
+  defName: string
+  label: string
+  armorSharp: string
+  armorBlunt: string
+  armorHeat: string
+  categories: string
 }
 
 /**
- * 解析材料标签列表（逗号分隔的MaterialTag枚举值）
- * 例如："Metallic,Woody" -> [MaterialTag.Metallic, MaterialTag.Woody]
- * 注意：由于枚举值现在就是XML原始值，直接验证即可
+ * 解析材料类别标签
  */
 function parseCategoryTags(value: string): MaterialTag[] {
   if (!value || !value.trim()) return []
 
   const tags: MaterialTag[] = []
-  const parts = value.split(',').map((s) => s.trim())
+  const parts = parseDelimitedString(value)
 
   for (const part of parts) {
     // 直接验证是否为有效的MaterialTag枚举值
@@ -40,42 +47,21 @@ function parseCategoryTags(value: string): MaterialTag[] {
 }
 
 /**
- * 解析材料CSV数据（支持中英文两种格式）
+ * 解析材料CSV数据
  */
-export async function parseMaterialDataFromCSV(csvContent: string): Promise<MaterialData[]> {
-  return new Promise((resolve, reject) => {
-    Papa.parse<Record<string, string>>(csvContent, {
-      complete: (results) => {
-        try {
-          const materialData = results.data
-            .filter((row) => {
-              const name = row['label']
-              return name && name.trim()
-            })
-            .map((row) => {
-              const material: MaterialData = {
-                name: row['label']!.trim(),
-                armorSharp: parseNumeric(row['armorSharp'] || '0'),
-                armorBlunt: parseNumeric(row['armorBlunt'] || '0'),
-                armorHeat: parseNumeric(row['armorHeat'] || '0'),
-                tags: parseCategoryTags(row['categories'] || ''),
-              }
+async function parseMaterialCSV(csvContent: string): Promise<MaterialData[]> {
+  const rows = await parseCSV<MaterialCSVRow>(csvContent)
 
-              return material
-            })
-
-          resolve(materialData)
-        } catch (error) {
-          reject(new Error(`解析材料数据失败: ${error}`))
-        }
-      },
-      error: (error: Error) => {
-        reject(new Error(`CSV解析错误: ${error.message}`))
-      },
-      header: true,
-      skipEmptyLines: true,
-    })
-  })
+  return rows
+    .filter((row) => row.label && row.label.trim())
+    .map((row) => ({
+      defName: row.defName?.trim() || '',
+      label: row.label.trim(),
+      armorSharp: parseNumeric(row.armorSharp),
+      armorBlunt: parseNumeric(row.armorBlunt),
+      armorHeat: parseNumeric(row.armorHeat),
+      tags: parseCategoryTags(row.categories),
+    }))
 }
 
 /**
@@ -124,73 +110,50 @@ export function calculateArmorFromMaterial(
   }
 }
 
-// 缓存（按语言代码）
-const cachedMaterialDataSources = new Map<string, MaterialDataSource[]>()
-
 /**
- * 从所有 MOD 目录加载材料数据
- * 根据指定语言加载对应的 CSV 文件
- *
- * @param locale - 语言代码（如 'zh-CN', 'en-US'）
+ * 加载所有材料数据源
+ * @param locale 语言代码
  * @returns 材料数据源数组
  */
 export async function getMaterialDataSources(
   locale: string = 'zh-CN',
 ): Promise<MaterialDataSource[]> {
-  // 检查缓存
-  if (cachedMaterialDataSources.has(locale)) {
-    return cachedMaterialDataSources.get(locale)!
-  }
+  const csvFilesGlob = import.meta.glob('./material_data/**/*.csv', {
+    query: '?raw',
+    eager: false,
+  })
 
-  const dataSources: MaterialDataSource[] = []
+  const modCSVMap = await loadCSVByLocale(DataSourceType.Material, locale, csvFilesGlob)
 
-  try {
-    // 动态加载所有 MOD 目录下的 CSV 文件
-    const csvFilesGlob = import.meta.glob('./material_data/**/*.csv', {
-      query: '?raw',
-      eager: false,
-    })
+  // 按数据源ID分组
+  const dataSourceMap = new Map<string, MaterialData[]>()
 
-    const pathRegex = /\.\/material_data\/([^/]+)\/([^/]+)\.csv$/
+  for (const [modName, csvContent] of modCSVMap.entries()) {
+    try {
+      const materials = await parseMaterialCSV(csvContent)
+      if (materials.length === 0) continue
 
-    // 按 MOD 分组加载
-    const modMaterialsMap = new Map<string, MaterialData[]>()
+      const sourceId = normalizeModName(modName)
 
-    for (const [path, importFn] of Object.entries(csvFilesGlob)) {
-      const match = path.match(pathRegex)
-      if (!match) continue
-
-      const [, modName, fileLocale] = match
-      if (!modName || !fileLocale) continue
-
-      // 只加载指定语言的文件
-      if (fileLocale !== locale) continue
-
-      try {
-        const module = (await importFn()) as { default: string }
-        const csvContent = module.default
-        const materials = await parseMaterialDataFromCSV(csvContent)
-
-        modMaterialsMap.set(modName, materials)
-      } catch (error) {
-        console.error(`Failed to load materials from ${modName}:`, error)
+      // 合并到对应的数据源
+      if (!dataSourceMap.has(sourceId)) {
+        dataSourceMap.set(sourceId, [])
       }
+      dataSourceMap.get(sourceId)!.push(...materials)
+    } catch (error) {
+      console.error(`Failed to parse materials from ${modName}:`, error)
     }
-
-    // 转换为 MaterialDataSource 格式
-    for (const [modName, materials] of modMaterialsMap.entries()) {
-      const groupedMaterials = groupMaterialsByTags(materials)
-
-      dataSources.push({
-        id: modName.toLowerCase(),
-        label: modName,
-        materials: groupedMaterials,
-      })
-    }
-  } catch (error) {
-    console.error('Failed to load material data sources:', error)
   }
 
-  cachedMaterialDataSources.set(locale, dataSources)
+  // 转换为数据源数组
+  const dataSources: MaterialDataSource[] = []
+  for (const [sourceId, materials] of dataSourceMap.entries()) {
+    dataSources.push({
+      id: sourceId,
+      label: sourceId === 'vanilla' ? 'Vanilla' : sourceId,
+      materials: groupMaterialsByTags(materials),
+    })
+  }
+
   return dataSources
 }
