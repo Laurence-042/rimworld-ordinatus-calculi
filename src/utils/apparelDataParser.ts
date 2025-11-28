@@ -21,18 +21,26 @@ export interface ClothingData {
 }
 
 /**
- * 衣物数据源接口
+ * 衣物预设数据（来自 CSV）
+ */
+export interface ClothingPreset {
+  defName: string
+  data: ClothingData
+}
+
+/**
+ * 衣物数据源分组
  */
 export interface ClothingDataSource {
-  id: string
-  label: string
-  clothing: ClothingData[]
+  id: string // 数据源ID，如 'Vanilla', 'Mod1'
+  label: string // 显示名称，如 'Vanilla', 'Mod 1'
+  clothing: ClothingPreset[]
 }
 
 /**
  * 解析衣物CSV数据
  */
-export async function parseClothingDataFromCSV(csvContent: string): Promise<ClothingData[]> {
+export async function parseClothingDataFromCSV(csvContent: string): Promise<ClothingPreset[]> {
   return new Promise((resolve, reject) => {
     Papa.parse<Record<string, string>>(csvContent, {
       complete: (results) => {
@@ -90,7 +98,13 @@ export async function parseClothingDataFromCSV(csvContent: string): Promise<Clot
               return clothing
             })
 
-          resolve(clothingData)
+          // 转换为 ClothingPreset 结构
+          const clothingPresets: ClothingPreset[] = clothingData.map((clothing) => ({
+            defName: clothing.defName,
+            data: clothing,
+          }))
+
+          resolve(clothingPresets)
         } catch (error) {
           reject(new Error(`解析衣物数据失败: ${error}`))
         }
@@ -158,33 +172,66 @@ function parseApparelLayers(layersStr: string): ApparelLayer[] {
   return apparelLayers
 }
 
-const DEBUG_MODE = false // 设置为true以启用调试输出// 缓存
-let cachedClothingDataSources: ClothingDataSource[] | null = null
+const DEBUG_MODE = false // 设置为true以启用调试输出
 
 /**
- * 加载衣物数据源
+ * 从所有 MOD 目录加载衣物数据
+ * 根据指定语言加载对应的 CSV 文件
+ *
+ * @param locale - 语言代码（如 'zh-CN', 'en-US'）
+ * @returns 衣物数据源数组
  */
-export async function getClothingDataSources(): Promise<ClothingDataSource[]> {
-  if (cachedClothingDataSources) {
-    return cachedClothingDataSources
-  }
+export async function getApparelDataSources(locale: string): Promise<ClothingDataSource[]> {
+  // 动态加载所有 MOD 目录下的 CSV 文件
+  const csvFilesGlob = import.meta.glob('./apparel_data/**/*.csv', {
+    query: '?raw',
+    eager: false,
+  })
 
   const dataSources: ClothingDataSource[] = []
 
-  try {
-    // 动态导入 Vanilla 衣物数据
-    const vanillaCSV = await import('./clothing_data/Vanilla.csv?raw')
-    const vanillaClothing = await parseClothingDataFromCSV(vanillaCSV.default)
+  // 按 MOD 目录分组
+  const modGroups = new Map<
+    string,
+    { locale: string; path: string; loader: () => Promise<unknown> }
+  >()
 
-    dataSources.push({
-      id: 'vanilla',
-      label: 'Vanilla',
-      clothing: vanillaClothing,
-    })
-  } catch (error) {
-    console.error('Failed to load Vanilla clothing:', error)
+  for (const [path, loader] of Object.entries(csvFilesGlob)) {
+    // 解析路径：./apparel_data/<MOD_NAME>/<locale>.csv
+    const match = path.match(/\.\/apparel_data\/([^/]+)\/([^/]+)\.csv$/)
+    if (!match) continue
+
+    const modName = match[1]
+    const fileLocale = match[2]
+
+    if (!modName || !fileLocale) continue
+
+    // 如果该 MOD 还没有加载，或者当前文件匹配目标语言
+    if (!modGroups.has(modName) || fileLocale === locale) {
+      modGroups.set(modName, { locale: fileLocale, path, loader })
+    }
   }
 
-  cachedClothingDataSources = dataSources
+  // 加载每个 MOD 的数据
+  for (const [modName, { locale: fileLocale, path, loader }] of modGroups.entries()) {
+    try {
+      const module = (await loader()) as { default: string }
+      const csvContent = module.default
+
+      const clothing = await parseClothingDataFromCSV(csvContent)
+
+      if (clothing.length > 0) {
+        dataSources.push({
+          id: modName,
+          label: modName,
+          clothing,
+        })
+        console.log(`Loaded ${clothing.length} clothing items from ${modName} (${fileLocale})`)
+      }
+    } catch (error) {
+      console.warn(`Failed to load data from ${path}:`, error)
+    }
+  }
+
   return dataSources
 }

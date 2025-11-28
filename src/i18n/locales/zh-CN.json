@@ -29,12 +29,12 @@
     },
     "quality": {
         "label": "品质",
-        "awful": "糟糕",
-        "poor": "差劲",
-        "normal": "普通",
-        "good": "优秀",
-        "excellent": "卓越",
-        "masterwork": "大师作",
+        "awful": "极差",
+        "poor": "较差",
+        "normal": "一般",
+        "good": "良好",
+        "excellent": "极佳",
+        "masterwork": "大师",
         "legendary": "传说"
     },
     "weapon": {
@@ -117,8 +117,7 @@
         "maxSetsReached": "已达到最大套装数量（2个）",
         "maxSetsDescription": "3D曲面模式最多支持2个护甲套装对比并显示交线。如需对比其他套装，请先删除现有套装。",
         "defaultSetName": "护甲套装 {n}",
-        "defaultLayerName": "新护甲",
-        "defaultClothingName": "新衣物",
+        "defaultApparelName": "自定义服装（点击以选择预设）",
         "presetDoubleBulletproof": "双层防弹套",
         "presetSingleMarine": "单层海军甲",
         "coverageTitle": "覆盖范围",

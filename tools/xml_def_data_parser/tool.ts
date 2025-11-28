@@ -7,19 +7,11 @@ import { ApparelLayer } from '../../src/types/armor'
 import { MOD_CONFIGS, OUTPUT_DIR_OVERRIDE, DEBUG_OPTIONS } from './config'
 
 const DEFAULT_WEAPON_OUTPUT_DIR = path.join(__dirname, '..', '..', 'src', 'utils', 'weapon_data')
-const DEFAULT_CLOTHING_OUTPUT_DIR = path.join(
-  __dirname,
-  '..',
-  '..',
-  'src',
-  'utils',
-  'clothing_data',
-)
+const DEFAULT_APPAREL_OUTPUT_DIR = path.join(__dirname, '..', '..', 'src', 'utils', 'apparel_data')
 const WEAPON_OUTPUT_DIR = OUTPUT_DIR_OVERRIDE || DEFAULT_WEAPON_OUTPUT_DIR
-const CLOTHING_OUTPUT_DIR = OUTPUT_DIR_OVERRIDE
-  ? path.join(OUTPUT_DIR_OVERRIDE, '..', 'clothing_data')
-  : DEFAULT_CLOTHING_OUTPUT_DIR
-
+const APPAREL_OUTPUT_DIR = OUTPUT_DIR_OVERRIDE
+  ? path.join(OUTPUT_DIR_OVERRIDE, '..', 'apparel_data')
+  : DEFAULT_APPAREL_OUTPUT_DIR
 // 语言映射配置
 const LANGUAGE_MAP: Record<string, string> = {
   'ChineseSimplified (简体中文)': 'zh-CN',
@@ -939,7 +931,7 @@ class ModDataParser {
     }
 
     // 创建 MOD 专用目录
-    const modOutputDir = path.join(CLOTHING_OUTPUT_DIR, this.modName)
+    const modOutputDir = path.join(APPAREL_OUTPUT_DIR, this.modName)
     if (!fs.existsSync(modOutputDir)) {
       fs.mkdirSync(modOutputDir, { recursive: true })
     }

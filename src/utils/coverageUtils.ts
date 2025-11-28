@@ -3,7 +3,8 @@
  */
 
 import { ApparelLayer } from '@/types/armor'
-import { BodyPart, buildBodyPartTree, type BodyPartTreeNode } from '@/types/bodyPart'
+import { BodyPart, type BodyPartTreeNode } from '@/types/bodyPart'
+import { buildBodyPartTree } from '@/utils/bodyPartUtils'
 
 /**
  * 覆盖信息接口（用于可视化树）
