@@ -17,11 +17,11 @@ export enum DataSourceType {
  */
 export const DATA_SOURCE_PATHS = {
   /** 武器数据路径 */
-  [DataSourceType.Weapon]: './weapon_data',
+  [DataSourceType.Weapon]: 'weapon_data',
   /** 服装数据路径 */
-  [DataSourceType.Apparel]: './apparel_data',
+  [DataSourceType.Apparel]: 'apparel_data',
   /** 材料数据路径 */
-  [DataSourceType.Material]: './material_data',
+  [DataSourceType.Material]: 'material_data',
 } as const
 
 /**
@@ -30,7 +30,7 @@ export const DATA_SOURCE_PATHS = {
  * @returns glob 模式字符串
  */
 export function getDataSourceGlobPattern(type: DataSourceType): string {
-  return `${DATA_SOURCE_PATHS[type]}/**/*.csv`
+  return `./${DATA_SOURCE_PATHS[type]}/**/*.csv`
 }
 
 /**
@@ -40,8 +40,8 @@ export function getDataSourceGlobPattern(type: DataSourceType): string {
  * @returns 正则表达式
  */
 export function getDataSourcePathRegex(type: DataSourceType): RegExp {
-  const basePath = DATA_SOURCE_PATHS[type].replace('./', '\\.\\/') // 转义 ./
-  return new RegExp(`${basePath}\\/([^/]+)\\/([^/]+)\\.csv$`)
+  const basePath = DATA_SOURCE_PATHS[type]
+  return new RegExp(`\.\/${basePath}\/([^/]+)\/([^/]+)\.csv$`)
 }
 
 /**
@@ -56,7 +56,7 @@ export function getModDataSourcePath(
   modName: string,
   locale: string,
 ): string {
-  return `${DATA_SOURCE_PATHS[type]}/${modName}/${locale}.csv`
+  return `./${DATA_SOURCE_PATHS[type]}/${modName}/${locale}.csv`
 }
 
 /**

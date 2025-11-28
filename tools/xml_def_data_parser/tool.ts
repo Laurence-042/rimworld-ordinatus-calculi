@@ -13,7 +13,7 @@ const DEFAULT_WEAPON_OUTPUT_DIR = path.join(
   '..',
   'src',
   'utils',
-  DATA_SOURCE_PATHS[DataSourceType.Weapon].replace('./', ''),
+  DATA_SOURCE_PATHS[DataSourceType.Weapon],
 )
 const DEFAULT_APPAREL_OUTPUT_DIR = path.join(
   __dirname,
@@ -21,15 +21,11 @@ const DEFAULT_APPAREL_OUTPUT_DIR = path.join(
   '..',
   'src',
   'utils',
-  DATA_SOURCE_PATHS[DataSourceType.Apparel].replace('./', ''),
+  DATA_SOURCE_PATHS[DataSourceType.Apparel],
 )
 const WEAPON_OUTPUT_DIR = OUTPUT_DIR_OVERRIDE || DEFAULT_WEAPON_OUTPUT_DIR
 const APPAREL_OUTPUT_DIR = OUTPUT_DIR_OVERRIDE
-  ? path.join(
-      OUTPUT_DIR_OVERRIDE,
-      '..',
-      DATA_SOURCE_PATHS[DataSourceType.Apparel].replace('./', ''),
-    )
+  ? path.join(OUTPUT_DIR_OVERRIDE, '..', DATA_SOURCE_PATHS[DataSourceType.Apparel])
   : DEFAULT_APPAREL_OUTPUT_DIR
 // 语言映射配置
 const LANGUAGE_MAP: Record<string, string> = {
