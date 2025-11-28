@@ -291,23 +291,41 @@ watch(locale, async () => {
             ></el-divider>
 
             <el-form-item :label="t('weapon.accuracyTouch')">
-              <SliderInput v-model="weapon.accuracyTouch" :min="0" :max="100" :step="1" unit="%" />
+              <SliderInput
+                v-model="weapon.accuracyTouch"
+                :min="0"
+                :max="100"
+                :step="0.1"
+                unit="%"
+              />
             </el-form-item>
 
             <el-form-item :label="t('weapon.accuracyShort')">
-              <SliderInput v-model="weapon.accuracyShort" :min="0" :max="100" :step="1" unit="%" />
+              <SliderInput
+                v-model="weapon.accuracyShort"
+                :min="0"
+                :max="100"
+                :step="0.1"
+                unit="%"
+              />
             </el-form-item>
 
             <el-form-item :label="t('weapon.accuracyMedium')">
-              <SliderInput v-model="weapon.accuracyMedium" :min="0" :max="100" :step="1" unit="%" />
+              <SliderInput
+                v-model="weapon.accuracyMedium"
+                :min="0"
+                :max="100"
+                :step="0.1"
+                unit="%"
+              />
             </el-form-item>
 
             <el-form-item :label="t('weapon.accuracyLong')">
-              <SliderInput v-model="weapon.accuracyLong" :min="0" :max="100" :step="1" unit="%" />
+              <SliderInput v-model="weapon.accuracyLong" :min="0" :max="100" :step="0.1" unit="%" />
             </el-form-item>
 
             <el-form-item :label="t('weapon.damage')">
-              <SliderInput v-model="weapon.damage" :min="1" :max="50" :step="1" />
+              <SliderInput v-model="weapon.damage" :min="1" :max="100" :step="1" />
             </el-form-item>
 
             <el-form-item :label="t('weapon.armorPenetration')">
@@ -316,6 +334,7 @@ watch(locale, async () => {
                 :min="0"
                 :max="200"
                 :step="1"
+                :precision="1"
                 unit="%"
               />
             </el-form-item>
