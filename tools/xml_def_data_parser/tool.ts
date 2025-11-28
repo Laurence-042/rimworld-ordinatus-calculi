@@ -1,6 +1,7 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import { parseStringPromise } from 'xml2js'
+import * as semver from 'semver'
 import {
   DataSourceType,
   type DataManifest,
@@ -318,6 +319,10 @@ class ModDataParser {
   private findLanguagesDirectories(dir: string, maxDepth: number = 2): string[] {
     const results: string[] = []
 
+    // 首先检查是否有版本号子目录（如 1.5, 1.6 等），取版本号最大的
+    const versionDir = this.findLatestVersionDir(dir)
+    const searchRoot = versionDir || dir
+
     const search = (currentDir: string, depth: number) => {
       if (!fs.existsSync(currentDir) || depth > maxDepth) {
         return
@@ -342,8 +347,34 @@ class ModDataParser {
       }
     }
 
-    search(dir, 0)
+    search(searchRoot, 0)
     return results
+  }
+
+  /**
+   * 查找MOD目录下版本号最大的子目录
+   * 版本号目录格式如：1.4, 1.5, 1.6
+   */
+  private findLatestVersionDir(modDir: string): string | null {
+    if (!fs.existsSync(modDir)) {
+      return null
+    }
+
+    const entries = fs.readdirSync(modDir, { withFileTypes: true })
+    const versionDirs = entries
+      .filter((e) => e.isDirectory() && semver.coerce(e.name))
+      .map((e) => e.name)
+
+    // semver.maxSatisfying 在空数组或无匹配时返回 null
+    const latest = semver.maxSatisfying(versionDirs, '*', { loose: true })
+    if (!latest) {
+      return null
+    }
+
+    if (DEBUG_OPTIONS.verbose) {
+      console.log(`  找到版本目录: ${latest}`)
+    }
+    return path.join(modDir, latest)
   }
 
   private async parseLanguageFiles(): Promise<void> {

@@ -47,6 +47,41 @@ export const MOD_CONFIGS: ModConfig[] = [
     path: 'D:\\SteamLibrary\\steamapps\\common\\RimWorld\\Data\\Odyssey',
     enabled: true,
   },
+  {
+    // Vanilla Expanded - Weapons
+    path: 'D:\\SteamLibrary\\steamapps\\workshop\\content\\294100\\1814383360',
+    enabled: true,
+  },
+  {
+    // Vanilla Expanded - Weapons Translate
+    path: 'D:\\SteamLibrary\\steamapps\\workshop\\content\\294100\\2459440010',
+    enabled: true,
+  },
+  {
+    // ratkin
+    path: 'D:\\SteamLibrary\\steamapps\\workshop\\content\\294100\\3497673755',
+    enabled: true,
+  },
+  {
+    // ratkin translate
+    path: 'D:\\SteamLibrary\\steamapps\\workshop\\content\\294100\\2898638732',
+    enabled: true,
+  },
+  {
+    // ratkin royalty
+    path: 'D:\\SteamLibrary\\steamapps\\workshop\\content\\294100\\3159926804',
+    enabled: true,
+  },
+  {
+    // Milira
+    path: 'D:\\SteamLibrary\\steamapps\\workshop\\content\\294100\\3256974620',
+    enabled: true,
+  },
+  {
+    // Milira empire
+    path: 'D:\\SteamLibrary\\steamapps\\workshop\\content\\294100\\3588393755',
+    enabled: true,
+  },
   // 添加更多MOD配置...
   // {
   //   path: 'D:\\SteamLibrary\\steamapps\\workshop\\content\\294100\\1234567890',
@@ -66,5 +101,5 @@ export const DEBUG_OPTIONS = {
   /** 是否跳过CSV生成（仅测试解析） */
   skipCSVGeneration: false,
   /** 输出到其他目录 */
-  outputDirectory: '',
+  outputDirectory: 'data_mods',
 }

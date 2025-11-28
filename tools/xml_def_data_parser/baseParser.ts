@@ -31,6 +31,7 @@ export interface BaseThingDefNode {
  */
 export const LANGUAGE_MAP: Record<string, string> = {
   'ChineseSimplified (简体中文)': 'zh-CN',
+  ChineseSimplified: 'zh-CN',
   English: 'en-US',
 }
 
