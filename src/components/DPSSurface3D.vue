@@ -2,7 +2,7 @@
 import { onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Plotly from 'plotly.js-dist-min'
-import { useResizeObserver } from '@vueuse/core'
+import { useResizeObserver, useDebounceFn } from '@vueuse/core'
 import type { Weapon } from '@/types/weapon'
 import { calculateHitChance, calculateMaxDPS } from '@/utils/weaponCalculations'
 import { calculateDPSDistribution } from '@/utils/armorCalculations'
@@ -232,11 +232,15 @@ function plotSurface() {
   Plotly.newPlot(chartContainer.value, plotData, layout, config)
 }
 
-// 监听参数变化，重新绘制
+// 监听参数变化，重新绘制（使用防抖避免频繁计算）
+const debouncedPlotSurface = useDebounceFn(() => {
+  plotSurface()
+}, 300)
+
 watch(
   () => props.weapons,
   () => {
-    plotSurface()
+    debouncedPlotSurface()
   },
   { deep: true },
 )
