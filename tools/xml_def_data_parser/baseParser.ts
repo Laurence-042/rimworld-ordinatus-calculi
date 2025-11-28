@@ -105,9 +105,18 @@ export class BaseParserUtils {
 
   /**
    * 格式化数字为字符串
+   * 对于小数，四舍五入取3位有效数字，避免浮点精度问题
    */
   static formatNumber(val?: number): string {
-    return val !== undefined ? val.toString() : ''
+    if (val === undefined) {
+      return ''
+    }
+    // 整数直接返回
+    if (Number.isInteger(val)) {
+      return val.toString()
+    }
+    // 小数：使用 toPrecision(3) 取3位有效数字，然后转回数字去除末尾0
+    return parseFloat(val.toPrecision(3)).toString()
   }
 
   /**

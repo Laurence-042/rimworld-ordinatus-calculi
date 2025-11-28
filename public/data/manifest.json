@@ -1,73 +1,73 @@
 {
-    "mods": [
-        {
-            "name": "Core",
-            "locales": [
-                "en-US",
-                "zh-CN"
-            ],
-            "types": [
-                "weapon",
-                "apparel",
-                "material"
-            ]
-        },
-        {
-            "name": "Royalty",
-            "locales": [
-                "en-US",
-                "zh-CN"
-            ],
-            "types": [
-                "weapon",
-                "apparel"
-            ]
-        },
-        {
-            "name": "Ideology",
-            "locales": [
-                "en-US",
-                "zh-CN"
-            ],
-            "types": [
-                "apparel"
-            ]
-        },
-        {
-            "name": "Biotech",
-            "locales": [
-                "en-US",
-                "zh-CN"
-            ],
-            "types": [
-                "weapon",
-                "apparel"
-            ]
-        },
-        {
-            "name": "Anomaly",
-            "locales": [
-                "en-US",
-                "zh-CN"
-            ],
-            "types": [
-                "weapon",
-                "apparel",
-                "material"
-            ]
-        },
-        {
-            "name": "Odyssey",
-            "locales": [
-                "en-US",
-                "zh-CN"
-            ],
-            "types": [
-                "weapon",
-                "apparel",
-                "material"
-            ]
-        }
-    ],
-    "generatedAt": "2025-01-01T00:00:00.000Z"
+  "mods": [
+    {
+      "name": "Core",
+      "locales": [
+        "en-US",
+        "zh-CN"
+      ],
+      "types": [
+        "weapon",
+        "apparel",
+        "material"
+      ]
+    },
+    {
+      "name": "Royalty",
+      "locales": [
+        "en-US",
+        "zh-CN"
+      ],
+      "types": [
+        "weapon",
+        "apparel"
+      ]
+    },
+    {
+      "name": "Biotech",
+      "locales": [
+        "en-US",
+        "zh-CN"
+      ],
+      "types": [
+        "weapon",
+        "apparel"
+      ]
+    },
+    {
+      "name": "Anomaly",
+      "locales": [
+        "en-US",
+        "zh-CN"
+      ],
+      "types": [
+        "weapon",
+        "apparel",
+        "material"
+      ]
+    },
+    {
+      "name": "Odyssey",
+      "locales": [
+        "en-US",
+        "zh-CN"
+      ],
+      "types": [
+        "weapon",
+        "apparel",
+        "material"
+      ]
+    },
+    {
+      "name": "Ideology",
+      "locales": [
+        "en-US",
+        "zh-CN"
+      ],
+      "types": [
+        "apparel"
+      ]
+    }
+  ],
+  "generatedAt": "2025-11-28T11:53:15.759Z"
 }

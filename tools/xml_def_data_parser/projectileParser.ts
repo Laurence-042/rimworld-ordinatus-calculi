@@ -5,11 +5,15 @@
 
 import { BaseParserUtils } from './baseParser'
 
+// 从独立模块导出 DamageDefNode 类型，方便其他模块使用
+export type { DamageDefNode } from './damageDefParser'
+
 /**
  * 投射物节点
  */
 export interface ProjectileNode {
   defName: string
+  damageDef?: string // 引用的伤害类型 defName
   damageAmountBase?: number
   armorPenetrationBase?: number
   stoppingPower?: number
@@ -61,6 +65,7 @@ export class ProjectileParser {
 
     if (BaseParserUtils.isRecord(xmlNode.projectile)) {
       const proj = xmlNode.projectile as Record<string, unknown>
+      projectile.damageDef = BaseParserUtils.getStringValue(proj, 'damageDef')
       projectile.damageAmountBase = BaseParserUtils.parseFloat(
         proj.damageAmountBase || proj.DamageAmountBase,
       )

@@ -9,7 +9,8 @@ import {
 } from '../../src/utils/dataSourceConfig'
 import { MOD_CONFIGS, DEBUG_OPTIONS } from './config'
 import { BaseThingDefNode, BaseParserUtils, LANGUAGE_MAP } from './baseParser'
-import { ProjectileNode, ProjectileParser } from './projectileParser'
+import { ProjectileNode, ProjectileParser, DamageDefNode } from './projectileParser'
+import { DamageDefParser } from './damageDefParser'
 import { WeaponThingDefNode, isWeaponNode, WeaponParser } from './weaponParser'
 import { ApparelThingDefNode, isApparelNode, ApparelParser } from './apparelParser'
 import { MaterialThingDefNode, isMaterialNode, MaterialParser } from './materialParser'
@@ -61,6 +62,7 @@ class ModDataParser {
   // 全局共享的数据映射（跨所有MOD）
   private thingDefMap: Map<string, ThingDefNode> = new Map()
   private projectileMap: Map<string, ProjectileNode> = new Map()
+  private damageDefMap: Map<string, DamageDefNode> = new Map() // 伤害类型定义映射
   private languageData: Map<string, Map<string, string>> = new Map() // language -> (defName.property -> translation)
 
   // 当前正在处理的MOD信息
@@ -171,7 +173,7 @@ class ModDataParser {
 
     console.log('='.repeat(60))
     console.log(
-      `XML解析完成: ${this.thingDefMap.size} 个ThingDef, ${this.projectileMap.size} 个Projectile`,
+      `XML解析完成: ${this.thingDefMap.size} 个ThingDef, ${this.projectileMap.size} 个Projectile, ${this.damageDefMap.size} 个DamageDef`,
     )
     console.log('='.repeat(60))
     console.log()
@@ -555,6 +557,17 @@ class ModDataParser {
           this.parseThingDef(thingDef)
         }
       }
+
+      // 处理DamageDef（伤害类型定义）
+      const damageDefs = this.extractNodes(result.Defs, 'DamageDef')
+      for (const damageDef of damageDefs) {
+        if (this.isRecord(damageDef)) {
+          const damageDefNode = DamageDefParser.parseDamageDefProperties(damageDef)
+          if (damageDefNode) {
+            this.damageDefMap.set(damageDefNode.defName, damageDefNode)
+          }
+        }
+      }
     } catch (error) {
       console.warn(`解析文件失败: ${filePath}`, error)
     }
@@ -764,14 +777,14 @@ class ModDataParser {
 
     // 生成默认语言（使用原始label）的CSV
     const defaultWeapons = validWeapons.map((node) =>
-      WeaponParser.createWeaponRow(node, this.projectileMap, null),
+      WeaponParser.createWeaponRow(node, this.projectileMap, this.damageDefMap, null),
     )
     WeaponParser.writeWeaponCSV(defaultWeapons, modOutputDir, 'en-US')
 
     // 为每种语言生成单独的CSV
     for (const [languageCode, translations] of this.languageData.entries()) {
       const localizedWeapons = validWeapons.map((node) =>
-        WeaponParser.createWeaponRow(node, this.projectileMap, translations),
+        WeaponParser.createWeaponRow(node, this.projectileMap, this.damageDefMap, translations),
       )
       WeaponParser.writeWeaponCSV(localizedWeapons, modOutputDir, languageCode)
       generatedLocales.push(languageCode)

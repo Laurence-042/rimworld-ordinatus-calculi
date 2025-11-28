@@ -6,7 +6,7 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import { BaseThingDefNode, BaseParserUtils } from './baseParser'
-import { ProjectileNode } from './projectileParser'
+import { ProjectileNode, DamageDefNode } from './projectileParser'
 
 /**
  * CSV 武器数据接口（对应 weapon_info.csv 的列）
@@ -145,10 +145,21 @@ export class WeaponParser {
 
   /**
    * 创建武器CSV行数据
+   *
+   * 伤害值计算逻辑（RimWorld 原版机制）：
+   * 1. 如果子弹定义中有 damageAmountBase，直接使用
+   * 2. 如果没有，则查找对应 DamageDef 的 defaultDamage
+   *
+   * 穿甲值计算逻辑（RimWorld 原版机制）：
+   * 1. 如果子弹定义中有 armorPenetrationBase，直接使用
+   * 2. 如果没有，则查找对应 DamageDef 的 defaultArmorPenetration
+   * 3. 如果 DamageDef 的 defaultArmorPenetration 为 -1 或未定义，
+   *    则使用 damage * 0.015 作为默认穿甲值
    */
   static createWeaponRow(
     weapon: WeaponThingDefNode,
     projectileMap: Map<string, ProjectileNode>,
+    damageDefMap: Map<string, DamageDefNode>,
     translations: Map<string, string> | null,
   ): WeaponCSVData {
     // 获取子弹数据
@@ -159,15 +170,34 @@ export class WeaponParser {
     if (weapon.defaultProjectile) {
       const projectile = projectileMap.get(weapon.defaultProjectile)
       if (projectile) {
-        damage =
-          projectile.damageAmountBase !== undefined ? projectile.damageAmountBase.toString() : ''
-        // 输出为小数格式（0-1），不再使用百分比
-        armorPenetration =
-          projectile.armorPenetrationBase !== undefined
-            ? projectile.armorPenetrationBase.toString()
-            : ''
-        stoppingPower =
-          projectile.stoppingPower !== undefined ? projectile.stoppingPower.toString() : ''
+        // 获取伤害类型定义
+        const damageDef = projectile.damageDef ? damageDefMap.get(projectile.damageDef) : undefined
+
+        // 伤害值计算：优先使用子弹定义，其次使用 DamageDef 默认值
+        let damageAmount = projectile.damageAmountBase
+        if (damageAmount === undefined && damageDef?.defaultDamage !== undefined) {
+          damageAmount = damageDef.defaultDamage
+        }
+        damage = BaseParserUtils.formatNumber(damageAmount)
+
+        // 穿甲值计算：
+        // 1. 优先使用子弹定义的 armorPenetrationBase
+        // 2. 其次使用 DamageDef 的 defaultArmorPenetration（如果 > 0）
+        // 3. 最后使用 damage * 0.015 作为默认值
+        if (projectile.armorPenetrationBase !== undefined) {
+          armorPenetration = BaseParserUtils.formatNumber(projectile.armorPenetrationBase)
+        } else if (
+          damageDef?.defaultArmorPenetration !== undefined &&
+          damageDef.defaultArmorPenetration > 0
+        ) {
+          armorPenetration = BaseParserUtils.formatNumber(damageDef.defaultArmorPenetration)
+        } else if (damageAmount !== undefined) {
+          // RimWorld 默认穿甲计算公式：damage * 0.015
+          const calculatedAP = damageAmount * 0.015
+          armorPenetration = BaseParserUtils.formatNumber(calculatedAP)
+        }
+
+        stoppingPower = BaseParserUtils.formatNumber(projectile.stoppingPower)
       }
     }
 

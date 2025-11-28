@@ -1,8 +1,8 @@
 ﻿defName,label,damage,armorPenetration,stoppingPower,warmupTime,cooldown,range,burstShotCount,ticksBetweenBurstShots,accuracyTouch,accuracyShort,accuracyMedium,accuracyLong,marketValue
-FleshmassSpitter,fleshmass spitter,10,,,4,,41.9,1,,,,,,
-Gun_TacticalTurret,tactical turret gun,12,,,0,4.8,19.9,2,8,0.77,0.7,0.45,0.24,
+FleshmassSpitter,fleshmass spitter,10,0.15,,4,,41.9,1,,,,,,
+Gun_TacticalTurret,tactical turret gun,12,0.18,,0,4.8,19.9,2,8,0.77,0.7,0.45,0.24,
 Apparel_DisruptorFlarePack,disruptor flare pack,,,,0.5,,22.9,1,,,,,,
 Apparel_PackTurret,turret pack,,,,1,,22.9,1,,,,,,
-Apparel_DeadlifePack,deadlife pack,,,,1,,23.9,1,,,,,,
-Gun_HellcatRifle,hellcat rifle,10,,,1.1,1.7,26.9,3,10,0.6,0.7,0.65,0.55,
-NerveSpiker,nerve spiker,11,,,1.45,1.65,29.9,,,0.7,0.78,0.65,0.35,
+Apparel_DeadlifePack,deadlife pack,0,0,,1,,23.9,1,,,,,,
+Gun_HellcatRifle,hellcat rifle,10,0.15,,1.1,1.7,26.9,3,10,0.6,0.7,0.65,0.55,
+NerveSpiker,nerve spiker,11,0.165,,1.45,1.65,29.9,,,0.7,0.78,0.65,0.35,
