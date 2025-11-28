@@ -60,6 +60,10 @@ export interface ArmorLayer {
   apparelLayers: ApparelLayer[]
   /** 覆盖的身体部位（使用BodyPart枚举） */
   bodyPartCoverage: string[] // BodyPart[] - 使用string[]以便与Element Plus TreeSelect兼容
+  /** 选中的数据源ID（用于预设选择） */
+  selectedDataSourceId?: string | null
+  /** 选中的衣物defName（用于预设选择） */
+  selectedClothingDefName?: string | null
 }
 
 export interface ArmorSet {

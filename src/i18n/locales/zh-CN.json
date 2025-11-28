@@ -102,6 +102,7 @@
         "layerNumber": "第 {n} 层",
         "addLayer": "添加护甲层",
         "addLayerButton": "+ 添加护甲层",
+        "selectDataSource": "选择数据源",
         "clothingName": "衣物名称",
         "selectClothing": "选择衣物预设",
         "apparelLayer": "服装层级",

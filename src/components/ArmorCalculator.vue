@@ -57,11 +57,16 @@ const selectedBodyPart = ref<BodyPart>(BodyPart.Torso)
 
 // 材料数据源
 const materialDataSources = ref<MaterialDataSource[]>([])
-const selectedMaterialDataSourceId = ref<string>('vanilla')
+// 每个材料类型的选中数据源ID
+const selectedMaterialDataSourceIds = ref<Record<MaterialTag, string | null>>({
+  [MaterialTag.Metallic]: null,
+  [MaterialTag.Woody]: null,
+  [MaterialTag.Leathery]: null,
+  [MaterialTag.Fabric]: null,
+})
 
 // 衣物数据源
 const clothingDataSources = ref<ClothingDataSource[]>([])
-const selectedClothingDataSourceId = ref<string>('vanilla')
 
 // 全局材料 - 使用 MaterialData 类型
 const globalMaterials = ref<{
@@ -158,6 +163,8 @@ const addArmorSet = () => {
         ],
         apparelLayers: [ApparelLayer.Outer],
         bodyPartCoverage: [BodyPart.Torso],
+        selectedDataSourceId: null,
+        selectedClothingDefName: null,
       },
     ],
   }
@@ -188,6 +195,8 @@ const addLayer = (armorSet: ArmorSet) => {
     ],
     apparelLayers: [ApparelLayer.Outer],
     bodyPartCoverage: [BodyPart.Torso],
+    selectedDataSourceId: null,
+    selectedClothingDefName: null,
   })
 }
 
@@ -236,24 +245,47 @@ const getLayerActualArmor = (layer: ArmorSet['layers'][number]) => {
   }
 }
 
-// 当前数据源的材料
-const currentMaterials = computed(() => {
-  const source = materialDataSources.value.find((s) => s.id === selectedMaterialDataSourceId.value)
-  return (
-    source?.materials || {
-      [MaterialTag.Metallic]: [],
-      [MaterialTag.Woody]: [],
-      [MaterialTag.Leathery]: [],
-      [MaterialTag.Fabric]: [],
-    }
-  )
-})
+// 根据数据源ID和材料类型获取材料列表
+const getMaterialsByDataSource = (
+  dataSourceId: string | null | undefined,
+  materialTag: MaterialTag,
+): MaterialData[] => {
+  if (!dataSourceId) return []
+  const source = materialDataSources.value.find((s) => s.id === dataSourceId)
+  return source?.materials[materialTag] || []
+}
 
-// 当前数据源的衣物
-const currentClothing = computed(() => {
-  const source = clothingDataSources.value.find((s) => s.id === selectedClothingDataSourceId.value)
+// 应用材料预设
+const applyMaterialPreset = (materialType: MaterialTag, dataSourceId: string, defName: string) => {
+  const material = getMaterialsByDataSource(dataSourceId, materialType).find(
+    (m) => m.defName === defName,
+  )
+  if (!material) return
+
+  selectedMaterialDataSourceIds.value[materialType] = dataSourceId
+  loadMaterialPreset(materialType, material)
+}
+
+// 根据数据源ID获取衣物列表
+const getClothingByDataSource = (dataSourceId: string | null | undefined): ClothingData[] => {
+  if (!dataSourceId) return []
+  const source = clothingDataSources.value.find((s) => s.id === dataSourceId)
   return source?.clothing || []
-})
+}
+
+// 应用衣物预设
+const applyClothingPreset = (
+  layer: ArmorSet['layers'][number],
+  dataSourceId: string,
+  defName: string,
+) => {
+  const clothing = getClothingByDataSource(dataSourceId).find((c) => c.defName === defName)
+  if (!clothing) return
+
+  layer.selectedDataSourceId = dataSourceId
+  layer.selectedClothingDefName = defName
+  loadClothingPreset(layer, clothing)
+}
 
 // 覆盖树（用于可视化哪些部位和层级被覆盖）
 const allCoverageTrees = computed(() => {
@@ -428,6 +460,7 @@ onMounted(async () => {
     const steel = vanillaSource.materials[MaterialTag.Metallic].find((m) => m.defName === 'Steel')
     if (steel) {
       globalMaterials.value[MaterialTag.Metallic] = convertMaterialToPercentage(steel)
+      selectedMaterialDataSourceIds.value[MaterialTag.Metallic] = 'vanilla'
     }
 
     // 合成纤维
@@ -436,6 +469,7 @@ onMounted(async () => {
     )
     if (synthread) {
       globalMaterials.value[MaterialTag.Fabric] = convertMaterialToPercentage(synthread)
+      selectedMaterialDataSourceIds.value[MaterialTag.Fabric] = 'vanilla'
     }
 
     // 普通皮革
@@ -444,12 +478,14 @@ onMounted(async () => {
     )
     if (plainLeather) {
       globalMaterials.value[MaterialTag.Leathery] = convertMaterialToPercentage(plainLeather)
+      selectedMaterialDataSourceIds.value[MaterialTag.Leathery] = 'vanilla'
     }
 
     // 木材
-    const wood = vanillaSource.materials[MaterialTag.Woody][0]
+    const wood = vanillaSource.materials[MaterialTag.Woody].find((m) => m.defName === 'WoodLog')
     if (wood) {
       globalMaterials.value[MaterialTag.Woody] = convertMaterialToPercentage(wood)
+      selectedMaterialDataSourceIds.value[MaterialTag.Woody] = 'vanilla'
     }
   }
 
@@ -490,6 +526,8 @@ onMounted(async () => {
         ],
         apparelLayers: bulletproofJacket.apparelLayers || [ApparelLayer.Outer],
         bodyPartCoverage: bulletproofJacket.bodyPartCoverage || [BodyPart.Torso],
+        selectedDataSourceId: 'vanilla',
+        selectedClothingDefName: 'Apparel_FlakJacket',
       }
       loadClothingPreset(jacketLayer, bulletproofJacket)
       doubleBulletproofSet.layers.push(jacketLayer)
@@ -512,6 +550,8 @@ onMounted(async () => {
         ],
         apparelLayers: bulletproofVest.apparelLayers || [ApparelLayer.Middle],
         bodyPartCoverage: bulletproofVest.bodyPartCoverage || [BodyPart.Torso],
+        selectedDataSourceId: 'vanilla',
+        selectedClothingDefName: 'Apparel_FlakVest',
       }
       loadClothingPreset(vestLayer, bulletproofVest)
       doubleBulletproofSet.layers.push(vestLayer)
@@ -549,6 +589,8 @@ onMounted(async () => {
         ],
         apparelLayers: marineArmor.apparelLayers || [ApparelLayer.Outer, ApparelLayer.Middle],
         bodyPartCoverage: marineArmor.bodyPartCoverage || [BodyPart.Torso],
+        selectedDataSourceId: 'vanilla',
+        selectedClothingDefName: 'Apparel_PowerArmor',
       }
       loadClothingPreset(marineLayer, marineArmor)
       singleMarineSet.layers.push(marineLayer)
@@ -575,9 +617,7 @@ onMounted(async () => {
             <h3>{{ t('armor.globalParams') }}</h3>
           </template>
           <el-form label-width="10em">
-            <el-divider content-position="left">{{ t('armor.damageTypeLabel') }}</el-divider>
-
-            <el-form-item>
+            <el-form-item :label="t('armor.damageTypeLabel')">
               <el-radio-group v-model="damageType">
                 <el-radio-button :value="DamageType.Sharp">{{
                   t('damageType.sharp')
@@ -592,82 +632,108 @@ onMounted(async () => {
             </el-form-item>
 
             <template v-if="chartMode === 'distribution'">
-              <el-divider content-position="left">{{ t('armor.fixedAttackParams') }}</el-divider>
-
               <el-form-item :label="t('armor.fixedPenetration')">
                 <SliderInput v-model="fixedPenetration" :min="0" :max="100" :step="1" unit="%" />
               </el-form-item>
             </template>
 
-            <el-divider content-position="left">{{ t('armor.globalMaterialPresets') }}</el-divider>
+            <el-form-item :label="t('armor.globalMaterialPresets')">
+              <el-collapse v-model="activeMaterialPanels" accordion>
+                <el-collapse-item
+                  v-for="materialType in materialTypes"
+                  :key="materialType.tag"
+                  :title="materialType.label"
+                  :name="materialType.name"
+                >
+                  <div class="material-preset-section">
+                    <div class="preset-selectors">
+                      <el-select
+                        v-model="selectedMaterialDataSourceIds[materialType.tag]"
+                        :placeholder="t('armor.selectDataSource')"
+                        style="width: 100%; margin-bottom: 8px"
+                        clearable
+                        filterable
+                      >
+                        <el-option
+                          v-for="source in materialDataSources"
+                          :key="source.id"
+                          :label="source.label"
+                          :value="source.id"
+                        />
+                      </el-select>
+                      <el-select
+                        :model-value="globalMaterials[materialType.tag].defName"
+                        :placeholder="t('armor.selectMaterialPreset', { type: materialType.label })"
+                        style="width: 100%"
+                        clearable
+                        filterable
+                        :disabled="!selectedMaterialDataSourceIds[materialType.tag]"
+                        @change="
+                          (defName: string) => {
+                            if (selectedMaterialDataSourceIds[materialType.tag] && defName) {
+                              applyMaterialPreset(
+                                materialType.tag,
+                                selectedMaterialDataSourceIds[materialType.tag]!,
+                                defName,
+                              )
+                            }
+                          }
+                        "
+                      >
+                        <el-option
+                          v-for="material in getMaterialsByDataSource(
+                            selectedMaterialDataSourceIds[materialType.tag],
+                            materialType.tag,
+                          )"
+                          :key="material.defName"
+                          :label="`${material.label} (${t('damageType.sharp')}${Math.round(material.armorSharp * 100)}% ${t('damageType.blunt')}${Math.round(material.armorBlunt * 100)}% ${t('damageType.heat')}${Math.round(material.armorHeat * 100)}%)`"
+                          :value="material.defName"
+                        />
+                      </el-select>
+                    </div>
 
-            <el-collapse v-model="activeMaterialPanels" accordion>
-              <el-collapse-item
-                v-for="materialType in materialTypes"
-                :key="materialType.tag"
-                :title="materialType.label"
-                :name="materialType.name"
-              >
-                <el-form-item :label="t('armor.loadPreset')">
-                  <el-select
-                    :model-value="globalMaterials[materialType.tag].label"
-                    :placeholder="t('armor.selectMaterialPreset', { type: materialType.label })"
-                    style="width: 100%"
-                    filterable
-                    @change="
-                      (value: any) => {
-                        if (value) {
-                          loadMaterialPreset(materialType.tag, value)
-                        }
-                      }
-                    "
-                  >
-                    <el-option
-                      v-for="material in currentMaterials[materialType.name]"
-                      :key="material.defName"
-                      :label="`${material.label} (${t('damageType.sharp')}${Math.round(material.armorSharp * 100)}% ${t('damageType.blunt')}${Math.round(material.armorBlunt * 100)}% ${t('damageType.heat')}${Math.round(material.armorHeat * 100)}%)`"
-                      :value="material"
-                    />
-                  </el-select>
-                </el-form-item>
-
-                <el-form-item :label="t('armor.armorSharp')">
-                  <SliderInput
-                    v-model="globalMaterials[materialType.tag].armorSharp"
-                    :min="0"
-                    :max="200"
-                    :step="1"
-                    :format-tooltip="(val: number) => `${val}%`"
-                    unit="%"
-                    @change="() => onMaterialValueChange(materialType.tag)"
-                  />
-                </el-form-item>
-
-                <el-form-item :label="t('armor.armorBlunt')">
-                  <SliderInput
-                    v-model="globalMaterials[materialType.tag].armorBlunt"
-                    :min="0"
-                    :max="200"
-                    :step="1"
-                    :format-tooltip="(val: number) => `${val}%`"
-                    unit="%"
-                    @change="() => onMaterialValueChange(materialType.tag)"
-                  />
-                </el-form-item>
-
-                <el-form-item :label="t('armor.armorHeat')">
-                  <SliderInput
-                    v-model="globalMaterials[materialType.tag].armorHeat"
-                    :min="0"
-                    :max="300"
-                    :step="1"
-                    :format-tooltip="(val: number) => `${val}%`"
-                    unit="%"
-                    @change="() => onMaterialValueChange(materialType.tag)"
-                  />
-                </el-form-item>
-              </el-collapse-item>
-            </el-collapse>
+                    <div class="material-sliders">
+                      <div class="slider-row">
+                        <span class="slider-label">{{ t('armor.armorSharp') }}</span>
+                        <SliderInput
+                          v-model="globalMaterials[materialType.tag].armorSharp"
+                          :min="0"
+                          :max="200"
+                          :step="1"
+                          :format-tooltip="(val: number) => `${val}%`"
+                          unit="%"
+                          @change="() => onMaterialValueChange(materialType.tag)"
+                        />
+                      </div>
+                      <div class="slider-row">
+                        <span class="slider-label">{{ t('armor.armorBlunt') }}</span>
+                        <SliderInput
+                          v-model="globalMaterials[materialType.tag].armorBlunt"
+                          :min="0"
+                          :max="200"
+                          :step="1"
+                          :format-tooltip="(val: number) => `${val}%`"
+                          unit="%"
+                          @change="() => onMaterialValueChange(materialType.tag)"
+                        />
+                      </div>
+                      <div class="slider-row">
+                        <span class="slider-label">{{ t('armor.armorHeat') }}</span>
+                        <SliderInput
+                          v-model="globalMaterials[materialType.tag].armorHeat"
+                          :min="0"
+                          :max="300"
+                          :step="1"
+                          :format-tooltip="(val: number) => `${val}%`"
+                          unit="%"
+                          @change="() => onMaterialValueChange(materialType.tag)"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </el-collapse-item>
+              </el-collapse>
+            </el-form-item>
           </el-form>
         </el-card>
 
@@ -757,27 +823,48 @@ onMounted(async () => {
               </el-alert>
 
               <el-form label-width="10em" size="small">
-                <el-form-item :label="t('armor.clothingName')">
-                  <el-select
-                    :model-value="layer.itemName"
-                    :placeholder="t('armor.selectClothing')"
-                    style="width: 100%"
-                    filterable
-                    @change="
-                      (value: any) => {
-                        if (value) {
-                          loadClothingPreset(layer, value)
-                        }
-                      }
-                    "
-                  >
-                    <el-option
-                      v-for="clothing in currentClothing"
-                      :key="clothing.defName"
-                      :label="clothing.label"
-                      :value="clothing"
-                    />
-                  </el-select>
+                <el-form-item :label="t('armor.loadPreset')">
+                  <div class="preset-selectors">
+                    <el-select
+                      v-model="layer.selectedDataSourceId"
+                      :placeholder="t('armor.selectDataSource')"
+                      style="width: 100%; margin-bottom: 8px"
+                      clearable
+                      filterable
+                      @change="layer.selectedClothingDefName = null"
+                    >
+                      <el-option
+                        v-for="source in clothingDataSources"
+                        :key="source.id"
+                        :label="source.label"
+                        :value="source.id"
+                      />
+                    </el-select>
+                    <el-select
+                      v-model="layer.selectedClothingDefName"
+                      :placeholder="t('armor.selectClothing')"
+                      style="width: 100%"
+                      clearable
+                      filterable
+                      :disabled="!layer.selectedDataSourceId"
+                      @change="
+                        layer.selectedDataSourceId &&
+                        layer.selectedClothingDefName &&
+                        applyClothingPreset(
+                          layer,
+                          layer.selectedDataSourceId,
+                          layer.selectedClothingDefName,
+                        )
+                      "
+                    >
+                      <el-option
+                        v-for="clothing in getClothingByDataSource(layer.selectedDataSourceId)"
+                        :key="clothing.defName"
+                        :label="clothing.label"
+                        :value="clothing.defName"
+                      />
+                    </el-select>
+                  </div>
                 </el-form-item>
 
                 <el-form-item :label="t('quality.label')">
@@ -1248,6 +1335,37 @@ onMounted(async () => {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+}
+
+/* 预设选择器容器 */
+.preset-selectors {
+  width: 100%;
+}
+
+/* 材料预设区域 */
+.material-preset-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.material-sliders {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.slider-row {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+.slider-label {
+  color: #606266;
+  flex-shrink: 0;
+  font-size: 14px;
+  min-width: 5em;
 }
 
 /* 品质按钮样式 */

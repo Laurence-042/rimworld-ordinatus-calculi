@@ -102,6 +102,7 @@
         "layerNumber": "Layer {n}",
         "addLayer": "Add Armor Layer",
         "addLayerButton": "+ Add Armor Layer",
+        "selectDataSource": "Select Data Source",
         "clothingName": "Clothing Name",
         "selectClothing": "Select Clothing Preset",
         "apparelLayer": "Apparel Layer",
