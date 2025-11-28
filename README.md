@@ -187,34 +187,21 @@ src/utils/material_data/MyMod.csv
 关于数据起源的圣典誓约
 
 此计算仪典中一切数值皆溯源于 Tynan 所赐之官方 XML 典藏。  
-SMW 查询乃导航之仪，不为启示之源；  
 未触凡俗文献（CC-BY-SA），故不受其羁绊。  
 以 MIT 之契约，赐诸信徒自由修习。
 
-### 真正的许可证
+### 正经的许可证说明
 
-本项目使用的所有武器、护甲与材料数值均来自 RimWorld 官方游戏的 Defs/XML 文件（包括英文原始 Defs 与官方中文本地化 XML）。
+本项目使用的所有武器、护甲与材料数值均来自 RimWorld 官方游戏的 Defs/XML 文件（包括英文原始 Defs 与官方中文本地化 XML），由项目内的数据提取脚本提取并整理为csv。
 这些数值属于 事实性游戏数据（factual data），不受著作权保护。
-
-为便于数据整理，本项目曾使用 [RimWorld 灰机 Wiki](https://rimworld.huijiwiki.com) 的 Semantic MediaWiki (SMW) 查询接口 生成用于对照的数据表。
-
-但：
-
-- SMW 导出的内容 本质上仍然对应官方游戏 XML 中的事实性数值
-- 本项目 未使用、复制或派生 HuijiWiki 撰写的文本内容（说明、解析、介绍等）
-- 本项目 不包含 HuijiWiki 的 CC BY-SA 内容
-- 因此 不受 CC BY-SA 协议约束
 
 本项目以 MIT 协议开源。
 
-> 注： [RimWorld 灰机 Wiki](https://rimworld.huijiwiki.com) 是国内优秀的 RimWorld 社区，其 SMW 查询接口极大方便了数据对照与验证。在本项目中仅用于辅助定位游戏原始数据，对此表示感谢。
+> 注： [RimWorld 灰机 Wiki](https://rimworld.huijiwiki.com) 是国内优秀的 RimWorld 社区，在开发数据提取脚本的过程中，其 SMW 查询接口极大方便了数据对照与验证，使我得以快速检查脚本输出是否有缺失和冗余，对此表示感谢。
 
-若您希望自行复现本项目的数据，可直接解析 RimWorld 的游戏 XML（RimWorld/Data/Defs/）。
-项目中的数据结构也允许以 CSV 的方式扩展或添加 Mod 数据。
+## RimWorld 原版数据速查
 
-## 数据速查（用于对照官方游戏数据）
-
-> 下列链接仅用于对照与验证，数据来源始终为 RimWorld 官方 Defs/XML。
+> 如果您怀疑预设数据存在问题，可以使用如下链接查询
 
 - **武器数据**：[远程武器查询](<https://rimworld.huijiwiki.com/wiki/%E7%89%B9%E6%AE%8A:%E8%AF%A2%E9%97%AE/mainlabel%3D%E5%90%8D%E7%A7%B0/format%3Dtable/link%3D-20subject/sort%3D/order%3Dasc/offset%3D0/limit%3D100/-5B-5B%E5%88%86%E7%B1%BB:%E8%BF%9C%E7%A8%8B%E6%AD%A6%E5%99%A8-5D-5D/-3F%E5%BC%B9%E8%8D%AF%E4%BC%A4%E5%AE%B3/-3F%E6%8A%A4%E7%94%B2%E7%A9%BF%E9%80%8F/-3F%E6%8A%91%E6%AD%A2%E8%83%BD%E5%8A%9B/-3F%E7%9E%84%E5%87%86%E6%97%B6%E9%97%B4/-3F%E8%BF%9C%E7%A8%8B%E5%86%B7%E5%8D%B4%E6%97%B6%E9%97%B4%3D%E5%86%B7%E5%8D%B4%E6%97%B6%E9%97%B4/-3F%E5%B0%84%E7%A8%8B%3D%E5%B0%84%E7%A8%8B(tiles)/-3F%E8%BF%9E%E5%8F%91%E6%95%B0%E9%87%8F/-3F%E8%BF%9E%E5%8F%91%E9%97%B4%E9%9A%94tick%E6%95%B0%3D%E8%BF%9E%E5%8F%91%E9%97%B4%E9%9A%94(ticks)/-3F%E7%B2%BE%E5%BA%A6%EF%BC%88%E8%B4%B4%E8%BF%91%EF%BC%89/-3F%E7%B2%BE%E5%BA%A6%EF%BC%88%E8%BF%91%EF%BC%89/-3F%E7%B2%BE%E5%BA%A6%EF%BC%88%E4%B8%AD%EF%BC%89/-3F%E7%B2%BE%E5%BA%A6%EF%BC%88%E8%BF%9C%EF%BC%89/-3F%E4%BB%B7%E5%80%BC%3D%E5%B8%82%E5%9C%BA%E4%BB%B7%E5%80%BC>)
 - **衣物数据**：[衣物查询](https://rimworld.huijiwiki.com/wiki/%E7%89%B9%E6%AE%8A:%E8%AF%A2%E9%97%AE/mainlabel%3D%E5%90%8D%E7%A7%B0/format%3Dtable/link%3D-20subject/sort%3D/order%3Dasc/offset%3D0/limit%3D500/-5B-5B%E5%88%86%E7%B1%BB:%E8%A1%A3%E7%89%A9-5D-5D/-3F%E5%88%86%E7%B1%BB/-3F%E6%8F%8F%E8%BF%B0/-3F%E6%9D%90%E8%B4%A8/-3F%E6%8A%A4%E7%94%B2-20-2D-20%E6%9D%90%E6%96%99%E7%B3%BB%E6%95%B0/-3F%E6%8A%A4%E7%94%B2-20-2D-20%E5%88%A9%E5%99%A8/-3F%E6%8A%A4%E7%94%B2-20-2D-20%E9%92%9D%E5%99%A8/-3F%E6%8A%A4%E7%94%B2-20-2D-20%E7%83%AD%E8%83%BD/-3F%E8%A6%86%E7%9B%96/-3F%E5%B1%82/-3F%E4%BB%B7%E5%80%BC%3D%E5%B8%82%E5%9C%BA%E4%BB%B7%E5%80%BC)
@@ -229,12 +216,25 @@ SMW 查询乃导航之仪，不为启示之源；
 
 - [ ] 看看能不能米利拉帝国的数据导进来
   - [x] 武器数据加载
-  - [ ] 服装数据加载
-  - [ ] 材料数据加载
+  - [x] 服装数据加载
+  - [x] 材料数据加载
+  - [ ] 开个CC协议的仓库存CC协议的mod数据
 - [x] 用更灵活的splitter而非固定宽度布局
 - [x] 减小input，增大slider
 - [x] 加俩截图
 - [x] i18n
+
+## 已知但不准备修复的问题（特性）
+
+### 一个ThingDef要么被忽略，要么被视为武器、衣物、材料三者之一，不能同时为多种类型
+
+这个问题在原版中只有一个影响，即原木（WoodLog）不会被作为武器加载。
+
+这个没啥问题，反正这个计算器目前没打算支持近战武器，近战武器也都在生成数据表格阶段就被过滤掉了（毕竟近战武器的数值大多一眼就能看出好不好）
+
+不过我没太多mod开发经验，不确定有没有可能做出能穿、能开火的材料，或者能拿手上开火的衣服……但我觉得这种设计太抽象了，就算可以做也不会有mod做，所以没有为此做兼容的计划。但如果真有mod整了这种抽象活，那这个特殊物品会依次匹配“材料”、“武器”、“衣物”，会被视为第一个匹配的类型。
+
+比如原木（WoodLog）就匹配到了材料，能拿手上开火的衣服会被视为武器，能穿、能开火的材料会被视为材料
 
 ## 开发过程中发现的一些有趣的事实
 

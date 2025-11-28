@@ -411,18 +411,24 @@ class ModDataParser {
     const stats = BaseParserUtils.parseStatBases(xmlNode)
     baseNode.marketValue = stats.marketValue
 
+    // 尝试解析材料属性（优先级最高，因为材料可能同时有weaponClasses等属性）
+    const materialProps = MaterialParser.parseMaterialProperties(xmlNode)
     // 尝试解析武器属性
     const weaponProps = WeaponParser.parseWeaponProperties(xmlNode)
     // 尝试解析服装属性
     const apparelProps = ApparelParser.parseApparelProperties(xmlNode)
-    // 尝试解析材料属性
-    const materialProps = MaterialParser.parseMaterialProperties(xmlNode)
     // 尝试解析投射物属性
     const projectileProps = ProjectileParser.parseProjectileProperties(xmlNode)
 
     let finalNode: ThingDefNode
 
-    if (weaponProps) {
+    if (materialProps) {
+      // 创建材料节点（优先级最高）
+      finalNode = {
+        ...baseNode,
+        ...materialProps,
+      } as MaterialThingDefNode
+    } else if (weaponProps) {
       // 创建武器节点
       finalNode = {
         ...baseNode,
@@ -434,12 +440,6 @@ class ModDataParser {
         ...baseNode,
         ...apparelProps,
       } as ApparelThingDefNode
-    } else if (materialProps) {
-      // 创建材料节点
-      finalNode = {
-        ...baseNode,
-        ...materialProps,
-      } as MaterialThingDefNode
     } else {
       // 未分类的基础节点
       finalNode = baseNode

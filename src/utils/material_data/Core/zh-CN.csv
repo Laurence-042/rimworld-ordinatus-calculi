@@ -3,6 +3,7 @@ Silver,白银,0.72,0.36,0.36,Metallic
 Gold,黄金,0.72,0.36,0.36,Metallic
 Steel,钢铁,0.9,0.45,0.6,Metallic
 Plasteel,玻璃钢,1.14,0.55,0.65,Metallic
+WoodLog,原木,0.54,0.54,0.4,Woody
 Uranium,铀,1.08,0.54,0.65,Metallic
 Jade,翡翠,0.9,0.45,0.54,Stony
 Cloth,布,0.36,0,0.18,Fabric
