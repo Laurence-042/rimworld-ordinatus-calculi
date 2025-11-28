@@ -1,3 +1,6 @@
+// 必须最先导入，在任何使用 canvas 的库之前修补 getContext
+import './utils/canvasPatch'
+
 import { createApp } from 'vue'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
