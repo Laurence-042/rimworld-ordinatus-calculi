@@ -1,14 +1,58 @@
-# RimWorld MOD XML数据解析工具
+# RimWorld XML Def 数据解析工具
 
-从RimWorld MOD的XML定义文件中提取武器数据，生成与Vanilla.csv格式兼容的CSV文件。
+这个工具用于从 RimWorld 的 MOD 目录中提取武器和衣物数据，并生成 CSV 文件供主应用使用。
+
+## 📁 文件结构（模块化设计）
+
+```
+xml_def_data_parser/
+├── tool.ts           # 主程序入口和协调器
+├── config.ts         # MOD配置和调试选项
+├── baseParser.ts     # 基础解析工具和通用类型
+├── weaponParser.ts   # 武器解析模块
+├── apparelParser.ts  # 衣物解析模块
+└── README.md         # 本文件
+```
+
+### 模块说明
+
+#### `tool.ts` - 主程序
+
+- 协调整个解析流程
+- 扫描XML文件并处理语言文件
+- 解析继承关系
+- 调用子模块生成CSV
+
+#### `baseParser.ts` - 基础工具
+
+导出通用工具和类型：
+
+- `BaseThingDefNode` - ThingDef基类接口
+- `ProjectileNode` - 投射物接口
+- `BaseParserUtils` - 工具类（类型守卫、数值解析、CSV写入等）
+
+#### `weaponParser.ts` - 武器解析
+
+导出武器专用功能：
+
+- `WeaponThingDefNode` - 武器节点接口
+- `WeaponParser` - 武器解析器（属性解析、继承、筛选、CSV生成）
+
+#### `apparelParser.ts` - 衣物解析
+
+导出衣物专用功能：
+
+- `ApparelThingDefNode` - 衣物节点接口
+- `ApparelParser` - 衣物解析器
+- 身体部位和层级映射配置
 
 ## 功能特性
 
 - ✅ 解析ThingDef继承树，自动填充父类属性
-- ✅ 提取武器统计数据（精度、冷却、连发等）
-- ✅ 关联子弹数据（伤害、穿甲、抑止）
+- ✅ 提取武器统计数据（精度、冷却、连发等）和衣物数据（护甲、层级、覆盖部位）
 - ✅ **多语言支持**：自动生成中文(zh-CN)和英文(en-US)版本的CSV文件
 - ✅ 批量处理多个MOD
+- ✅ **模块化架构**：易于维护和扩展新物品类型
 
 ## 快速开始
 
@@ -49,12 +93,79 @@ npm run parse-mod
 **输出文件结构：**
 
 ```
-src/utils/weapon_data/
-└── <MOD名称>/
-    ├── en-US.csv     # 英文（原始label或英文翻译）
-    ├── zh-CN.csv     # 中文翻译（如果存在）
-    └── ...           # 其他支持的语言
+src/utils/
+├── weapon_data/
+│   └── <MOD名称>/
+│       ├── en-US.csv     # 英文（原始label或英文翻译）
+│       └── zh-CN.csv     # 中文翻译（如果存在）
+└── apparel_data/
+    └── <MOD名称>/
+        ├── en-US.csv     # 英文衣物数据
+        └── zh-CN.csv     # 中文衣物数据
 ```
+
+## 🔧 扩展指南
+
+### 添加新的物品类型解析
+
+1. **创建新的解析器模块**（如 `furnitureParser.ts`）：
+
+   ```typescript
+   import { BaseThingDefNode, BaseParserUtils } from './baseParser'
+
+   export interface FurnitureThingDefNode extends BaseThingDefNode {
+     category: 'Furniture'
+     // 家具特有属性...
+   }
+
+   export class FurnitureParser {
+     static parseFurnitureProperties(xmlNode: Record<string, unknown>) {
+       // 解析逻辑...
+     }
+
+     static filterValidFurniture(items: FurnitureThingDefNode[]) {
+       // 筛选逻辑...
+     }
+
+     static createFurnitureRow(
+       item: FurnitureThingDefNode,
+       translations: Map<string, string> | null,
+     ) {
+       // CSV行生成...
+     }
+
+     static writeFurnitureCSV(data: FurnitureCSVData[], outputDir: string, languageCode: string) {
+       // CSV写入...
+     }
+   }
+   ```
+
+2. **在 `tool.ts` 中集成**：
+
+   ```typescript
+   // 导入新模块
+   import { FurnitureParser, isFurnitureNode } from './furnitureParser'
+
+   // 在 parseThingDef() 中添加检测
+   const furnitureProps = FurnitureParser.parseFurnitureProperties(xmlNode)
+   if (furnitureProps) {
+     finalNode = { ...baseNode, ...furnitureProps } as FurnitureThingDefNode
+   }
+
+   // 添加生成方法
+   private async generateFurnitureCSV() {
+     // 类似 generateWeaponCSV() 的实现
+   }
+
+   // 在 parse() 中调用
+   await this.generateFurnitureCSV()
+   ```
+
+### 修改现有解析逻辑
+
+- **通用工具**: 修改 `baseParser.ts`
+- **武器特定**: 修改 `weaponParser.ts`
+- **衣物特定**: 修改 `apparelParser.ts`
 
 ## 工作原理
 
