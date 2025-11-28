@@ -256,5 +256,53 @@
         "loadFailed": "Load Failed",
         "invalidData": "Invalid Data",
         "networkError": "Network Error"
+    },
+    "dataSource": {
+        "title": "Extended Data Source Settings",
+        "addNew": "Add New Data Source",
+        "sourceList": "Data Sources",
+        "refreshAll": "Refresh All",
+        "empty": "No data sources configured",
+        "lastSynced": "Last Synced",
+        "form": {
+            "name": "Source Name",
+            "namePlaceholder": "e.g., My MOD Data",
+            "manifestUrl": "Manifest URL",
+            "urlPlaceholder": "https://example.com/data/manifest.json"
+        },
+        "status": {
+            "idle": "Not Loaded",
+            "loading": "Loading",
+            "success": "Loaded",
+            "error": "Failed",
+            "neverSynced": "Never synced"
+        },
+        "statusTooltip": {
+            "noSources": "No extended data sources configured",
+            "loading": "Loading extended data sources...",
+            "success": "{count} extended data source(s) loaded",
+            "error": "{count} extended data source(s) failed to load",
+            "idle": "Click to configure extended data sources"
+        },
+        "validation": {
+            "required": "Name and URL are required",
+            "invalidUrl": "Please enter a valid URL"
+        },
+        "confirm": {
+            "deleteTitle": "Confirm Delete",
+            "deleteMessage": "Are you sure you want to delete data source \"{name}\"?",
+            "resetTitle": "Confirm Reset",
+            "resetMessage": "Are you sure you want to reset to default settings? This will remove all custom data sources."
+        },
+        "message": {
+            "added": "Data source added",
+            "updated": "Data source updated",
+            "deleted": "Data source deleted",
+            "refreshed": "Data source refreshed",
+            "refreshFailed": "Refresh failed: {error}",
+            "partialRefresh": "Partial refresh: {loaded} succeeded, {failed} failed",
+            "allRefreshed": "{count} data source(s) refreshed",
+            "reset": "Reset to default settings"
+        }
     }
 }

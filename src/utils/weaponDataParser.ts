@@ -8,6 +8,7 @@ import {
   loadCSVByLocale,
   normalizeModName,
 } from './csvParserUtils'
+import { useExtendedDataSourceManager } from './extendedDataSourceManager'
 
 /**
  * CSV武器数据行
@@ -35,6 +36,8 @@ export interface WeaponDataSource {
   id: string
   label: string
   weapons: Array<{ defName: string; params: WeaponParams }>
+  /** 是否为扩展数据源 */
+  isExtended?: boolean
 }
 
 /**
@@ -88,11 +91,12 @@ async function parseWeaponCSV(
 }
 
 /**
- * 加载所有武器数据源
+ * 加载所有武器数据源（包括扩展数据源）
  * @param locale 语言代码
  * @returns 武器数据源数组
  */
 export async function getWeaponDataSources(locale: string): Promise<WeaponDataSource[]> {
+  // 加载内置数据
   const modCSVMap = await loadCSVByLocale(DataSourceType.Weapon, locale)
 
   // 按数据源ID分组
@@ -122,7 +126,56 @@ export async function getWeaponDataSources(locale: string): Promise<WeaponDataSo
       id: sourceId,
       label: sourceId === 'vanilla' ? 'Vanilla' : sourceId,
       weapons,
+      isExtended: false,
     })
+  }
+
+  // 加载扩展数据源
+  try {
+    const extendedManager = useExtendedDataSourceManager()
+    const extendedCSVMap = await extendedManager.loadExtendedCSVByLocale(
+      DataSourceType.Weapon,
+      locale,
+    )
+
+    // 扩展数据按源分组
+    const extendedSourceMap = new Map<string, Array<{ defName: string; params: WeaponParams }>>()
+
+    for (const [key, csvContent] of extendedCSVMap.entries()) {
+      try {
+        const weapons = await parseWeaponCSV(csvContent)
+        if (weapons.length === 0) continue
+
+        // key 格式: sourceId:modName
+        const parts = key.split(':')
+        const sourceId = parts[0] || 'unknown'
+        const modName = parts.slice(1).join(':') || 'unknown'
+        const extendedSourceId = `extended:${sourceId}:${normalizeModName(modName)}`
+
+        if (!extendedSourceMap.has(extendedSourceId)) {
+          extendedSourceMap.set(extendedSourceId, [])
+        }
+        extendedSourceMap.get(extendedSourceId)!.push(...weapons)
+      } catch (error) {
+        console.error(`Failed to parse extended weapons from ${key}:`, error)
+      }
+    }
+
+    // 添加扩展数据源
+    for (const [sourceId, weapons] of extendedSourceMap.entries()) {
+      // 从 sourceId 提取显示名称 (格式: extended:sourceId:modName)
+      const parts = sourceId.split(':')
+      const displayName = parts.length >= 3 ? parts.slice(2).join(':') : sourceId
+
+      dataSources.push({
+        id: sourceId,
+        label: `[Extended] ${displayName}`,
+        weapons,
+        isExtended: true,
+      })
+    }
+  } catch (error) {
+    console.warn('Failed to load extended weapon data sources:', error)
   }
 
   return dataSources

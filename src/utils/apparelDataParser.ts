@@ -9,6 +9,7 @@ import {
   loadCSVByLocale,
   normalizeModName,
 } from './csvParserUtils'
+import { useExtendedDataSourceManager } from './extendedDataSourceManager'
 
 /**
  * 衣物数据接口
@@ -32,6 +33,8 @@ export interface ClothingDataSource {
   id: string
   label: string
   clothing: ClothingData[]
+  /** 是否为扩展数据源 */
+  isExtended?: boolean
 }
 
 /**
@@ -107,7 +110,7 @@ async function parseApparelCSV(csvContent: string): Promise<ClothingData[]> {
 }
 
 /**
- * 加载所有衣物数据源
+ * 加载所有衣物数据源（包括扩展数据源）
  * @param locale 语言代码
  * @returns 衣物数据源数组
  */
@@ -141,7 +144,56 @@ export async function getApparelDataSources(locale: string): Promise<ClothingDat
       id: sourceId,
       label: sourceId === 'vanilla' ? 'Vanilla' : sourceId,
       clothing,
+      isExtended: false,
     })
+  }
+
+  // 加载扩展数据源
+  try {
+    const extendedManager = useExtendedDataSourceManager()
+    const extendedCSVMap = await extendedManager.loadExtendedCSVByLocale(
+      DataSourceType.Apparel,
+      locale,
+    )
+
+    // 扩展数据按源分组
+    const extendedSourceMap = new Map<string, ClothingData[]>()
+
+    for (const [key, csvContent] of extendedCSVMap.entries()) {
+      try {
+        const clothing = await parseApparelCSV(csvContent)
+        if (clothing.length === 0) continue
+
+        // key 格式: sourceId:modName
+        const parts = key.split(':')
+        const sourceId = parts[0] || 'unknown'
+        const modName = parts.slice(1).join(':') || 'unknown'
+        const extendedSourceId = `extended:${sourceId}:${normalizeModName(modName)}`
+
+        if (!extendedSourceMap.has(extendedSourceId)) {
+          extendedSourceMap.set(extendedSourceId, [])
+        }
+        extendedSourceMap.get(extendedSourceId)!.push(...clothing)
+      } catch (error) {
+        console.error(`Failed to parse extended apparel from ${key}:`, error)
+      }
+    }
+
+    // 添加扩展数据源
+    for (const [sourceId, clothing] of extendedSourceMap.entries()) {
+      // 从 sourceId 提取显示名称 (格式: extended:sourceId:modName)
+      const parts = sourceId.split(':')
+      const displayName = parts.length >= 3 ? parts.slice(2).join(':') : sourceId
+
+      dataSources.push({
+        id: sourceId,
+        label: `[Extended] ${displayName}`,
+        clothing,
+        isExtended: true,
+      })
+    }
+  } catch (error) {
+    console.warn('Failed to load extended apparel data sources:', error)
   }
 
   return dataSources

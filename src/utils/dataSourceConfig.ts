@@ -13,21 +13,21 @@ export enum DataSourceType {
 }
 
 /**
- * 数据目录基础路径（相对于 public 目录）
+ * 获取数据目录基础路径
+ * 使用 import.meta.env.BASE_URL 来正确处理 Vite 的 base 配置
  */
-export const DATA_BASE_PATH = '/data'
+function getDataBasePath(): string {
+  const baseUrl = import.meta.env.BASE_URL || '/'
+  // 确保 baseUrl 以 / 结尾，然后拼接 data
+  return `${baseUrl.endsWith('/') ? baseUrl : baseUrl + '/'}data`
+}
 
 /**
- * 数据源路径配置
+ * 获取数据源类型的路径
  */
-export const DATA_SOURCE_PATHS = {
-  /** 武器数据路径 */
-  [DataSourceType.Weapon]: `${DATA_BASE_PATH}/weapon`,
-  /** 服装数据路径 */
-  [DataSourceType.Apparel]: `${DATA_BASE_PATH}/apparel`,
-  /** 材料数据路径 */
-  [DataSourceType.Material]: `${DATA_BASE_PATH}/material`,
-} as const
+function getDataSourcePath(type: DataSourceType): string {
+  return `${getDataBasePath()}/${type}`
+}
 
 /**
  * 核心MOD列表（这些MOD会被合并为"Vanilla"）
@@ -66,7 +66,7 @@ export interface DataManifest {
  * @returns 清单文件URL路径
  */
 export function getManifestPath(): string {
-  return `${DATA_BASE_PATH}/manifest.json`
+  return `${getDataBasePath()}/manifest.json`
 }
 
 /**
@@ -77,7 +77,7 @@ export function getManifestPath(): string {
  * @returns CSV文件URL路径
  */
 export function getCSVPath(type: DataSourceType, modName: string, locale: string): string {
-  return `${DATA_SOURCE_PATHS[type]}/${modName}/${locale}.csv`
+  return `${getDataSourcePath(type)}/${modName}/${locale}.csv`
 }
 
 /**

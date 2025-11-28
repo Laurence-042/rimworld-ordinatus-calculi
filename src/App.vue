@@ -4,9 +4,19 @@ import { useI18n } from 'vue-i18n'
 import DPSCalculator from './components/DPSCalculator.vue'
 import ArmorCalculator from './components/ArmorCalculator.vue'
 import LanguageSelector from './components/LanguageSelector.vue'
+import DataSourceStatus from './components/DataSourceStatus.vue'
+import DataSourceSettings from './components/DataSourceSettings.vue'
 
 const { t, locale } = useI18n()
 const calculationMode = ref<'weapon' | 'armor'>('weapon')
+
+// Data source settings drawer ref
+const dataSourceSettingsRef = ref<InstanceType<typeof DataSourceSettings> | null>(null)
+
+// Open data source settings drawer
+function openDataSourceSettings() {
+  dataSourceSettingsRef.value?.openDrawer()
+}
 
 // Update document title when locale changes
 watch(
@@ -33,6 +43,7 @@ watch(
             >{{ t('app.subtitleArmor') }}({{ t('calculator.armor.title') }})</el-radio-button
           >
         </el-radio-group>
+        <DataSourceStatus @open-settings="openDataSourceSettings" />
         <LanguageSelector />
       </div>
     </header>
@@ -41,6 +52,9 @@ watch(
       <ArmorCalculator v-else-if="calculationMode === 'armor'" />
       <div v-else class="placeholder">{{ t('error.invalidData') }}</div>
     </main>
+
+    <!-- Data Source Settings Drawer -->
+    <DataSourceSettings ref="dataSourceSettingsRef" />
   </div>
 </template>
 

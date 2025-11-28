@@ -256,5 +256,53 @@
         "loadFailed": "加载失败",
         "invalidData": "无效数据",
         "networkError": "网络错误"
+    },
+    "dataSource": {
+        "title": "扩展数据源设置",
+        "addNew": "添加新数据源",
+        "sourceList": "数据源列表",
+        "refreshAll": "刷新全部",
+        "empty": "暂无数据源",
+        "lastSynced": "最后同步",
+        "form": {
+            "name": "数据源名称",
+            "namePlaceholder": "例如: 我的MOD数据",
+            "manifestUrl": "Manifest URL",
+            "urlPlaceholder": "https://example.com/data/manifest.json"
+        },
+        "status": {
+            "idle": "未加载",
+            "loading": "加载中",
+            "success": "已加载",
+            "error": "加载失败",
+            "neverSynced": "从未同步"
+        },
+        "statusTooltip": {
+            "noSources": "未配置扩展数据源",
+            "loading": "正在加载扩展数据源...",
+            "success": "已加载 {count} 个扩展数据源",
+            "error": "{count} 个扩展数据源加载失败",
+            "idle": "点击配置扩展数据源"
+        },
+        "validation": {
+            "required": "名称和URL不能为空",
+            "invalidUrl": "请输入有效的URL地址"
+        },
+        "confirm": {
+            "deleteTitle": "确认删除",
+            "deleteMessage": "确定要删除数据源 \"{name}\" 吗？",
+            "resetTitle": "确认重置",
+            "resetMessage": "确定要重置为默认配置吗？这将删除所有自定义数据源。"
+        },
+        "message": {
+            "added": "数据源已添加",
+            "updated": "数据源已更新",
+            "deleted": "数据源已删除",
+            "refreshed": "数据源已刷新",
+            "refreshFailed": "刷新失败: {error}",
+            "partialRefresh": "部分刷新成功: {loaded} 个成功, {failed} 个失败",
+            "allRefreshed": "已刷新 {count} 个数据源",
+            "reset": "已重置为默认配置"
+        }
     }
 }

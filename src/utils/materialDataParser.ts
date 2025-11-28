@@ -7,6 +7,7 @@ import {
   loadCSVByLocale,
   normalizeModName,
 } from './csvParserUtils'
+import { useExtendedDataSourceManager } from './extendedDataSourceManager'
 
 // 重新导出类型供外部使用
 export type { MaterialData, MaterialDataSource }
@@ -111,13 +112,21 @@ export function calculateArmorFromMaterial(
 }
 
 /**
- * 加载所有材料数据源
+ * 扩展材料数据源接口（添加 isExtended 标记）
+ */
+export interface ExtendedMaterialDataSource extends MaterialDataSource {
+  /** 是否为扩展数据源 */
+  isExtended?: boolean
+}
+
+/**
+ * 加载所有材料数据源（包括扩展数据源）
  * @param locale 语言代码
  * @returns 材料数据源数组
  */
 export async function getMaterialDataSources(
   locale: string = 'zh-CN',
-): Promise<MaterialDataSource[]> {
+): Promise<ExtendedMaterialDataSource[]> {
   const modCSVMap = await loadCSVByLocale(DataSourceType.Material, locale)
 
   // 按数据源ID分组
@@ -141,13 +150,62 @@ export async function getMaterialDataSources(
   }
 
   // 转换为数据源数组
-  const dataSources: MaterialDataSource[] = []
+  const dataSources: ExtendedMaterialDataSource[] = []
   for (const [sourceId, materials] of dataSourceMap.entries()) {
     dataSources.push({
       id: sourceId,
       label: sourceId === 'vanilla' ? 'Vanilla' : sourceId,
       materials: groupMaterialsByTags(materials),
+      isExtended: false,
     })
+  }
+
+  // 加载扩展数据源
+  try {
+    const extendedManager = useExtendedDataSourceManager()
+    const extendedCSVMap = await extendedManager.loadExtendedCSVByLocale(
+      DataSourceType.Material,
+      locale,
+    )
+
+    // 扩展数据按源分组
+    const extendedSourceMap = new Map<string, MaterialData[]>()
+
+    for (const [key, csvContent] of extendedCSVMap.entries()) {
+      try {
+        const materials = await parseMaterialCSV(csvContent)
+        if (materials.length === 0) continue
+
+        // key 格式: sourceId:modName
+        const parts = key.split(':')
+        const sourceId = parts[0] || 'unknown'
+        const modName = parts.slice(1).join(':') || 'unknown'
+        const extendedSourceId = `extended:${sourceId}:${normalizeModName(modName)}`
+
+        if (!extendedSourceMap.has(extendedSourceId)) {
+          extendedSourceMap.set(extendedSourceId, [])
+        }
+        extendedSourceMap.get(extendedSourceId)!.push(...materials)
+      } catch (error) {
+        console.error(`Failed to parse extended materials from ${key}:`, error)
+      }
+    }
+
+    // 添加扩展数据源
+    for (const [sourceId, materials] of extendedSourceMap.entries()) {
+      // 从 sourceId 提取显示名称 (格式: extended:sourceId:modName)
+      const parts = sourceId.split(':')
+      const displayName = parts.length >= 3 ? parts.slice(2).join(':') : sourceId
+
+      dataSources.push({
+        id: sourceId,
+        label: `[Extended] ${displayName}`,
+        materials: groupMaterialsByTags(materials),
+        isExtended: true,
+      })
+    }
+  } catch (error) {
+    console.warn('Failed to load extended material data sources:', error)
   }
 
   return dataSources
