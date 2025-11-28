@@ -1,5 +1,6 @@
 import type { WeaponParams } from '@/types/weapon'
 import { QualityCategory } from '@/types/quality'
+import { DataSourceType, getDataSourcePathRegex } from './dataSourceConfig'
 
 /**
  * CSV 武器数据接口（对应 weapon_info.csv 的列）
@@ -154,6 +155,8 @@ export async function loadAllWeaponDataByLocale(
     eager: false,
   })
 
+  const pathRegex = getDataSourcePathRegex(DataSourceType.Weapon)
+
   const modWeaponsMap = new Map<string, Array<{ defName: string; params: WeaponParams }>>()
 
   // 按 MOD 目录分组
@@ -164,7 +167,7 @@ export async function loadAllWeaponDataByLocale(
 
   for (const [path, loader] of Object.entries(csvFilesGlob)) {
     // 解析路径：./weapon_data/<MOD_NAME>/<locale>.csv
-    const match = path.match(/\.\/weapon_data\/([^/]+)\/([^/]+)\.csv$/)
+    const match = path.match(pathRegex)
     if (!match) continue
 
     const modName = match[1]

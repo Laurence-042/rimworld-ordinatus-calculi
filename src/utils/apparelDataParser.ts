@@ -1,6 +1,7 @@
 import Papa from 'papaparse'
 import { ApparelLayer } from '@/types/armor'
 import { BodyPart } from '@/types/bodyPart'
+import { DataSourceType, getDataSourcePathRegex } from './dataSourceConfig'
 
 /**
  * 衣物数据接口
@@ -189,6 +190,7 @@ export async function getApparelDataSources(locale: string): Promise<ClothingDat
   })
 
   const dataSources: ClothingDataSource[] = []
+  const pathRegex = getDataSourcePathRegex(DataSourceType.Apparel)
 
   // 按 MOD 目录分组
   const modGroups = new Map<
@@ -198,7 +200,7 @@ export async function getApparelDataSources(locale: string): Promise<ClothingDat
 
   for (const [path, loader] of Object.entries(csvFilesGlob)) {
     // 解析路径：./apparel_data/<MOD_NAME>/<locale>.csv
-    const match = path.match(/\.\/apparel_data\/([^/]+)\/([^/]+)\.csv$/)
+    const match = path.match(pathRegex)
     if (!match) continue
 
     const modName = match[1]

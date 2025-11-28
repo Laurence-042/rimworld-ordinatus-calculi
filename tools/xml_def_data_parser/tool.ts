@@ -4,13 +4,32 @@ import { parseStringPromise } from 'xml2js'
 import type { WeaponCSVData } from '../../src/utils/weaponDataParser'
 import { BodyPart } from '../../src/types/bodyPart'
 import { ApparelLayer } from '../../src/types/armor'
+import { DataSourceType, DATA_SOURCE_PATHS } from '../../src/utils/dataSourceConfig'
 import { MOD_CONFIGS, OUTPUT_DIR_OVERRIDE, DEBUG_OPTIONS } from './config'
 
-const DEFAULT_WEAPON_OUTPUT_DIR = path.join(__dirname, '..', '..', 'src', 'utils', 'weapon_data')
-const DEFAULT_APPAREL_OUTPUT_DIR = path.join(__dirname, '..', '..', 'src', 'utils', 'apparel_data')
+const DEFAULT_WEAPON_OUTPUT_DIR = path.join(
+  __dirname,
+  '..',
+  '..',
+  'src',
+  'utils',
+  DATA_SOURCE_PATHS[DataSourceType.Weapon].replace('./', ''),
+)
+const DEFAULT_APPAREL_OUTPUT_DIR = path.join(
+  __dirname,
+  '..',
+  '..',
+  'src',
+  'utils',
+  DATA_SOURCE_PATHS[DataSourceType.Apparel].replace('./', ''),
+)
 const WEAPON_OUTPUT_DIR = OUTPUT_DIR_OVERRIDE || DEFAULT_WEAPON_OUTPUT_DIR
 const APPAREL_OUTPUT_DIR = OUTPUT_DIR_OVERRIDE
-  ? path.join(OUTPUT_DIR_OVERRIDE, '..', 'apparel_data')
+  ? path.join(
+      OUTPUT_DIR_OVERRIDE,
+      '..',
+      DATA_SOURCE_PATHS[DataSourceType.Apparel].replace('./', ''),
+    )
   : DEFAULT_APPAREL_OUTPUT_DIR
 // 语言映射配置
 const LANGUAGE_MAP: Record<string, string> = {
