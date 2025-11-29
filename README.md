@@ -4,61 +4,63 @@
 
 一个基于 Vue 3 + TypeScript 的 RimWorld 战斗机制计算器，用于计算给定武器在不同的距离/护甲情况下的DPS，以及给定护甲组合在不同单发伤害/穿甲情况下的受伤期望。
 
-## 功能特性  
+## 功能特性
+
 ## Features
 
 ---
 
-### 武器 DPS 计算器（Weapon-Centric）  
+### 武器 DPS 计算器（Weapon-Centric）
+
 ### Weapon DPS Calculator (Weapon-Centric)
 
-- **多武器对比**：同时评估多个武器在不同护甲率（0–200%）下的 DPS 表现  
+- **多武器对比**：同时评估多个武器在不同护甲率（0–200%）下的 DPS 表现
 - **Multi-weapon comparison:** Evaluate multiple weapons across armor values (0–200%).
 
-- **精确命中率**：基于距离分段（贴近/近/中/远）的线性插值算法  
+- **精确命中率**：基于距离分段（贴近/近/中/远）的线性插值算法
 - **Accurate hit chance:** Linear interpolation across distance segments (touch / short / medium / long).
 
-- **连发机制**：完整模拟预热、连发间隔、冷却时序  
+- **连发机制**：完整模拟预热、连发间隔、冷却时序
 - **Burst mechanics:** Full simulation of warm-up, burst interval, and cooldown timings.
 
-- **2D/3D 可视化**：  
+- **2D/3D 可视化**：
 - **2D/3D Visualization:**
-
-  - **2D 曲线图**：特定距离下 DPS 随护甲率变化的曲线  
+  - **2D 曲线图**：特定距离下 DPS 随护甲率变化的曲线
   - **2D line plots:** DPS vs. armor curves at a fixed distance.
 
-  - **3D 曲面图**：护甲率随距离与穿甲变化的曲面，并标记两种武器曲面交线（何种情况下两武器 DPS 相等）  
+  - **3D 曲面图**：护甲率随距离与穿甲变化的曲面，并标记两种武器曲面交线（何种情况下两武器 DPS 相等）
   - **3D surface plots:** DPS surface over distance and armor penetration, with intersection lines showing where two weapons have equal expected DPS.
 
 ---
 
-### 护甲效能计算器（Armor-Centric）  
+### 护甲效能计算器（Armor-Centric）
+
 ### Armor Effectiveness Calculator (Armor-Centric)
 
-- **多层护甲系统**：支持多层护甲叠加计算  
+- **多层护甲系统**：支持多层护甲叠加计算
 - **Multi-layer armor system:** Supports stacked armor calculations.
 
-- **身体部位覆盖**：根据部位覆盖情况计算综合防护效果  
+- **身体部位覆盖**：根据部位覆盖情况计算综合防护效果
 - **Body part coverage:** Computes protection based on armor coverage over body parts.
 
-- **伤害类型模拟**：利器 / 钝器 / 热能伤害的不同穿透与减伤机制  
+- **伤害类型模拟**：利器 / 钝器 / 热能伤害的不同穿透与减伤机制
 - **Damage type simulation:** Different penetration/reduction rules for sharp, blunt, and heat damage.
 
-- **概率分布**：显示完全偏转 / 部分穿透 / 完全穿透的概率  
+- **概率分布**：显示完全偏转 / 部分穿透 / 完全穿透的概率
 - **Probability distribution:** Shows chances of deflection, partial penetration, and full penetration.
 
-- **实战场景**：  
+- **实战场景**：
 - **Practical scenarios:**
-
-  - **减伤概率分布**：特定穿甲值下的减伤概率  
+  - **减伤概率分布**：特定穿甲值下的减伤概率
   - **Damage reduction distribution:** Damage reduction probability for a given AP value.
 
-  - **减伤期望曲线**：不同穿甲对应的减伤期望  
+  - **减伤期望曲线**：不同穿甲对应的减伤期望
   - **Expected reduction curves:** Expected damage reduction across different AP values.
 
 ---
 
-## 快速开始  
+## 快速开始
+
 ## Quick Start
 
 **在线演示 / Demo:**  
@@ -66,17 +68,20 @@ https://laurence-042.github.io/project/rimworld-ordinatus-calculi/demo/
 
 ---
 
-### 使用示例  
+### 使用示例
+
 ### Usage Examples
 
-#### 调整语言（目前只支持简体中文和英文）  
+#### 调整语言（目前只支持简体中文和英文）
+
 #### Change Language (currently supports Simplified Chinese & English)
 
 [](https://github.com/user-attachments/assets/b71f3d97-155a-42e4-b319-5aec8b4abba6)
 
 ---
 
-#### 修改 / 添加扩展数据源  
+#### 修改 / 添加扩展数据源
+
 #### Modify / Add Extra Data Sources
 
 [](https://github.com/user-attachments/assets/f0dc649a-fc17-4fea-a141-c04ad07deb0e)
@@ -88,7 +93,8 @@ Default dataset repository:
 
 ---
 
-#### 创建新的扩展数据源  
+#### 创建新的扩展数据源
+
 #### Creating a New Extra Data Source
 
 执行前请修改 `tools\xml_def_data_parser\config.ts` 中的配置，以对应实际 Mod 路径。  
@@ -402,7 +408,7 @@ MIT 许可仅适用于本项目的源代码、计算逻辑的实现方式，以�
 
 在面对原版的护甲杀手-电荷标枪（35%穿甲）和更低穿甲的武器时，普通品质的防弹夹克和防弹夹板组成的防弹套在对躯干的保护上优于普通品质的海军甲
 
-> 但这不代表有海军甲不穿去穿防弹套是个好主意。因为防弹套是不保护双臂的，脖颈也只有防弹夹克提供单层保护，所以不想飞头的话，有海军甲还是好好穿上——除非你的敌人是某些mod里那种就算减伤50%也能飞头的伤害数值怪
+> 但这不代表有海军甲不穿去穿防弹套是个好主意，只是说当你没有海军甲时，防弹套对躯干的防护效果可能比大多数人想象得还高。因为防弹套是不保护双臂的，腿部也只能穿防弹裤来提供单层保护，有海军甲还是摇好好穿上，这样能避免缺胳膊少腿
 
 ![](https://github.com/user-attachments/assets/50aceb17-41ad-467a-89a1-307809f6c9fd)
 
