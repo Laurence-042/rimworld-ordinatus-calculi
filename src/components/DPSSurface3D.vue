@@ -8,7 +8,7 @@ import { getResolvedHitChance } from '@/utils/weaponCalculations'
 import { calculateDPSDistribution } from '@/utils/armorCalculations'
 import { transposeMatrix, calculateSurfaceIntersection } from '@/utils/plotlyUtils'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 interface Props {
   resolvedWeapons: ResolvedWeapon[]
@@ -250,7 +250,7 @@ const debouncedPlotSurface = useDebounceFn(() => {
 }, 300)
 
 watch(
-  () => props.resolvedWeapons,
+  () => [props.resolvedWeapons, locale.value],
   () => {
     debouncedPlotSurface()
   },

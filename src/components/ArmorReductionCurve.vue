@@ -21,7 +21,7 @@ import {
   filterArmorLayersByBodyPart,
 } from '@/utils/armorCalculations'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
 
@@ -200,7 +200,7 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
 
 <template>
   <div class="chart-wrapper">
-    <Line :data="chartData" :options="chartOptions" />
+    <Line :key="locale" :data="chartData" :options="chartOptions" />
   </div>
 </template>
 

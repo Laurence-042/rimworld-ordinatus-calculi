@@ -3,10 +3,6 @@
  * 定义武器和装备的品质等级及其对应的系数
  */
 
-import i18n from '@/i18n'
-
-const { global } = i18n
-
 /**
  * 品质等级枚举
  */
@@ -19,29 +15,6 @@ export enum QualityCategory {
   Masterwork = 'masterwork', // 大师
   Legendary = 'legendary', // 传奇
 }
-
-/**
- * 获取品质等级名称（支持i18n）
- */
-export function getQualityName(quality: QualityCategory): string {
-  const key = `quality.${quality}` as const
-  return global.t(key)
-}
-
-/**
- * 品质等级名称映射（保留用于向后兼容，但使用i18n）
- */
-export const QualityNames: Record<QualityCategory, string> = new Proxy(
-  {} as Record<QualityCategory, string>,
-  {
-    get(_target, prop: string | symbol) {
-      if (typeof prop === 'string' && prop in QualityCategory) {
-        return getQualityName(prop as QualityCategory)
-      }
-      return undefined
-    },
-  },
-)
 
 /**
  * 品质等级颜色（基于RimWorld Quality Colors mod）
@@ -140,15 +113,4 @@ export const ApparelQualityMultipliers: Record<QualityCategory, ApparelQualityMu
   [QualityCategory.Legendary]: {
     armor: 1.8,
   },
-}
-
-/**
- * 获取所有品质等级选项（用于UI）
- */
-export function getQualityOptions() {
-  return Object.values(QualityCategory).map((quality) => ({
-    value: quality,
-    label: getQualityName(quality),
-    color: QualityColors[quality],
-  }))
 }

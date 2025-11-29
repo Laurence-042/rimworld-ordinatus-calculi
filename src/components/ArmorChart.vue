@@ -10,7 +10,7 @@ import {
   filterArmorLayersByBodyPart,
 } from '@/utils/armorCalculations'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 const props = defineProps<{
   armorSets: ArmorSet[]
@@ -206,7 +206,13 @@ function renderChart() {
 }
 
 watch(
-  () => [props.armorSets, props.damageType, props.fixedPenetration, props.selectedBodyPart],
+  () => [
+    props.armorSets,
+    props.damageType,
+    props.fixedPenetration,
+    props.selectedBodyPart,
+    locale.value,
+  ],
   renderChart,
   { deep: true },
 )

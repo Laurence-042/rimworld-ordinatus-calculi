@@ -24,7 +24,8 @@ import {
   getApparelLayerOptions,
   type CoverageTreeNode,
 } from '@/utils/coverageUtils'
-import { QualityCategory, getQualityOptions } from '@/types/quality'
+import { QualityCategory } from '@/types/quality'
+import { useQualityOptions } from '@/composables/useQualityOptions'
 import { getActualArmorValue } from '@/utils/armorCalculations'
 import ArmorChart from './ArmorChart.vue'
 import ArmorReductionCurve from './ArmorReductionCurve.vue'
@@ -45,7 +46,7 @@ const ARMOR_COLORS = [
 ]
 
 // 品质选项
-const qualityOptions = getQualityOptions()
+const { qualityOptions } = useQualityOptions()
 
 // 状态
 const chartMode = ref<'distribution' | 'curve'>('curve')

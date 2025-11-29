@@ -8,7 +8,8 @@ import {
   getResolvedHitChance,
 } from '@/utils/weaponCalculations'
 import type { ResolvedWeapon, Weapon, WeaponDataSource } from '@/types/weapon'
-import { QualityCategory, getQualityOptions } from '@/types/quality'
+import { QualityCategory } from '@/types/quality'
+import { useQualityOptions } from '@/composables/useQualityOptions'
 import DPSChart from './DPSChart.vue'
 import DPSSurface3D from './DPSSurface3D.vue'
 import SliderInput from './SliderInput.vue'
@@ -79,7 +80,7 @@ const weapons = ref<Weapon[]>([
 ])
 
 // 品质选项
-const qualityOptions = getQualityOptions()
+const { qualityOptions } = useQualityOptions()
 
 // 辅助函数
 function createWeapon(name: string, color: string, params?: Partial<Weapon>): Weapon {

@@ -17,7 +17,7 @@ import type { ResolvedWeapon } from '@/types/weapon'
 import { getResolvedHitChance } from '@/utils/weaponCalculations'
 import { calculateDPSCurve, calculateDPSDistribution } from '@/utils/armorCalculations'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 // 注册 Chart.js 组件
 ChartJS.register(
@@ -160,7 +160,7 @@ const chartOptions = computed(() => ({
 
 <template>
   <div class="chart-container">
-    <Line :data="chartData" :options="chartOptions" />
+    <Line :key="locale" :data="chartData" :options="chartOptions" />
   </div>
 </template>
 
