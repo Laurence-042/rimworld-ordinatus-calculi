@@ -3,7 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Plotly from 'plotly.js-dist-min'
 import { useResizeObserver } from '@vueuse/core'
-import type { ArmorSet, ArmorLayer, DamageType } from '@/types/armor'
+import type { ArmorSet, DamageType } from '@/types/armor'
 import { BodyPart } from '@/types/bodyPart'
 import {
   calculateMultiLayerDamageReduction,
@@ -17,11 +17,6 @@ const props = defineProps<{
   damageType: DamageType
   fixedPenetration: number
   selectedBodyPart: BodyPart
-  getLayerActualArmor: (layer: ArmorLayer) => {
-    armorSharp: number
-    armorBlunt: number
-    armorHeat: number
-  }
 }>()
 
 const chartContainer = ref<HTMLElement | null>(null)
@@ -36,22 +31,11 @@ const damageTypeLabel = computed(() => {
 })
 
 // 在组件内部计算所有护甲套装的伤害分布数据
+// 护甲层已包含 resolvedMaterialData，getActualArmorValue 会自动计算材料加成
 const armorSetsData = computed(() => {
   return props.armorSets.map((armorSet) => {
-    // 计算实际护甲值的层
-    const actualLayers = armorSet.layers.map((layer) => {
-      const armor = props.getLayerActualArmor(layer)
-      return {
-        ...layer,
-        // 将百分比转换为0-1的小数供计算使用
-        armorSharp: armor.armorSharp / 100,
-        armorBlunt: armor.armorBlunt / 100,
-        armorHeat: armor.armorHeat / 100,
-      }
-    })
-
     // 过滤只覆盖选中身体部位的护甲层
-    const filteredLayers = filterArmorLayersByBodyPart(actualLayers, props.selectedBodyPart)
+    const filteredLayers = filterArmorLayersByBodyPart(armorSet.layers, props.selectedBodyPart)
 
     // 计算在固定穿甲条件下的伤害分布
     const result = calculateMultiLayerDamageReduction(filteredLayers, {

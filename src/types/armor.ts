@@ -3,7 +3,7 @@
  */
 
 import { QualityCategory } from './quality'
-import { MaterialTag } from './material'
+import { MaterialTag, type MaterialData } from './material'
 
 /**
  * 服装层级枚举（按从内到外的顺序）
@@ -50,8 +50,8 @@ export interface ArmorLayer {
   quality: QualityCategory
   /** 材料系数 (0-2)，用于计算材料护甲加成 */
   materialCoefficient: number
-  /** 使用的全局材料类型 */
-  selectedMaterial?: MaterialTag
+  /** 选中的材料数据（包含护甲值，用于计算材料加成） */
+  selectedMaterialData?: MaterialData | null
   /** 支持的材料类型（从预设加载） */
   supportedMaterials?: MaterialTag[]
   /** 服装层级（从CSV加载，可能有多个） */

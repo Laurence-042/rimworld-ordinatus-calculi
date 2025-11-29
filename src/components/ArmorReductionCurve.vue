@@ -14,7 +14,7 @@ import {
   type ChartOptions,
 } from 'chart.js'
 import { Line } from 'vue-chartjs'
-import type { ArmorSet, ArmorLayer, DamageType } from '@/types/armor'
+import type { ArmorSet, DamageType } from '@/types/armor'
 import { BodyPart } from '@/types/bodyPart'
 import {
   calculateMultiLayerDamageReduction,
@@ -29,11 +29,6 @@ const props = defineProps<{
   armorSets: ArmorSet[]
   damageType: DamageType
   selectedBodyPart: BodyPart
-  getLayerActualArmor: (layer: ArmorLayer) => {
-    armorSharp: number
-    armorBlunt: number
-    armorHeat: number
-  }
 }>()
 
 const damageTypeLabel = computed(() => {
@@ -46,21 +41,10 @@ const damageTypeLabel = computed(() => {
 })
 
 // 为单个护甲套装生成减伤曲线数据
+// 护甲层已包含 resolvedMaterialData，getActualArmorValue 会自动计算材料加成
 function generateArmorReductionCurve(armorSet: ArmorSet) {
-  // 计算实际护甲值的层
-  const actualLayers = armorSet.layers.map((layer) => {
-    const armor = props.getLayerActualArmor(layer)
-    return {
-      ...layer,
-      // 将百分比转换为0-1的小数供计算使用
-      armorSharp: armor.armorSharp / 100,
-      armorBlunt: armor.armorBlunt / 100,
-      armorHeat: armor.armorHeat / 100,
-    }
-  })
-
   // 过滤只覆盖选中身体部位的护甲层
-  const filteredLayers = filterArmorLayersByBodyPart(actualLayers, props.selectedBodyPart)
+  const filteredLayers = filterArmorLayersByBodyPart(armorSet.layers, props.selectedBodyPart)
 
   // 护甲穿透范围：0%-200%
   const penetrationValues: number[] = []

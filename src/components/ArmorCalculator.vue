@@ -153,7 +153,7 @@ const addArmorSet = () => {
         baseArmorHeat: 20,
         quality: QualityCategory.Masterwork,
         materialCoefficient: 0,
-        selectedMaterial: MaterialTag.Fabric,
+        selectedMaterialData: globalMaterials.value[MaterialTag.Fabric],
         supportedMaterials: [
           MaterialTag.Metallic,
           MaterialTag.Woody,
@@ -184,7 +184,7 @@ const addLayer = (armorSet: ArmorSet) => {
     baseArmorHeat: 20,
     quality: QualityCategory.Masterwork,
     materialCoefficient: 0,
-    selectedMaterial: MaterialTag.Fabric,
+    selectedMaterialData: globalMaterials.value[MaterialTag.Fabric],
     supportedMaterials: [
       MaterialTag.Metallic,
       MaterialTag.Woody,
@@ -204,39 +204,27 @@ const removeLayer = (armorSet: ArmorSet, index: number) => {
   }
 }
 
-// 计算层的实际护甲值（考虑基础护甲、材料加成和品质）
-// 最终护甲 = 基础护甲 + 材料系数 × 材料护甲值
+// 计算层的实际护甲值（用于UI显示）
+// 公式：(基础护甲 + 材料系数 × 材料护甲) × 品质系数
+// layer 已包含 selectedMaterialData，getActualArmorValue 会自动计算材料加成
 const getLayerActualArmor = (layer: ArmorSet['layers'][number]) => {
-  // 基础护甲值（百分比）
-  let totalArmorSharp = layer.baseArmorSharp
-  let totalArmorBlunt = layer.baseArmorBlunt
-  let totalArmorHeat = layer.baseArmorHeat
-
-  // 如果有材料系数，加上材料护甲加成
-  if (layer.materialCoefficient > 0 && layer.selectedMaterial) {
-    const material = globalMaterials.value[layer.selectedMaterial]
-    if (material) {
-      // 基础护甲 + 材料系数 × 材料护甲值
-      totalArmorSharp += layer.materialCoefficient * material.armorSharp
-      totalArmorBlunt += layer.materialCoefficient * material.armorBlunt
-      totalArmorHeat += layer.materialCoefficient * material.armorHeat
-    }
-  }
-
-  // 应用品质系数到护甲值
-  const actualArmorLayer = {
-    ...layer,
-    // 这里需要传入合并后的护甲值（转换为0-2范围）
-    baseArmorSharp: totalArmorSharp / 100,
-    baseArmorBlunt: totalArmorBlunt / 100,
-    baseArmorHeat: totalArmorHeat / 100,
-  }
-
   return {
-    armorSharp: getActualArmorValue(actualArmorLayer, DamageType.Sharp) * 100, // 转回百分比
-    armorBlunt: getActualArmorValue(actualArmorLayer, DamageType.Blunt) * 100,
-    armorHeat: getActualArmorValue(actualArmorLayer, DamageType.Heat) * 100,
+    armorSharp: getActualArmorValue(layer, DamageType.Sharp) * 100, // 转回百分比显示
+    armorBlunt: getActualArmorValue(layer, DamageType.Blunt) * 100,
+    armorHeat: getActualArmorValue(layer, DamageType.Heat) * 100,
   }
+}
+
+// 获取 layer 当前选中的材料类型 tag
+const getLayerMaterialTag = (layer: ArmorSet['layers'][number]): MaterialTag | null => {
+  if (!layer.selectedMaterialData) return null
+  // 从材料的 tags 中取第一个
+  return layer.selectedMaterialData.tags?.[0] || null
+}
+
+// 设置 layer 的材料（根据 MaterialTag 从 globalMaterials 获取）
+const setLayerMaterial = (layer: ArmorSet['layers'][number], materialTag: MaterialTag) => {
+  layer.selectedMaterialData = globalMaterials.value[materialTag]
 }
 
 // 根据数据源ID和材料类型获取材料列表
@@ -353,8 +341,11 @@ const loadClothingPreset = (layer: ArmorSet['layers'][number], preset: ClothingD
   // 如果有材料系数，设置支持的材料
   if (layer.materialCoefficient > 0) {
     layer.supportedMaterials = parseAcceptedMaterials(preset.acceptedMaterials)
-    // 选择第一个支持的材料
-    layer.selectedMaterial = layer.supportedMaterials[0]
+    // 选择第一个支持的材料，并设置对应的材料数据
+    const firstMaterialTag = layer.supportedMaterials[0]
+    if (firstMaterialTag) {
+      layer.selectedMaterialData = globalMaterials.value[firstMaterialTag]
+    }
   } else {
     // 没有材料系数时，不限制材料选择但默认不使用
     layer.supportedMaterials = [
@@ -363,7 +354,7 @@ const loadClothingPreset = (layer: ArmorSet['layers'][number], preset: ClothingD
       MaterialTag.Leathery,
       MaterialTag.Fabric,
     ]
-    layer.selectedMaterial = MaterialTag.Fabric
+    layer.selectedMaterialData = globalMaterials.value[MaterialTag.Fabric]
   }
 }
 
@@ -519,7 +510,7 @@ onMounted(async () => {
         baseArmorHeat: 0,
         quality: QualityCategory.Masterwork,
         materialCoefficient: 0,
-        selectedMaterial: MaterialTag.Fabric,
+        selectedMaterialData: globalMaterials.value[MaterialTag.Fabric],
         supportedMaterials: [
           MaterialTag.Metallic,
           MaterialTag.Woody,
@@ -542,7 +533,7 @@ onMounted(async () => {
         baseArmorHeat: 0,
         quality: QualityCategory.Masterwork,
         materialCoefficient: 0,
-        selectedMaterial: MaterialTag.Fabric,
+        selectedMaterialData: globalMaterials.value[MaterialTag.Fabric],
         supportedMaterials: [
           MaterialTag.Metallic,
           MaterialTag.Woody,
@@ -580,7 +571,7 @@ onMounted(async () => {
         baseArmorHeat: 0,
         quality: QualityCategory.Masterwork,
         materialCoefficient: 0,
-        selectedMaterial: MaterialTag.Fabric,
+        selectedMaterialData: globalMaterials.value[MaterialTag.Fabric],
         supportedMaterials: [
           MaterialTag.Metallic,
           MaterialTag.Woody,
@@ -610,6 +601,25 @@ watch(locale, async () => {
   materialDataSources.value = await getMaterialDataSources(locale.value)
   clothingDataSources.value = await getApparelDataSources(locale.value)
 })
+
+// 监听全局材料变化，同步更新所有 layer 的 selectedMaterialData
+watch(
+  globalMaterials,
+  (newMaterials) => {
+    armorSets.value.forEach((armorSet) => {
+      armorSet.layers.forEach((layer) => {
+        // 如果 layer 有选中的材料，根据其 tag 更新为新的材料数据
+        if (layer.selectedMaterialData) {
+          const tag = layer.selectedMaterialData.tags?.[0]
+          if (tag && newMaterials[tag]) {
+            layer.selectedMaterialData = newMaterials[tag]
+          }
+        }
+      })
+    })
+  },
+  { deep: true },
+)
 </script>
 
 <template>
@@ -978,8 +988,9 @@ watch(locale, async () => {
                 <!-- 材料选择（仅在材料系数>0时启用） -->
                 <el-form-item :label="t('armor.usedMaterial')">
                   <el-radio-group
-                    v-model="layer.selectedMaterial"
+                    :model-value="getLayerMaterialTag(layer)"
                     :disabled="layer.materialCoefficient <= 0"
+                    @change="(val: MaterialTag) => setLayerMaterial(layer, val)"
                   >
                     <el-radio-button
                       :value="MaterialTag.Metallic"
@@ -1125,14 +1136,12 @@ watch(locale, async () => {
         <div class="chart-controls">
           <div>
             <el-radio-group v-model="chartMode" size="default">
-              <el-radio-button value="distribution"
-                >{{ t('chart.damageReductionDistribution') }} -
-                {{ selectedBodyPartName }}</el-radio-button
-              >
-              <el-radio-button value="curve"
-                >{{ t('chart.damageReductionExpectedCurve') }} -
-                {{ selectedBodyPartName }}</el-radio-button
-              >
+              <el-radio-button value="distribution">{{
+                t('armor.distributionChart', { part: selectedBodyPartName })
+              }}</el-radio-button>
+              <el-radio-button value="curve">{{
+                t('armor.curveChart', { part: selectedBodyPartName })
+              }}</el-radio-button>
             </el-radio-group>
           </div>
           <p class="chart-hint">
@@ -1150,14 +1159,12 @@ watch(locale, async () => {
             :damage-type="damageType"
             :fixed-penetration="fixedPenetration"
             :selected-body-part="selectedBodyPart"
-            :get-layer-actual-armor="getLayerActualArmor"
           />
           <ArmorReductionCurve
             v-else
             :armor-sets="armorSets"
             :damage-type="damageType"
             :selected-body-part="selectedBodyPart"
-            :get-layer-actual-armor="getLayerActualArmor"
           />
         </div>
       </el-splitter-panel>

@@ -16,9 +16,10 @@ import { ApparelQualityMultipliers } from '@/types/quality'
 
 /**
  * 获取应用品质系数后的护甲值
+ * 计算公式：(基础护甲 + 材料系数 × 材料护甲) × 品质系数
  * 根据 RimWorld 源码，护甲值限制在0-200%
  *
- * @param layer - 护甲层
+ * @param layer - 护甲层（需包含 selectedMaterialData 以获取材料护甲加成）
  * @param damageType - 伤害类型
  * @returns 实际护甲值 (0-2)
  */
@@ -26,16 +27,35 @@ export function getActualArmorValue(layer: ArmorLayer, damageType: DamageType): 
   const qualityMultipliers = ApparelQualityMultipliers[layer.quality]
   const armorMultiplier = qualityMultipliers.armor
 
+  // 获取基础护甲值（存储为百分比 0-200，转换为 0-2）
   let baseArmor: number
   if (damageType === DamageType.Blunt) {
-    baseArmor = layer.baseArmorBlunt
+    baseArmor = layer.baseArmorBlunt / 100
   } else if (damageType === DamageType.Sharp) {
-    baseArmor = layer.baseArmorSharp
+    baseArmor = layer.baseArmorSharp / 100
   } else {
-    baseArmor = layer.baseArmorHeat
+    baseArmor = layer.baseArmorHeat / 100
   }
 
-  const value = baseArmor * armorMultiplier
+  // 获取材料护甲加成
+  // MaterialData 的护甲值是百分比(0-100+)，需要转换为0-2范围
+  let materialArmorBonus = 0
+  if (layer.materialCoefficient > 0 && layer.selectedMaterialData) {
+    let materialArmor: number
+    if (damageType === DamageType.Blunt) {
+      materialArmor = layer.selectedMaterialData.armorBlunt / 100
+    } else if (damageType === DamageType.Sharp) {
+      materialArmor = layer.selectedMaterialData.armorSharp / 100
+    } else {
+      materialArmor = layer.selectedMaterialData.armorHeat / 100
+    }
+    materialArmorBonus = layer.materialCoefficient * materialArmor
+  }
+
+  // 计算最终护甲值：(基础护甲 + 材料系数 × 材料护甲) × 品质系数
+  const effectiveArmor = baseArmor + materialArmorBonus
+  const value = effectiveArmor * armorMultiplier
+
   // Clamp 到0-200%
   return Math.max(0, Math.min(2, value))
 }
