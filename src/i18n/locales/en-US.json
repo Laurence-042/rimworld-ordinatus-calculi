@@ -113,7 +113,7 @@
         "maxSetsDescription": "Up to 2 armor sets can be compared. To compare other sets, please remove existing ones first.",
         "defaultSetName": "Armor Set {n}",
         "defaultApparelName": "Custom Apparel (Click to Select Preset)",
-        "presetDoubleBulletproof": "Double Bulletproof Set",
+        "presetDoubleBulletproof": "Double Flak Set",
         "presetSingleMarine": "Single Marine Armor",
         "coverageTitle": "Coverage Range",
         "coverageHint": "Click on body parts to view armor calculations for that part",
