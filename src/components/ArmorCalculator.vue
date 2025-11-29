@@ -50,7 +50,8 @@ const qualityOptions = getQualityOptions()
 // 状态
 const chartMode = ref<'distribution' | 'curve'>('curve')
 const damageType = ref<DamageType>(DamageType.Sharp)
-const fixedPenetration = ref(35) // 用于减伤概率分布模式
+const baseDamage = ref(30) // 用于减伤概率分布模式计算实际受到的伤害
+const fixedPenetration = ref(45) // 用于减伤概率分布模式
 
 // 选中的身体部位（用于计算该部位的护甲）
 const selectedBodyPart = ref<BodyPart>(BodyPart.Torso)
@@ -648,8 +649,18 @@ watch(
             </el-form-item>
 
             <template v-if="chartMode === 'distribution'">
+              <el-form-item :label="t('armor.baseDamage')">
+                <SliderInput v-model="baseDamage" :min="1" :max="100" :step="1" :precision="1" />
+              </el-form-item>
               <el-form-item :label="t('armor.fixedPenetration')">
-                <SliderInput v-model="fixedPenetration" :min="0" :max="100" :step="1" unit="%" />
+                <SliderInput
+                  v-model="fixedPenetration"
+                  :min="0"
+                  :max="100"
+                  :step="1"
+                  :precision="1"
+                  unit="%"
+                />
               </el-form-item>
             </template>
 
@@ -1159,6 +1170,7 @@ watch(
             :damage-type="damageType"
             :fixed-penetration="fixedPenetration"
             :selected-body-part="selectedBodyPart"
+            :base-damage="baseDamage"
           />
           <ArmorReductionCurve
             v-else

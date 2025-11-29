@@ -17,6 +17,7 @@ const props = defineProps<{
   damageType: DamageType
   fixedPenetration: number
   selectedBodyPart: BodyPart
+  baseDamage: number
 }>()
 
 const chartContainer = ref<HTMLElement | null>(null)
@@ -92,13 +93,15 @@ function renderChart() {
       cumulativeProbabilities.push(cumulative)
     }
 
-    // 准备hover文本（显示减伤比例）
+    // 准备hover文本（显示减伤比例和受到的伤害）
     const hoverTexts = sortedMultipliers.map((multiplier, index) => {
       const damageReduction = ((1 - multiplier) * 100).toFixed(1)
       const prob = probabilities[index] ?? 0
+      const actualDamage = (props.baseDamage * multiplier).toFixed(1)
       return t('chart.reductionHoverText', {
         reduction: damageReduction,
         prob: prob.toFixed(2),
+        damage: actualDamage,
       })
     })
 
@@ -133,9 +136,11 @@ function renderChart() {
     const cumulativeHoverTexts = sortedMultipliers.map((multiplier, index) => {
       const cumulativeProb = cumulativeProbabilities[index] ?? 0
       const damageReduction = ((1 - multiplier) * 100).toFixed(1)
+      const maxDamage = (props.baseDamage * multiplier).toFixed(1)
       return t('chart.cumulativeProbText', {
         prob: cumulativeProb.toFixed(2),
         reduction: damageReduction,
+        maxDamage: maxDamage,
       })
     })
 
