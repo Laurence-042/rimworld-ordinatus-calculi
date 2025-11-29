@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useWindowSize } from '@vueuse/core'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Delete, Refresh, Link } from '@element-plus/icons-vue'
 import {
@@ -13,6 +14,14 @@ const manager = useExtendedDataSourceManager()
 
 // Drawer visibility
 const drawerVisible = ref(false)
+
+// Responsive drawer size using VueUse
+const { width: windowWidth } = useWindowSize()
+const drawerSize = computed(() => {
+  if (windowWidth.value <= 480) return '100%'
+  if (windowWidth.value <= 768) return '85%'
+  return '450px'
+})
 
 // Form for adding new source
 const newSourceForm = ref({
@@ -200,7 +209,7 @@ defineExpose({ openDrawer })
     v-model="drawerVisible"
     :title="t('dataSource.title')"
     direction="rtl"
-    size="450px"
+    :size="drawerSize"
     @close="closeDrawer"
   >
     <div class="data-source-settings">
