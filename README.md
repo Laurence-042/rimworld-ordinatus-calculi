@@ -4,46 +4,108 @@
 
 一个基于 Vue 3 + TypeScript 的 RimWorld 战斗机制计算器，用于计算给定武器在不同的距离/护甲情况下的DPS，以及给定护甲组合在不同单发伤害/穿甲情况下的受伤期望。
 
-## 功能特性
+## 功能特性  
+## Features
 
-### 武器 DPS 计算器（Weapon-Centric）
+---
 
-- **多武器对比**：同时评估多个武器在不同护甲率（0-200%）下的 DPS 表现
-- **精确命中率**：基于距离分段（贴近/近/中/远）的线性插值算法
-- **连发机制**：完整模拟预热、连发间隔、冷却时序
-- **2D/3D 可视化**：
-  - 2D 曲线图：特定距离下 DPS 随 护甲率 变化的曲线
-  - 3D 曲面图：护甲率 随 距离 和 穿甲 变化的曲面，并标记两种武器曲面交线（什么情况下两种武器 DPS 期望一致）
+### 武器 DPS 计算器（Weapon-Centric）  
+### Weapon DPS Calculator (Weapon-Centric)
 
-### 护甲效能计算器（Armor-Centric）
+- **多武器对比**：同时评估多个武器在不同护甲率（0–200%）下的 DPS 表现  
+- **Multi-weapon comparison:** Evaluate multiple weapons across armor values (0–200%).
 
-- **多层护甲系统**：支持多层护甲计算
-- **身体部位覆盖**：支持显示覆盖情况并根据覆盖的护甲计算防护效果
-- **伤害类型模拟**：利器/钝器/热能伤害的不同穿透机制
-- **概率分布**：显示完全偏转/部分穿透/完全穿透的概率分布
-- **实战场景**：
-  - 减伤概率分布：特定穿甲的减伤概率分布
-  - 减伤期望曲线：不同穿甲的减伤期望曲线
+- **精确命中率**：基于距离分段（贴近/近/中/远）的线性插值算法  
+- **Accurate hit chance:** Linear interpolation across distance segments (touch / short / medium / long).
 
-## 快速开始
+- **连发机制**：完整模拟预热、连发间隔、冷却时序  
+- **Burst mechanics:** Full simulation of warm-up, burst interval, and cooldown timings.
 
-[Demo](https://laurence-042.github.io/project/rimworld-ordinatus-calculi/demo/)
+- **2D/3D 可视化**：  
+- **2D/3D Visualization:**
 
-### 使用示例
+  - **2D 曲线图**：特定距离下 DPS 随护甲率变化的曲线  
+  - **2D line plots:** DPS vs. armor curves at a fixed distance.
 
-#### 调整语言（目前只支持简体中文和英文）
+  - **3D 曲面图**：护甲率随距离与穿甲变化的曲面，并标记两种武器曲面交线（何种情况下两武器 DPS 相等）  
+  - **3D surface plots:** DPS surface over distance and armor penetration, with intersection lines showing where two weapons have equal expected DPS.
 
-#### 修改/添加扩展数据源
+---
 
-默认数据源是 [rimworld-ordinatus-calculi-extra-data](https://github.com/Laurence-042/rimworld-ordinatus-calculi-extra-data)，可以使用这个项目中的
+### 护甲效能计算器（Armor-Centric）  
+### Armor Effectiveness Calculator (Armor-Centric)
 
-#### 创建新的扩展数据源
+- **多层护甲系统**：支持多层护甲叠加计算  
+- **Multi-layer armor system:** Supports stacked armor calculations.
 
-执行前请参照 `tools\xml_def_data_parser\config.ts` 中的注释修改配置，以对应实际 Mod 路径
+- **身体部位覆盖**：根据部位覆盖情况计算综合防护效果  
+- **Body part coverage:** Computes protection based on armor coverage over body parts.
 
-其默认参数通常为开发者生成 [扩展数据集](https://github.com/Laurence-042/rimworld-ordinatus-calculi-extra-data) 的时候的配置
+- **伤害类型模拟**：利器 / 钝器 / 热能伤害的不同穿透与减伤机制  
+- **Damage type simulation:** Different penetration/reduction rules for sharp, blunt, and heat damage.
 
-请注意，Mod 中提取出的数据仅应提交到上述 扩展数据集 仓库，这是因为 Mod 往往使用 CC 系类协议（或者未提及），将其包含在本仓库后本仓库的 License 声明将不再适用
+- **概率分布**：显示完全偏转 / 部分穿透 / 完全穿透的概率  
+- **Probability distribution:** Shows chances of deflection, partial penetration, and full penetration.
+
+- **实战场景**：  
+- **Practical scenarios:**
+
+  - **减伤概率分布**：特定穿甲值下的减伤概率  
+  - **Damage reduction distribution:** Damage reduction probability for a given AP value.
+
+  - **减伤期望曲线**：不同穿甲对应的减伤期望  
+  - **Expected reduction curves:** Expected damage reduction across different AP values.
+
+---
+
+## 快速开始  
+## Quick Start
+
+**在线演示 / Demo:**  
+https://laurence-042.github.io/project/rimworld-ordinatus-calculi/demo/
+
+---
+
+### 使用示例  
+### Usage Examples
+
+#### 调整语言（目前只支持简体中文和英文）  
+#### Change Language (currently supports Simplified Chinese & English)
+
+[](https://github.com/user-attachments/assets/b71f3d97-155a-42e4-b319-5aec8b4abba6)
+
+---
+
+#### 修改 / 添加扩展数据源  
+#### Modify / Add Extra Data Sources
+
+[](https://github.com/user-attachments/assets/f0dc649a-fc17-4fea-a141-c04ad07deb0e)
+[](https://github.com/user-attachments/assets/46d16361-98dc-4795-8953-aed9100842c5)
+
+默认数据源仓库：  
+Default dataset repository:  
+**[rimworld-ordinatus-calculi-extra-data](https://github.com/Laurence-042/rimworld-ordinatus-calculi-extra-data)**
+
+---
+
+#### 创建新的扩展数据源  
+#### Creating a New Extra Data Source
+
+执行前请修改 `tools\xml_def_data_parser\config.ts` 中的配置，以对应实际 Mod 路径。  
+Before running, edit the configuration in `tools\xml_def_data_parser\config.ts` to match your actual mod paths.
+
+默认配置通常用于为官方扩展数据集  
+[rimworld-ordinatus-calculi-extra-data](https://github.com/Laurence-042/rimworld-ordinatus-calculi-extra-data)  
+生成数据。  
+The default configuration matches the settings used when generating the official extra dataset above.
+
+请注意：从 Mod 中提取的数据 **只应提交到扩展数据集仓库**，因为许多 Mod 使用 CC 系列协议（或未声明许可）。若将其包含在本仓库中，本仓库的 License 条款将不再适用。  
+Note: Extracted Mod data **should only be committed to the extra dataset repository**, since many Mods use CC licenses (or lack proper licensing). Including such data in this main repository would invalidate its License terms.
+
+---
+
+执行命令：  
+Run:
 
 ```powershell
 npm run parse-mod
