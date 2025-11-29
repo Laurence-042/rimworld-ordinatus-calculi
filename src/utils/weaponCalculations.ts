@@ -1,11 +1,66 @@
 import { getWeaponDataSources as loadWeaponDataSources } from './weaponDataParser'
-import type { WeaponDataSource, WeaponParams } from '@/types/weapon'
+import type { ResolvedWeapon, Weapon, WeaponDataSource } from '@/types/weapon'
 import { WeaponQualityMultipliers } from '@/types/quality'
 import i18n from '@/i18n'
 import type { Ref } from 'vue'
 
 /**
- * 计算命中率
+ * 解析武器参数，生成包含所有真实值的对象
+ *
+ * 将武器的基础参数转换为应用品质加成后的真实值，方便后续计算使用。
+ * 所有数值都已经是可直接用于计算的形式（精度和穿甲转为0-1/0-2范围）。
+ *
+ * **RimWorld 品质加成：**
+ * - 伤害：普通=1.0x, 大师=1.25x, 传说=1.5x
+ * - 精度：普通=1.0x, 大师=1.35x, 传说=1.5x
+ * - 穿甲：普通=1.0x, 大师=1.25x, 传说=1.5x
+ *
+ * **DPS 计算公式：**
+ * ```
+ * DPS = (连发数量 × 实际伤害 × 60) / 攻击周期时长(ticks)
+ * 攻击周期 = 预热时间 + (连发数-1)×连发间隔 + 冷却时间
+ * ```
+ *
+ * @param weapon - 原始武器对象
+ * @returns 解析后的武器对象，包含所有真实值
+ */
+export function resolveWeapon(weapon: Weapon): ResolvedWeapon {
+  const qualityMultipliers = WeaponQualityMultipliers[weapon.quality]
+
+  // 精度值：基础值 * 品质系数，clamp到0-1
+  const clamp01 = (v: number) => Math.max(0, Math.min(1, v))
+  const accuracyMultiplier = qualityMultipliers.rangedAccuracy
+
+  // 穿甲值：基础值 * 品质系数，clamp到0-2
+  const apMultiplier = qualityMultipliers.rangedArmorPenetration
+  const armorPenetration = Math.max(0, Math.min(2, (weapon.armorPenetration / 100) * apMultiplier))
+
+  // 伤害值：基础值 * 品质系数
+  const damageMultiplier = qualityMultipliers.rangedDamage
+  const damage = weapon.damage * damageMultiplier
+
+  // 计算最大DPS（使用已计算的实际伤害）
+  const warmUpTicks = weapon.warmUp * 60
+  const cooldownTicks = weapon.cooldown * 60
+  const burstDuration = (Math.max(1, weapon.burstCount) - 1) * weapon.burstTicks
+  const cycleDuration = warmUpTicks + burstDuration + cooldownTicks
+  const totalDamage = Math.max(1, weapon.burstCount) * damage
+  const maxDPS = cycleDuration > 0 ? (totalDamage * 60) / cycleDuration : 0
+
+  return {
+    original: weapon,
+    damage,
+    armorPenetration,
+    accuracyTouch: clamp01((weapon.accuracyTouch / 100) * accuracyMultiplier),
+    accuracyShort: clamp01((weapon.accuracyShort / 100) * accuracyMultiplier),
+    accuracyMedium: clamp01((weapon.accuracyMedium / 100) * accuracyMultiplier),
+    accuracyLong: clamp01((weapon.accuracyLong / 100) * accuracyMultiplier),
+    maxDPS,
+  }
+}
+
+/**
+ * 根据距离计算解析后武器的命中率
  *
  * **RimWorld 命中率机制：**
  *
@@ -17,186 +72,41 @@ import type { Ref } from 'vue'
  *
  * 在两个档位之间，命中率采用**线性插值**：
  * ```
- * hitChance = baseAccuracy1 + (baseAccuracy2 - baseAccuracy1) × (distance - range1) / (range2 - range1)
+ * hitChance = accuracy1 + (accuracy2 - accuracy1) × (distance - range1) / (range2 - range1)
  * ```
  *
- * 如果目标距离超出武器射程，命中率为 0。
- *
- * **示例：**
- * ```
- * 武器：Touch=95%, Short=85%, Medium=70%, Long=50%
- *
- * 距离 = 2格：Touch 档位 → 95%
- * 距离 = 7格：Touch 和 Short 之间插值
- *   → 95% + (85% - 95%) × (7 - 3) / (12 - 3) = 95% - 10% × 4/9 ≈ 90.6%
- * 距离 = 17格：Medium 档位内插值
- *   → 70% + (50% - 70%) × (17 - 12) / (25 - 12) ≈ 62.3%
- * ```
- *
- * 根据目标距离选择对应的命中率档位，并在范围之间进行线性插值
- * 如果超出武器射程，返回 0
- *
- * @param params - 武器参数（包含各档位命中率和射程）
+ * @param resolved - 解析后的武器（已应用品质加成）
  * @param targetDistance - 目标距离（格）
  * @returns 命中率 (0-1)
  */
-export function calculateHitChance(params: WeaponParams, targetDistance: number): number {
-  // 超出射程返回 0
-  if (targetDistance > params.range) return 0
+export function getResolvedHitChance(resolved: ResolvedWeapon, targetDistance: number): number {
+  // 超出射程返回最小值
+  if (targetDistance > resolved.original.range) return 0.01
 
   // 负距离视为 0
-  if (targetDistance < 0) {
-    console.warn(`目标距离为负数: ${targetDistance}，已自动设为 0`)
-    targetDistance = 0
-  }
-
-  const { accuracyLong, accuracyMedium, accuracyShort, accuracyTouch, quality } = params
-
-  // 获取品质系数
-  const qualityMultipliers = WeaponQualityMultipliers[quality]
-  const accuracyMultiplier = qualityMultipliers.rangedAccuracy
-
-  // 转换为 0-1 范围并应用品质系数，然后 clamp 到 0-1
-  // 根据 RimWorld 源码，AdjustedAccuracy 返回的值会被用于插值
-  const clamp01 = (v: number) => Math.max(0, Math.min(1, v))
-  const accuracies = {
-    long: clamp01((accuracyLong / 100) * accuracyMultiplier),
-    medium: clamp01((accuracyMedium / 100) * accuracyMultiplier),
-    short: clamp01((accuracyShort / 100) * accuracyMultiplier),
-    touch: clamp01((accuracyTouch / 100) * accuracyMultiplier),
-  }
+  if (targetDistance < 0) targetDistance = 0
 
   let value: number
 
   if (targetDistance <= 3) {
-    value = accuracies.touch
+    value = resolved.accuracyTouch
   } else if (targetDistance <= 12) {
-    value = accuracies.touch + (accuracies.short - accuracies.touch) * ((targetDistance - 3) / 9)
+    value =
+      resolved.accuracyTouch +
+      (resolved.accuracyShort - resolved.accuracyTouch) * ((targetDistance - 3) / 9)
   } else if (targetDistance <= 25) {
-    value = accuracies.short + (accuracies.medium - accuracies.short) * ((targetDistance - 12) / 13)
+    value =
+      resolved.accuracyShort +
+      (resolved.accuracyMedium - resolved.accuracyShort) * ((targetDistance - 12) / 13)
   } else if (targetDistance <= 40) {
-    value = accuracies.medium + (accuracies.long - accuracies.medium) * ((targetDistance - 25) / 15)
+    value =
+      resolved.accuracyMedium +
+      (resolved.accuracyLong - resolved.accuracyMedium) * ((targetDistance - 25) / 15)
   } else {
-    value = accuracies.long
+    value = resolved.accuracyLong
   }
 
   return Math.max(0.01, Math.min(1.0, value))
-}
-
-/**
- * 计算最大DPS（无护甲、100%命中）
- *
- * **RimWorld DPS 计算公式：**
- *
- * ```
- * DPS = (总伤害 × 60) / 攻击周期时长
- * ```
- *
- * 其中：
- * - **总伤害** = 连发数量 × 单发伤害
- * - **攻击周期时长(ticks)** = 预热时间 + 连发持续时间 + 冷却时间
- *   - 预热时间(ticks) = warmUp(秒) × 60
- *   - 连发持续时间(ticks) = (burstCount - 1) × burstTicks
- *   - 冷却时间(ticks) = cooldown(秒) × 60
- * - **60** 是转换系数（1秒 = 60 ticks）
- *
- * **示例：**
- * ```
- * 武器：伤害=12, 连发=3, 连发间隔=8ticks, 预热=1.5s, 冷却=2.1s
- *
- * 总伤害 = 3 × 12 = 36
- * 攻击周期 = (1.5×60) + (3-1)×8 + (2.1×60)
- *         = 90 + 16 + 126
- *         = 232 ticks
- *
- * DPS = (36 × 60) / 232 ≈ 9.31
- * ```
- *
- * @param params - 武器参数
- * @returns 最大DPS值
- */
-export function calculateMaxDPS(params: WeaponParams): number {
-  const { burstCount, burstTicks, cooldown, damage, quality, warmUp } = params
-
-  // 获取品质系数
-  const qualityMultipliers = WeaponQualityMultipliers[quality]
-  const damageMultiplier = qualityMultipliers.rangedDamage
-
-  // 应用品质系数到伤害
-  const actualDamage = damage * damageMultiplier
-
-  // 验证参数
-  if (damage < 0) {
-    console.warn(`伤害值为负数: ${damage}，已自动设为 0`)
-    return 0
-  }
-  if (burstCount < 1) {
-    console.warn(`连发数量小于1: ${burstCount}，已自动设为 1`)
-  }
-
-  const warmUpTicks = warmUp * 60
-  const cooldownTicks = cooldown * 60
-  const burstDuration = (Math.max(1, burstCount) - 1) * burstTicks
-  const cycleDuration = warmUpTicks + burstDuration + cooldownTicks
-
-  // 防止除以 0
-  if (cycleDuration <= 0) {
-    console.error(`攻击周期为非正数: ${cycleDuration}，无法计算DPS`)
-    return 0
-  }
-
-  const totalDamage = Math.max(1, burstCount) * actualDamage
-
-  return (totalDamage * 60) / cycleDuration
-}
-
-/**
- * 获取应用品质系数后的护甲穿透值
- * 根据 RimWorld 源码，穿甲值限制在0-200%
- *
- * @param params - 武器参数
- * @returns 实际护甲穿透值 (0-200)
- */
-export function getActualArmorPenetration(params: WeaponParams): number {
-  const qualityMultipliers = WeaponQualityMultipliers[params.quality]
-  const value = params.armorPenetration * qualityMultipliers.rangedArmorPenetration
-  // Clamp 到0-200%
-  return Math.max(0, Math.min(200, value))
-}
-
-/**
- * 获取应用品质系数后的伤害值
- *
- * @param params - 武器参数
- * @returns 实际伤害值
- */
-export function getActualDamage(params: WeaponParams): number {
-  const qualityMultipliers = WeaponQualityMultipliers[params.quality]
-  return params.damage * qualityMultipliers.rangedDamage
-}
-
-/**
- * 获取应用品质系数后的精度值
- * 根据 RimWorld 源码，精度值限制在0-100%
- *
- * @param params - 武器参数
- * @returns 实际精度值对象 { touch, short, medium, long }，值为 0-100 范围
- */
-export function getActualAccuracies(params: WeaponParams): {
-  touch: number
-  short: number
-  medium: number
-  long: number
-} {
-  const qualityMultipliers = WeaponQualityMultipliers[params.quality]
-  const multiplier = qualityMultipliers.rangedAccuracy
-  // Clamp 到0-100%
-  return {
-    touch: Math.max(0, Math.min(100, params.accuracyTouch * multiplier)),
-    short: Math.max(0, Math.min(100, params.accuracyShort * multiplier)),
-    medium: Math.max(0, Math.min(100, params.accuracyMedium * multiplier)),
-    long: Math.max(0, Math.min(100, params.accuracyLong * multiplier)),
-  }
 }
 
 // 缓存

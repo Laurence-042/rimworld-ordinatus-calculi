@@ -77,6 +77,27 @@ export interface WeaponWithCalculations {
 }
 
 /**
+ * 解析后的武器参数（含品质加成的真实值）
+ *
+ * 所有数值都已应用品质系数，可直接用于计算
+ */
+export interface ResolvedWeapon {
+  // 原始武器引用
+  original: Weapon
+
+  // 真实数值（含品质加成）
+  damage: number // 实际伤害
+  armorPenetration: number // 实际穿甲 (0-2 范围)
+  accuracyTouch: number // 实际贴近精度 (0-1 范围)
+  accuracyShort: number // 实际近距离精度 (0-1 范围)
+  accuracyMedium: number // 实际中距离精度 (0-1 范围)
+  accuracyLong: number // 实际远距离精度 (0-1 范围)
+
+  // 计算结果
+  maxDPS: number // 最大DPS（100%命中、无护甲）
+}
+
+/**
  * DPS 曲线数据
  */
 export interface DPSCurve {

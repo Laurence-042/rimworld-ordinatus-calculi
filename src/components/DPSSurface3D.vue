@@ -3,15 +3,15 @@ import { onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Plotly from 'plotly.js-dist-min'
 import { useResizeObserver, useDebounceFn } from '@vueuse/core'
-import type { Weapon } from '@/types/weapon'
-import { calculateHitChance, calculateMaxDPS } from '@/utils/weaponCalculations'
+import type { ResolvedWeapon } from '@/types/weapon'
+import { getResolvedHitChance } from '@/utils/weaponCalculations'
 import { calculateDPSDistribution } from '@/utils/armorCalculations'
 import { transposeMatrix, calculateSurfaceIntersection } from '@/utils/plotlyUtils'
 
 const { t } = useI18n()
 
 interface Props {
-  weapons: Weapon[]
+  resolvedWeapons: ResolvedWeapon[]
 }
 
 const props = defineProps<Props>()
@@ -19,7 +19,9 @@ const props = defineProps<Props>()
 const chartContainer = ref<HTMLDivElement | null>(null)
 
 // 为单个武器生成3D曲面数据
-function generateWeaponSurfaceData(weapon: Weapon) {
+function generateWeaponSurfaceData(resolved: ResolvedWeapon) {
+  const weapon = resolved.original
+
   // 目标距离范围：0-50格
   const distances = []
   for (let d = 0; d <= 50; d += 1) {
@@ -45,14 +47,13 @@ function generateWeaponSurfaceData(weapon: Weapon) {
     for (let j = 0; j < armorValues.length; j++) {
       const armor = armorValues[j]! / 100
 
-      // 计算该距离下的命中率
-      const hitChance = calculateHitChance(weapon, distance)
-      const maxDPS = calculateMaxDPS(weapon)
+      // 使用解析后的武器计算命中率
+      const hitChance = getResolvedHitChance(resolved, distance)
 
       const weaponParams = {
-        armorPenetration: weapon.armorPenetration / 100,
+        armorPenetration: resolved.armorPenetration,
         hitChance,
-        maxDPS,
+        maxDPS: resolved.maxDPS,
       }
 
       const distribution = calculateDPSDistribution(weaponParams, armor)
@@ -67,7 +68,7 @@ function generateWeaponSurfaceData(weapon: Weapon) {
         `<b>${t('weapon.targetDistance')}:</b> ${distance} ${t('unit.tile')}`,
         `<b>${t('armor.armorSharp')}:</b> ${armorValues[j]}%`,
         `<b>${t('weapon.hitChance')}:</b> ${(hitChance * 100).toFixed(2)}%`,
-        `<b>${t('weapon.maxDPS')}:</b> ${maxDPS.toFixed(2)}`,
+        `<b>${t('weapon.maxDPS')}:</b> ${resolved.maxDPS.toFixed(2)}`,
         `----------------`,
         `<b>${t('chart.miss')}:</b> ${(distribution.missProb * 100).toFixed(2)}%`,
         `<b>${t('chart.deflectFull')}:</b> ${(distribution.zeroDamageProb * 100).toFixed(2)}%`,
@@ -83,21 +84,32 @@ function generateWeaponSurfaceData(weapon: Weapon) {
     hoverTexts.push(hoverRow)
   }
 
-  return { weapon, distances, armorValues, zData, hoverTexts, maxDPS: calculateMaxDPS(weapon) }
+  return { resolved, distances, armorValues, zData, hoverTexts }
+}
+
+// 定义曲面数据缓存类型
+interface SurfaceDataCache {
+  resolved: ResolvedWeapon
+  distances: number[]
+  armorValues: number[]
+  zData: number[][]
+  hoverTexts: string[][]
 }
 
 // 绘制3D图表
 function plotSurface() {
-  if (!chartContainer.value || !props.weapons || props.weapons.length === 0) return
+  if (!chartContainer.value || !props.resolvedWeapons || props.resolvedWeapons.length === 0) return
 
   const plotData: Plotly.Data[] = []
 
   // 先为所有武器生成曲面数据
-  const surfaceDataCache = props.weapons.map((weapon) => generateWeaponSurfaceData(weapon))
+  const surfaceDataCache: SurfaceDataCache[] = props.resolvedWeapons.map((resolved) =>
+    generateWeaponSurfaceData(resolved),
+  )
 
   // 为每个武器创建一个曲面
   surfaceDataCache.forEach((surfaceData) => {
-    const { weapon, distances, armorValues, zData, hoverTexts } = surfaceData
+    const { resolved, distances, armorValues, zData, hoverTexts } = surfaceData
 
     // 数据结构：zData[distanceIndex][armorIndex]
     // 目标映射：x=distances, y=armorValues, z=DPS
@@ -107,7 +119,7 @@ function plotSurface() {
 
     plotData.push({
       type: 'surface',
-      name: weapon.name,
+      name: resolved.original.name,
       x: distances, // 目标距离
       y: armorValues, // 护甲值
       z: zDataTransposed, // DPS
@@ -132,10 +144,10 @@ function plotSurface() {
   })
 
   // 如果有多个武器，绘制曲面相交线
-  if (props.weapons.length >= 2) {
+  if (props.resolvedWeapons.length >= 2) {
     // 为每对武器计算交线
-    for (let i = 0; i < props.weapons.length; i++) {
-      for (let j = i + 1; j < props.weapons.length; j++) {
+    for (let i = 0; i < props.resolvedWeapons.length; i++) {
+      for (let j = i + 1; j < props.resolvedWeapons.length; j++) {
         const surface1 = surfaceDataCache[i]!
         const surface2 = surfaceDataCache[j]!
 
@@ -144,7 +156,7 @@ function plotSurface() {
           surface2.zData,
           surface1.distances,
           surface1.armorValues,
-          { x: 50, y: 200, z: Math.max(surface1.maxDPS, surface2.maxDPS, 1) },
+          { x: 50, y: 200, z: Math.max(surface1.resolved.maxDPS, surface2.resolved.maxDPS, 1) },
         )
 
         // 为每条独立的交线段添加一个轨迹
@@ -155,8 +167,8 @@ function plotSurface() {
               mode: 'lines',
               name:
                 curveIndex === 0
-                  ? `${surface1.weapon.name} ∩ ${surface2.weapon.name}`
-                  : `${surface1.weapon.name} ∩ ${surface2.weapon.name} (${curveIndex + 1})`,
+                  ? `${surface1.resolved.original.name} ∩ ${surface2.resolved.original.name}`
+                  : `${surface1.resolved.original.name} ∩ ${surface2.resolved.original.name} (${curveIndex + 1})`,
               x: curve.x,
               y: curve.y,
               z: curve.z,
@@ -238,7 +250,7 @@ const debouncedPlotSurface = useDebounceFn(() => {
 }, 300)
 
 watch(
-  () => props.weapons,
+  () => props.resolvedWeapons,
   () => {
     debouncedPlotSurface()
   },

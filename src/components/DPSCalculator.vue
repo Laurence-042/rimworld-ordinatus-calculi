@@ -1,16 +1,13 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Delete, QuestionFilled } from '@element-plus/icons-vue'
 import {
-  calculateHitChance,
-  calculateMaxDPS,
   getWeaponDataSources,
-  getActualArmorPenetration,
-  getActualDamage,
-  getActualAccuracies,
+  resolveWeapon,
+  getResolvedHitChance,
 } from '@/utils/weaponCalculations'
-import type { Weapon, WeaponDataSource } from '@/types/weapon'
+import type { ResolvedWeapon, Weapon, WeaponDataSource } from '@/types/weapon'
 import { QualityCategory, getQualityOptions } from '@/types/quality'
 import DPSChart from './DPSChart.vue'
 import DPSSurface3D from './DPSSurface3D.vue'
@@ -137,14 +134,21 @@ const removeWeapon = (id: number) => {
   }
 }
 
-// 计算辅助函数
-const getWeaponStats = (weapon: Weapon) => {
-  const hitChance = calculateHitChance(weapon, targetDistance.value)
-  const maxDPS = calculateMaxDPS(weapon)
-  const armorPenetration = getActualArmorPenetration(weapon)
-  const damage = getActualDamage(weapon)
-  const accuracies = getActualAccuracies(weapon)
-  return { hitChance, maxDPS, armorPenetration, damage, accuracies }
+// 解析后的武器列表（包含所有品质加成后的真实值）
+const resolvedWeapons = computed<ResolvedWeapon[]>(() => {
+  return weapons.value.map((weapon) => resolveWeapon(weapon))
+})
+
+// 根据武器ID获取解析后的武器数据
+const getResolved = (weapon: Weapon): ResolvedWeapon | undefined => {
+  return resolvedWeapons.value.find((r) => r.original.id === weapon.id)
+}
+
+// 获取武器在当前距离下的命中率
+const getHitChance = (weapon: Weapon): number => {
+  const resolved = getResolved(weapon)
+  if (!resolved) return 0
+  return getResolvedHitChance(resolved, targetDistance.value)
 }
 
 // 生命周期
@@ -389,42 +393,42 @@ watch(locale, async () => {
                 <div class="actual-stats-grid">
                   <div class="stat-row">
                     <span class="stat-label">{{ t('weapon.damage') }}:</span>
-                    <span class="stat-value">{{ getWeaponStats(weapon).damage.toFixed(1) }}</span>
+                    <span class="stat-value">{{ getResolved(weapon)?.damage.toFixed(1) }}</span>
                   </div>
                   <div class="stat-row">
                     <span class="stat-label">{{ t('weapon.armorPenetrationShort') }}:</span>
                     <span class="stat-value"
-                      >{{ getWeaponStats(weapon).armorPenetration.toFixed(1) }}%</span
+                      >{{ ((getResolved(weapon)?.armorPenetration ?? 0) * 100).toFixed(1) }}%</span
                     >
                   </div>
                   <div class="stat-row">
                     <span class="stat-label">{{ t('weapon.accuracyTouch') }}:</span>
                     <span class="stat-value"
-                      >{{ getWeaponStats(weapon).accuracies.touch.toFixed(1) }}%</span
+                      >{{ ((getResolved(weapon)?.accuracyTouch ?? 0) * 100).toFixed(1) }}%</span
                     >
                   </div>
                   <div class="stat-row">
                     <span class="stat-label">{{ t('weapon.accuracyShort') }}:</span>
                     <span class="stat-value"
-                      >{{ getWeaponStats(weapon).accuracies.short.toFixed(1) }}%</span
+                      >{{ ((getResolved(weapon)?.accuracyShort ?? 0) * 100).toFixed(1) }}%</span
                     >
                   </div>
                   <div class="stat-row">
                     <span class="stat-label">{{ t('weapon.accuracyMedium') }}:</span>
                     <span class="stat-value"
-                      >{{ getWeaponStats(weapon).accuracies.medium.toFixed(1) }}%</span
+                      >{{ ((getResolved(weapon)?.accuracyMedium ?? 0) * 100).toFixed(1) }}%</span
                     >
                   </div>
                   <div class="stat-row">
                     <span class="stat-label">{{ t('weapon.accuracyLong') }}:</span>
                     <span class="stat-value"
-                      >{{ getWeaponStats(weapon).accuracies.long.toFixed(1) }}%</span
+                      >{{ ((getResolved(weapon)?.accuracyLong ?? 0) * 100).toFixed(1) }}%</span
                     >
                   </div>
                   <div class="stat-row">
                     <span class="stat-label">{{ t('weapon.maxDPS') }}:</span>
                     <span class="stat-value highlight">{{
-                      getWeaponStats(weapon).maxDPS.toFixed(2)
+                      getResolved(weapon)?.maxDPS.toFixed(2)
                     }}</span>
                   </div>
                 </div>
@@ -439,7 +443,7 @@ watch(locale, async () => {
               style="margin-top: 10px"
               :description="
                 t('weapon.resultSummary2D', {
-                  hitChance: (getWeaponStats(weapon).hitChance * 100).toFixed(2),
+                  hitChance: (getHitChance(weapon) * 100).toFixed(2),
                 })
               "
             />
@@ -480,10 +484,10 @@ watch(locale, async () => {
         <div class="chart-container">
           <DPSChart
             v-if="chartMode === '2d'"
-            :weapons="weapons"
+            :resolved-weapons="resolvedWeapons"
             :target-distance="targetDistance"
           />
-          <DPSSurface3D v-else :weapons="weapons" />
+          <DPSSurface3D v-else :resolved-weapons="resolvedWeapons" />
         </div>
       </el-splitter-panel>
     </el-splitter>

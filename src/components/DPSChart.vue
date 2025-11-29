@@ -13,8 +13,8 @@ import {
   Title,
   Tooltip,
 } from 'chart.js'
-import type { Weapon } from '@/types/weapon'
-import { calculateHitChance, calculateMaxDPS } from '@/utils/weaponCalculations'
+import type { ResolvedWeapon } from '@/types/weapon'
+import { getResolvedHitChance } from '@/utils/weaponCalculations'
 import { calculateDPSCurve, calculateDPSDistribution } from '@/utils/armorCalculations'
 
 const { t } = useI18n()
@@ -32,7 +32,7 @@ ChartJS.register(
 )
 
 interface Props {
-  weapons: Weapon[]
+  resolvedWeapons: ResolvedWeapon[]
   targetDistance: number
 }
 
@@ -40,13 +40,12 @@ const props = defineProps<Props>()
 
 // 在组件内部计算所有武器的 DPS 数据
 const weaponsData = computed(() => {
-  return props.weapons.map((weapon) => {
-    const hitChance = calculateHitChance(weapon, props.targetDistance)
-    const maxDPS = calculateMaxDPS(weapon)
+  return props.resolvedWeapons.map((resolved) => {
+    const hitChance = getResolvedHitChance(resolved, props.targetDistance)
     const armorParams = {
-      armorPenetration: weapon.armorPenetration / 100,
+      armorPenetration: resolved.armorPenetration,
       hitChance,
-      maxDPS,
+      maxDPS: resolved.maxDPS,
     }
     const dpsCurve = calculateDPSCurve(armorParams)
     const distributions = dpsCurve.armorValues.map((armor) =>
@@ -54,9 +53,8 @@ const weaponsData = computed(() => {
     )
 
     return {
-      weapon,
+      resolved,
       hitChance,
-      maxDPS,
       dpsCurve,
       distributions,
     }
@@ -75,10 +73,10 @@ const chartData = computed(() => {
   const labels = weaponsData.value[0]!.dpsCurve.armorValues.map((v) => `${v}%`)
 
   const datasets = weaponsData.value.map((weaponData) => ({
-    label: weaponData.weapon.name,
+    label: weaponData.resolved.original.name,
     data: weaponData.dpsCurve.dpsValues,
-    borderColor: weaponData.weapon.color,
-    backgroundColor: `${weaponData.weapon.color}20`,
+    borderColor: weaponData.resolved.original.color,
+    backgroundColor: `${weaponData.resolved.original.color}20`,
     borderWidth: 2,
     fill: true,
     tension: 0.4,
@@ -114,7 +112,7 @@ const chartOptions = computed(() => ({
 
           const weaponData = weaponsData.value[context.datasetIndex]
           if (!weaponData) return ''
-          return `${weaponData.weapon.name} - ${t('weapon.expectedDPS')}: ${y.toFixed(3)}`
+          return `${weaponData.resolved.original.name} - ${t('weapon.expectedDPS')}: ${y.toFixed(3)}`
         },
         afterLabel: (context: { dataIndex: number; datasetIndex: number }) => {
           const index = context.dataIndex
