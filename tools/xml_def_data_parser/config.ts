@@ -1,28 +1,28 @@
 /**
- * MOD解析配置文件
+ * MOD解析配置文件 / MOD Parsing Configuration File
  *
- * 使用方法：
- * 1. 修改MOD_CONFIGS数组，添加你的MOD路径
- * 2. 运行 npm run parse-mod
+ * 使用方法 / Usage:
+ * 1. 修改MOD_CONFIGS数组，添加你的MOD路径 / Edit MOD_CONFIGS array, add your MOD paths
+ * 2. 运行 npm run parse-mod / Run npm run parse-mod
  */
 
 export interface ModConfig {
-  /** MOD目录的绝对路径 */
+  /** MOD目录的绝对路径 / Absolute path to MOD directory */
   path: string
-  /** 数据来源URL（必填）- Steam创意工坊链接或官方来源 */
+  /** 数据来源URL（必填）- Steam创意工坊链接或官方来源 / Source URL (required) - Steam Workshop link or official source */
   sourceUrl: string
-  /** （可选）自定义输出文件名，默认使用About.xml中的名称 */
+  /** （可选）自定义输出文件名，默认使用About.xml中的名称 / (Optional) Custom output name, defaults to name from About.xml */
   outputName?: string
-  /** （可选）是否启用此MOD的解析，默认true */
+  /** （可选）是否启用此MOD的解析，默认true / (Optional) Enable parsing for this MOD, defaults to true */
   enabled?: boolean
 }
 
 /**
- * MOD配置列表
+ * MOD配置列表 / MOD Configuration List
  *
- * 示例路径格式：
+ * 示例路径格式 / Example path formats:
  * - Steam Workshop: 'D:\\SteamLibrary\\steamapps\\workshop\\content\\294100\\<MOD_ID>'
- * - 本地MOD: 'C:\\Program Files\\Steam\\steamapps\\common\\RimWorld\\Mods\\<MOD_NAME>'
+ * - 本地MOD / Local MOD: 'C:\\Program Files\\Steam\\steamapps\\common\\RimWorld\\Mods\\<MOD_NAME>'
  */
 export const MOD_CONFIGS: ModConfig[] = [
   // {
@@ -86,18 +86,18 @@ export const MOD_CONFIGS: ModConfig[] = [
     enabled: true,
   },
   {
-    // Milira
+    // Milira / 米莉拉
     path: 'D:\\SteamLibrary\\steamapps\\workshop\\content\\294100\\3256974620',
     sourceUrl: 'https://steamcommunity.com/sharedfiles/filedetails/?id=3256974620',
     enabled: true,
   },
   {
-    // Milira empire
+    // Milira empire / 米莉拉帝国
     path: 'D:\\SteamLibrary\\steamapps\\workshop\\content\\294100\\3588393755',
     sourceUrl: 'https://steamcommunity.com/sharedfiles/filedetails/?id=3588393755',
     enabled: true,
   },
-  // 添加更多MOD配置...
+  // 添加更多MOD配置... / Add more MOD configs...
   // {
   //   path: 'D:\\SteamLibrary\\steamapps\\workshop\\content\\294100\\1234567890',
   //   sourceUrl: 'https://steamcommunity.com/sharedfiles/filedetails/?id=1234567890',
@@ -107,15 +107,15 @@ export const MOD_CONFIGS: ModConfig[] = [
 ]
 
 /**
- * 调试选项
+ * 调试选项 / Debug Options
  */
 export const DEBUG_OPTIONS = {
-  /** 是否输出详细日志 */
+  /** 是否输出详细日志 / Output verbose logs */
   verbose: true,
-  /** 是否输出原始XML节点信息（用于调试） */
+  /** 是否输出原始XML节点信息（用于调试） / Output raw XML node info (for debugging) */
   dumpRawNodes: false,
-  /** 是否跳过CSV生成（仅测试解析） */
+  /** 是否跳过CSV生成（仅测试解析） / Skip CSV generation (parsing test only) */
   skipCSVGeneration: false,
-  /** 输出到其他目录，留空会输出到默认的 public/data 目录 */
+  /** 相对于public的目录或绝对路径，留空使用默认的 public/data / Path relative to public or absolute path, leave empty for default public/data */
   outputDirectory: 'data_mods',
 }

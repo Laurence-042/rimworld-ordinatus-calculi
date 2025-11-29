@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { ElMessage } from 'element-plus'
 import DPSCalculator from './components/DPSCalculator.vue'
 import ArmorCalculator from './components/ArmorCalculator.vue'
 import LanguageSelector from './components/LanguageSelector.vue'
@@ -10,17 +11,6 @@ import DataSourceSettings from './components/DataSourceSettings.vue'
 const { t, locale } = useI18n()
 const calculationMode = ref<'weapon' | 'armor'>('weapon')
 
-// 手机端检测
-const isMobileWarningClosed = ref(false)
-const isMobileDevice = computed(() => {
-  if (isMobileWarningClosed.value) return false
-  // 通过屏幕宽度判断是否为手机
-  if (typeof window !== 'undefined') {
-    return window.innerWidth <= 768
-  }
-  return false
-})
-
 // Data source settings drawer ref
 const dataSourceSettingsRef = ref<InstanceType<typeof DataSourceSettings> | null>(null)
 
@@ -28,6 +18,17 @@ const dataSourceSettingsRef = ref<InstanceType<typeof DataSourceSettings> | null
 function openDataSourceSettings() {
   dataSourceSettingsRef.value?.openDrawer()
 }
+
+// 手机端检测并显示警告
+onMounted(() => {
+  if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+    ElMessage.warning({
+      message: `${t('app.mobileWarningTitle')}: ${t('app.mobileWarningDescription')}`,
+      duration: 0,
+      showClose: true,
+    })
+  }
+})
 
 // Update document title when locale changes
 watch(
@@ -41,19 +42,6 @@ watch(
 
 <template>
   <div class="app-container">
-    <!-- 手机端提示 -->
-    <el-alert
-      v-if="isMobileDevice"
-      :title="t('app.mobileWarningTitle')"
-      type="warning"
-      :closable="true"
-      show-icon
-      class="mobile-warning"
-      @close="isMobileWarningClosed = true"
-    >
-      {{ t('app.mobileWarningDescription') }}
-    </el-alert>
-
     <header class="app-header">
       <h1 class="app-title">
         {{ t('app.title') }}
@@ -151,10 +139,6 @@ watch(
   height: 100%;
   font-size: 1.5em;
   color: var(--el-text-color-secondary);
-}
-
-.mobile-warning {
-  flex-shrink: 0;
 }
 
 @media (max-width: 768px) {

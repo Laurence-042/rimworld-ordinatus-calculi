@@ -4,10 +4,6 @@
 
 一个基于 Vue 3 + TypeScript 的 RimWorld 战斗机制计算器，用于计算给定武器在不同的距离/护甲情况下的DPS，以及给定护甲组合在不同单发伤害/穿甲情况下的受伤期望。
 
-![Vue 3](https://img.shields.io/badge/Vue-3.5-brightgreen) ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue) ![Element Plus](https://img.shields.io/badge/Element%20Plus-2.11-409EFF)
-
-[TOC]
-
 ## 功能特性
 
 ### 武器 DPS 计算器（Weapon-Centric）
@@ -32,6 +28,26 @@
 ## 快速开始
 
 [Demo](https://laurence-042.github.io/project/rimworld-ordinatus-calculi/demo/)
+
+### 使用示例
+
+#### 调整语言（目前只支持简体中文和英文）
+
+#### 修改/添加扩展数据源
+
+默认数据源是 [rimworld-ordinatus-calculi-extra-data](https://github.com/Laurence-042/rimworld-ordinatus-calculi-extra-data)，可以使用这个项目中的
+
+#### 创建新的扩展数据源
+
+执行前请参照 `tools\xml_def_data_parser\config.ts` 中的注释修改配置，以对应实际 Mod 路径
+
+其默认参数通常为开发者生成 [扩展数据集](https://github.com/Laurence-042/rimworld-ordinatus-calculi-extra-data) 的时候的配置
+
+请注意，Mod 中提取出的数据仅应提交到上述 扩展数据集 仓库，这是因为 Mod 往往使用 CC 系类协议（或者未提及），将其包含在本仓库后本仓库的 License 声明将不再适用
+
+```powershell
+npm run parse-mod
+```
 
 ### 环境要求
 
@@ -71,18 +87,6 @@ npm run type-check
 ```powershell
 npm run lint      # ESLint 检查并自动修复
 npm run format    # Prettier 格式化
-```
-
-### 预设数据生成
-
-执行前请参照 `tools\xml_def_data_parser\config.ts` 中的注释修改配置，以对应实际 Mod 路径
-
-其默认参数通常为开发者生成 [扩展数据集](https://github.com/Laurence-042/rimworld-ordinatus-calculi-extra-data) 的时候的配置
-
-请注意，Mod 中提取出的数据仅应提交到上述 扩展数据集 仓库，这是因为 Mod 往往使用 CC 系类协议（或者未提及），将其包含在本仓库后本仓库的 License 声明将不再适用
-
-```powershell
-npm run parse-mod # 从 RimWorld 游戏本体和 Mod 的 XML 中提取数据
 ```
 
 ## 核心计算公式
@@ -210,7 +214,7 @@ tools/xml_def_data_parser/     # RimWorld XML 数据提取工具
    - 解析 MOD 的 XML 定义文件
    - 处理继承关系（ParentName）
    - 提取多语言翻译
-   - 生成 CSV 文件到 `public/data/`
+   - 生成 CSV 文件到 `public/data/`（或者其他`config.js`里指定的相对于`public/`的路径）
    - 更新 `manifest.json`
    - 生成带有来源归属的 `README.md`
 
@@ -238,10 +242,6 @@ tools/xml_def_data_parser/     # RimWorld XML 数据提取工具
 - `text` 数据的第一维对应 X 轴，第二维对应 Y 轴：`text[i][j]` 对应 `(x[i], y[j])`
 - 所以画 3D 图时，`z` 需要转置但 `text` 不用
 - 详见 `src/utils/plotlyUtils.ts` 里的 `transposeMatrix()` 注释
-
-## 使用示例
-
-这还要啥示例啊，在右上角选一个模式，然后左边调数据右边看结果就完事了
 
 ## 许可证
 
@@ -346,20 +346,17 @@ MIT 许可仅适用于本项目的源代码、计算逻辑的实现方式，以�
 
 ![](https://github.com/user-attachments/assets/b07a471a-d33c-4012-8330-17bae4c01557)
 
-
-
 ### 极差巨弓射穿大师级海军头？
 
 不同于流行的“极差巨弓一箭射穿大师级海军头盔”meme，实际上即使是一般的巨弓（15%穿甲）也不可能完全打穿大师级海军头盔，只是有 30.65% 造成半数钝器伤害。
 
-而减伤后 8.5 的钝器伤害并不足以致命，只有打中大脑才能让健康殖民者倒地。这种情况发生的概率实际上大约是 30.65%（头盔未内完全抵挡伤害） \* 0.41%（命中大脑概率）= 0.125665%，也就是说至少要挨 2385 才有 95% 的概率能至少射到一次大脑 
+而减伤后 8.5 的钝器伤害并不足以致命，只有打中大脑才能让健康殖民者倒地。这种情况发生的概率实际上大约是 30.65%（头盔未内完全抵挡伤害） \* 0.41%（命中大脑概率）= 0.125665%，也就是说至少要挨 2385 才有 95% 的概率能至少射到一次大脑
 
 而且别忘了巨弓的前后摇都极长，精度也不算好，再加上殖民者通常在掩体后面吃掩体加成，本身“挨1下”就已经不算是高概率事件了
 
 > 虽然乍一听似乎很离谱，但我觉得这主要是因为我们下意识把海军甲当成 机动龙骑 里的那种载具级装甲了。但其实从海军甲描述和英文来看，其设定比起钢铁侠那种近未来都没戏的玩意，更接近辐射系列里的动力甲（两者的英文都是 PoweredArmor）。你要说能扛几吨垃圾健步如飞、挨了十几发步枪直射都不倒的部落老哥能拉开的巨弓，在 2385 次尝试后才能以刁钻的角度击碎眼部透明材料并让材料击穿眼睛伤害大脑，那我觉得也不是说不通
 
 ![]("https://github.com/user-attachments/assets/7023f356-2a2c-4453-8da1-5610258c112b)
-
 
 ### 为什么速射机枪是神？
 
