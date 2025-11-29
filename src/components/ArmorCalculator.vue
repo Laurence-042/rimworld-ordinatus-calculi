@@ -1298,15 +1298,236 @@ watch(locale, async () => {
     overflow: visible;
   }
 
-  .left-panel,
-  .right-panel {
+  :deep(.left-panel),
+  :deep(.middle-panel),
+  :deep(.right-panel) {
     height: auto;
     overflow: visible;
     width: 100%;
   }
 
-  .right-panel {
+  :deep(.right-panel) {
     min-height: 600px;
+  }
+}
+
+/* 平板适配 */
+@media (max-width: 768px) {
+  :deep(.left-panel),
+  :deep(.middle-panel) {
+    padding: 15px;
+  }
+
+  :deep(.right-panel) {
+    padding: 15px;
+    min-height: 500px;
+  }
+
+  .armor-card :deep(.el-form-item) {
+    margin-bottom: 12px;
+  }
+
+  .armor-card :deep(.el-form-item__label) {
+    width: 8em !important;
+    font-size: 0.9em;
+  }
+
+  .chart-controls {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .chart-hint {
+    font-size: 0.85em;
+  }
+
+  /* 品质按钮在平板上 */
+  .quality-button:deep(.el-radio-button__inner) {
+    padding: 8px 12px;
+    font-size: 0.85em;
+  }
+
+  .layer-item {
+    padding: 12px;
+  }
+
+  .actual-armor-values {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+/* 手机适配 */
+@media (max-width: 480px) {
+  :deep(.left-panel),
+  :deep(.middle-panel) {
+    padding: 10px;
+  }
+
+  :deep(.right-panel) {
+    padding: 10px;
+    min-height: 400px;
+  }
+
+  .global-section {
+    margin-bottom: 15px;
+  }
+
+  .global-section :deep(.el-card__body) {
+    padding: 12px;
+  }
+
+  .global-section :deep(.el-form-item) {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+
+  .global-section :deep(.el-form-item__label) {
+    width: 100% !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+    padding-bottom: 4px;
+    padding-right: 0 !important;
+    font-size: 0.85em;
+  }
+
+  .global-section :deep(.el-form-item__content) {
+    width: 100%;
+    margin-left: 0 !important;
+  }
+
+  .armor-card {
+    margin-bottom: 15px;
+  }
+
+  .armor-card :deep(.el-card__header) {
+    padding: 12px;
+  }
+
+  .armor-card :deep(.el-card__body) {
+    padding: 12px;
+  }
+
+  .armor-card :deep(.el-form-item) {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+
+  .armor-card :deep(.el-form-item__label) {
+    width: 100% !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+    padding-bottom: 4px;
+    padding-right: 0 !important;
+    font-size: 0.85em;
+  }
+
+  .armor-card :deep(.el-form-item__content) {
+    width: 100%;
+    margin-left: 0 !important;
+  }
+
+  .armor-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .armor-name-input {
+    width: 100%;
+  }
+
+  .armor-name-input :deep(.el-input__inner) {
+    font-size: 1em;
+  }
+
+  .layer-item {
+    padding: 10px;
+  }
+
+  .layer-item :deep(.el-form-item) {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+
+  .layer-item :deep(.el-form-item__label) {
+    width: 100% !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+    padding-bottom: 4px;
+    padding-right: 0 !important;
+    font-size: 0.85em;
+  }
+
+  .layer-item :deep(.el-form-item__content) {
+    width: 100%;
+    margin-left: 0 !important;
+  }
+
+  .layer-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .layer-title {
+    font-size: 0.9em;
+  }
+
+  /* 品质按钮在手机上 */
+  .armor-card :deep(.el-radio-group) {
+    flex-wrap: wrap;
+  }
+
+  .quality-button:deep(.el-radio-button__inner) {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .chart-controls :deep(.el-radio-button__inner) {
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+
+  .coverage-hint {
+    font-size: 0.8em;
+  }
+
+  .coverage-tree-title {
+    font-size: 0.9em;
+  }
+
+  .tree-node-content {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .layer-tags {
+    gap: 2px;
+  }
+
+  .layer-tags :deep(.el-tag) {
+    font-size: 0.7em;
+    padding: 0 4px;
+  }
+
+  /* 材料折叠面板手机适配 */
+  .material-collapse :deep(.el-collapse-item__header) {
+    font-size: 0.9em;
+    padding: 8px 0;
+  }
+
+  .slider-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .slider-label {
+    font-size: 0.85em;
+    min-width: auto;
   }
 }
 

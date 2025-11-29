@@ -171,4 +171,16 @@ const chartOptions = computed(() => ({
   height: 400px;
   position: relative;
 }
+
+@media (max-width: 768px) {
+  .chart-container {
+    height: 350px;
+  }
+}
+
+@media (max-width: 480px) {
+  .chart-container {
+    height: 300px;
+  }
+}
 </style>

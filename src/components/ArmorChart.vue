@@ -248,11 +248,24 @@ onMounted(() => {
   height: 100%;
   overflow: hidden;
   width: 100%;
+  min-height: 400px;
 }
 
 .chart {
   flex: 1;
   height: 100%;
   width: 100%;
+}
+
+@media (max-width: 768px) {
+  .chart-wrapper {
+    min-height: 350px;
+  }
+}
+
+@media (max-width: 480px) {
+  .chart-wrapper {
+    min-height: 300px;
+  }
 }
 </style>

@@ -4,7 +4,9 @@
         "subtitleWeapon": "Song of Armor Breaker",
         "subtitleArmor": "Chant of the Life Keeper",
         "pageTitle": "RimWorld Ordinatus Calculi: Song of Armor Breaker & Chant of the Life Keeper (Weapon DPS/Armor Calculator)",
-        "githubLink": "View source on GitHub"
+        "githubLink": "View source on GitHub",
+        "mobileWarningTitle": "Desktop Recommended",
+        "mobileWarningDescription": "This app is designed for desktop use. The experience may not be optimal on mobile devices. Please use a computer or tablet for the best experience."
     },
     "common": {
         "add": "Add",

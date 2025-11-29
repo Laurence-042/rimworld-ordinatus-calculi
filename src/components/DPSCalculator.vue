@@ -606,15 +606,137 @@ watch(locale, async () => {
     overflow: visible;
   }
 
-  .left-panel,
-  .right-panel {
+  :deep(.left-panel),
+  :deep(.right-panel) {
     height: auto;
     overflow: visible;
     width: 100%;
   }
 
-  .right-panel {
+  :deep(.right-panel) {
     min-height: 600px;
+  }
+}
+
+/* 平板适配 */
+@media (max-width: 768px) {
+  :deep(.left-panel) {
+    padding: 15px;
+  }
+
+  :deep(.right-panel) {
+    padding: 15px;
+    min-height: 500px;
+  }
+
+  .weapon-card :deep(.el-form-item) {
+    margin-bottom: 12px;
+  }
+
+  .weapon-card :deep(.el-form-item__label) {
+    width: 8em !important;
+    font-size: 0.9em;
+  }
+
+  .chart-controls {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .chart-hint {
+    font-size: 0.85em;
+  }
+
+  /* 品质按钮在平板上换行 */
+  .quality-button:deep(.el-radio-button__inner) {
+    padding: 8px 12px;
+    font-size: 0.85em;
+  }
+
+  .actual-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+}
+
+/* 手机适配 */
+@media (max-width: 480px) {
+  :deep(.left-panel) {
+    padding: 10px;
+  }
+
+  :deep(.right-panel) {
+    padding: 10px;
+    min-height: 400px;
+  }
+
+  .weapon-card {
+    margin-bottom: 15px;
+  }
+
+  .weapon-card :deep(.el-card__header) {
+    padding: 12px;
+  }
+
+  .weapon-card :deep(.el-card__body) {
+    padding: 12px;
+  }
+
+  .weapon-card :deep(.el-form-item) {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+
+  .weapon-card :deep(.el-form-item__label) {
+    width: 100% !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+    padding-bottom: 4px;
+    padding-right: 0 !important;
+    font-size: 0.85em;
+  }
+
+  .weapon-card :deep(.el-form-item__content) {
+    width: 100%;
+    margin-left: 0 !important;
+  }
+
+  .weapon-header-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .weapon-name-input {
+    width: 100%;
+  }
+
+  .weapon-name-input :deep(.el-input__inner) {
+    font-size: 1em;
+  }
+
+  /* 品质按钮在手机上 */
+  .weapon-card :deep(.el-radio-group) {
+    flex-wrap: wrap;
+  }
+
+  .quality-button:deep(.el-radio-button__inner) {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .chart-controls :deep(.el-radio-button__inner) {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .stat-label {
+    font-size: 0.85em;
+  }
+
+  .stat-value {
+    font-size: 0.85em;
   }
 }
 

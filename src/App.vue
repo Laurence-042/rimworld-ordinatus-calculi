@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DPSCalculator from './components/DPSCalculator.vue'
 import ArmorCalculator from './components/ArmorCalculator.vue'
@@ -9,6 +9,17 @@ import DataSourceSettings from './components/DataSourceSettings.vue'
 
 const { t, locale } = useI18n()
 const calculationMode = ref<'weapon' | 'armor'>('weapon')
+
+// 手机端检测
+const isMobileWarningClosed = ref(false)
+const isMobileDevice = computed(() => {
+  if (isMobileWarningClosed.value) return false
+  // 通过屏幕宽度判断是否为手机
+  if (typeof window !== 'undefined') {
+    return window.innerWidth <= 768
+  }
+  return false
+})
 
 // Data source settings drawer ref
 const dataSourceSettingsRef = ref<InstanceType<typeof DataSourceSettings> | null>(null)
@@ -30,9 +41,22 @@ watch(
 
 <template>
   <div class="app-container">
+    <!-- 手机端提示 -->
+    <el-alert
+      v-if="isMobileDevice"
+      :title="t('app.mobileWarningTitle')"
+      type="warning"
+      :closable="true"
+      show-icon
+      class="mobile-warning"
+      @close="isMobileWarningClosed = true"
+    >
+      {{ t('app.mobileWarningDescription') }}
+    </el-alert>
+
     <header class="app-header">
       <h1 class="app-title">
-        {{ t('app.title') }} - {{ t('app.subtitleWeapon') }}·{{ t('app.subtitleArmor') }}
+        {{ t('app.title') }}
       </h1>
       <div class="header-actions">
         <el-radio-group v-model="calculationMode" size="default">
@@ -129,15 +153,54 @@ watch(
   color: var(--el-text-color-secondary);
 }
 
+.mobile-warning {
+  flex-shrink: 0;
+}
+
 @media (max-width: 768px) {
   .app-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 15px;
+    gap: 10px;
+    padding: 10px 15px;
+  }
+
+  .header-actions {
+    flex-wrap: wrap;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .header-actions :deep(.el-radio-group) {
+    width: 100%;
+  }
+
+  .header-actions :deep(.el-radio-button__inner) {
+    padding: 8px 10px;
+    font-size: 12px;
   }
 
   .app-title {
-    font-size: 1.3em;
+    font-size: 1.1em;
+  }
+
+  .app-main {
+    overflow: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-header {
+    padding: 8px 10px;
+  }
+
+  .app-title {
+    font-size: 1em;
+  }
+
+  .header-actions :deep(.el-radio-button__inner) {
+    padding: 6px 8px;
+    font-size: 11px;
   }
 }
 </style>

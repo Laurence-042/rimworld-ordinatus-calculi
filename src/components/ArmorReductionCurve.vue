@@ -228,5 +228,18 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
   height: 100%;
   overflow: hidden;
   width: 100%;
+  min-height: 400px;
+}
+
+@media (max-width: 768px) {
+  .chart-wrapper {
+    min-height: 350px;
+  }
+}
+
+@media (max-width: 480px) {
+  .chart-wrapper {
+    min-height: 300px;
+  }
 }
 </style>

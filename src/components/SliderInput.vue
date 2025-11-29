@@ -86,4 +86,47 @@ const handleChange = (value: number) => {
 .unit-placeholder {
   width: 20px;
 }
+
+/* 平板适配 */
+@media (max-width: 768px) {
+  .slider-input-group {
+    gap: 10px;
+  }
+
+  .input-number-fixed {
+    width: 5.5em;
+  }
+
+  .input-number-fixed :deep(.el-input__inner) {
+    padding: 0 8px;
+  }
+}
+
+/* 手机适配 */
+@media (max-width: 480px) {
+  .slider-input-group {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .slider-input-group :deep(.el-slider) {
+    width: 100%;
+    flex: none;
+  }
+
+  .input-number-fixed {
+    flex: 1;
+    width: auto;
+    min-width: 5em;
+  }
+
+  .unit {
+    width: auto;
+    flex-shrink: 0;
+  }
+
+  .unit-placeholder {
+    display: none;
+  }
+}
 </style>

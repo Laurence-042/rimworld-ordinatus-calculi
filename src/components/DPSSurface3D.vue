@@ -266,4 +266,16 @@ onMounted(() => {
   width: 100%;
   height: 600px;
 }
+
+@media (max-width: 768px) {
+  .chart-container {
+    height: 450px;
+  }
+}
+
+@media (max-width: 480px) {
+  .chart-container {
+    height: 350px;
+  }
+}
 </style>

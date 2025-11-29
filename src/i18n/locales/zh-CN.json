@@ -4,7 +4,9 @@
         "subtitleWeapon": "破甲者之歌",
         "subtitleArmor": "留命者之吟",
         "pageTitle": "Rimworld 武器DPS/护甲效果计算器",
-        "githubLink": "在 GitHub 上查看源码"
+        "githubLink": "在 GitHub 上查看源码",
+        "mobileWarningTitle": "建议使用桌面设备",
+        "mobileWarningDescription": "本应用为桌面端设计，在手机上使用可能体验不佳。建议使用电脑或平板访问以获得最佳体验。"
     },
     "common": {
         "add": "添加",
@@ -70,7 +72,7 @@
         "armorSharp": "锐器护甲",
         "armorBlunt": "钝器护甲",
         "armorHeat": "热能护甲",
-        "baseArmorSharp": "基础钓器护甲",
+        "baseArmorSharp": "基础锐器护甲",
         "baseArmorBlunt": "基础钝器护甲",
         "baseArmorHeat": "基础热能护甲",
         "coverage": "覆盖率",
