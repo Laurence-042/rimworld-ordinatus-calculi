@@ -7,11 +7,12 @@ import { ApparelQualityMultipliers } from '@/types/quality'
  * RimWorld 护甲计算工具
  *
  * RimWorld 护甲机制：
- * 1. 受到伤害时，护甲值首先会减去攻击武器的护甲穿透值
- * 2. 剩余护甲值与0到100之间的随机数进行比较
- * 3. 如果随机数 < 剩余护甲值的一半，则伤害无效（0%伤害）
- * 4. 如果随机数 >= 剩余护甲值的一半 且 < 剩余护甲值，则伤害减半（50%伤害）
- * 5. 如果随机数 >= 剩余护甲值，则护甲无效（100%伤害）
+ * 1. 受到伤害时，护甲值首先会减去攻击武器的护甲穿透值（有效护甲 = max(护甲 - AP, 0)，范围 0-2）
+ * 2. 游戏生成一个 [0, 1) 的随机数（即 [0, 100) 百分比），与有效护甲值比较
+ * 3. 如果随机数 < min(有效护甲值的一半, 100)：则伤害无效（0%伤害）
+ * 4. 如果随机数 >= min(有效护甲值的一半, 100) 且 < min(有效护甲值, 100)：则伤害减半（50%伤害）
+ * 5. 如果随机数 >= min(有效护甲值, 100)：则护甲无效（100%伤害）
+ * 注意：有效护甲值可超过 100（高护甲装备），此时穿透概率为 0，偏转/减半概率相应提高
  */
 
 /**
@@ -121,46 +122,51 @@ export interface DPSCalculationResult {
  *    - 伤害被**部分偏转**，造成 50% 伤害
  *    - 概率 = (有效护甲值 / 2) / 100
  *
- * 3. 如果随机数 >= 有效护甲值：
+ * 3. 如果随机数 >= min(有效护甲值, 100)：
  *    - 护甲**无效**，造成 100% 伤害
- *    - 概率 = (100 - 有效护甲值) / 100
+ *    - 概率 = (100 - min(有效护甲值, 100)) / 100
+ *
+ * 注意：有效护甲值可超过 100（即 100%），此时穿透概率降为 0。
+ * 超过 200 时完全偏转概率达到 100%。
  *
  * **示例：**
- * - 有效护甲值 = 60%
+ * - 有效护甲值 = 60（护甲 60%）
  *   - 0-30: 完全偏转 (30% 概率, 0% 伤害)
  *   - 30-60: 部分偏转 (30% 概率, 50% 伤害)
  *   - 60-100: 护甲无效 (40% 概率, 100% 伤害)
  *   - 期望伤害倍率 = 0.3×0 + 0.3×0.5 + 0.4×1.0 = 0.55
  *
- * @param effectiveArmor - 有效护甲值 (0-100)，已减去武器的护甲穿透
+ * - 有效护甲值 = 182（护甲 200%，穿甲 18%）
+ *   - 0-91: 完全偏转 (91% 概率, 0% 伤害)
+ *   - 91-100: 部分偏转 (9% 概率, 50% 伤害)
+ *   - 穿透: 0%
+ *   - 期望伤害倍率 = 0.91×0 + 0.09×0.5 = 0.045
+ *
+ * @param effectiveArmor - 有效护甲值 (0-200)，已减去武器的护甲穿透，对应游戏内 0-2 范围 ×100
  * @returns 期望伤害倍率 (0-1)
  */
 function calculateDamageMultiplier(effectiveArmor: number): number {
-  // 确保护甲值在有效范围内
-  effectiveArmor = Math.max(0, Math.min(100, effectiveArmor))
+  // 确保护甲值在有效范围内（0-200，对应游戏内 0.0-2.0）
+  effectiveArmor = Math.max(0, Math.min(200, effectiveArmor))
 
+  // RimWorld 中随机数 Rand.Value 范围为 [0, 1)，即 [0, 100) 的百分比区间
+  // 有效护甲阈值可超过 100（即 100%），但随机数不会超过 100
+  // 因此判定阈值需上限截断到 100
   const halfArmor = effectiveArmor / 2
+  const cappedArmor = Math.min(effectiveArmor, 100) // 减半判定上限
+  const cappedHalfArmor = Math.min(halfArmor, 100) // 完全偏转判定上限
 
-  // 计算三种情况的概率和伤害
-  // 情况1: 随机数 < 护甲值的一半 -> 0%伤害
-  const noDeflectChance = halfArmor / 100
-  const noDeflectDamage = 0
+  // 情况1: 随机数 < min(护甲/2, 100) -> 完全偏转（0%伤害）
+  const deflectChance = cappedHalfArmor / 100
 
-  // 情况2: 护甲值的一半 <= 随机数 < 护甲值 -> 50%伤害
-  const halfDeflectChance = (effectiveArmor - halfArmor) / 100
-  const halfDeflectDamage = 0.5
+  // 情况2: min(护甲/2, 100) <= 随机数 < min(护甲, 100) -> 减半（50%伤害）
+  const halfDamageChance = Math.max(0, cappedArmor - cappedHalfArmor) / 100
 
-  // 情况3: 随机数 >= 护甲值 -> 100%伤害
-  const fullDamageChance = (100 - effectiveArmor) / 100
-  const fullDamage = 1.0
+  // 情况3: 随机数 >= min(护甲, 100) -> 穿透（100%伤害）
+  const penetrateChance = (100 - cappedArmor) / 100
 
   // 计算期望伤害倍率
-  const expectedMultiplier =
-    noDeflectChance * noDeflectDamage +
-    halfDeflectChance * halfDeflectDamage +
-    fullDamageChance * fullDamage
-
-  return expectedMultiplier
+  return deflectChance * 0 + halfDamageChance * 0.5 + penetrateChance * 1.0
 }
 
 /**
@@ -258,16 +264,18 @@ export function calculateDPSDistribution(
   const validArmorPenetration = Math.max(0, Math.min(2, armorPenetration))
   const validTargetArmor = Math.max(0, targetArmor)
 
-  // 计算有效护甲值
-  const effectiveArmor = Math.max(0, validTargetArmor - validArmorPenetration) * 100
-  const clampedArmor = Math.max(0, Math.min(100, effectiveArmor))
+  // 计算有效护甲值（0-200 范围，对应游戏内 0.0-2.0）
+  const effectiveArmor = Math.max(0, Math.min(200, (validTargetArmor - validArmorPenetration) * 100))
 
-  const halfArmor = clampedArmor / 2
+  // 随机数范围为 [0, 100)，护甲阈值超过 100 时需截断
+  const halfArmor = effectiveArmor / 2
+  const cappedArmor = Math.min(effectiveArmor, 100)
+  const cappedHalfArmor = Math.min(halfArmor, 100)
 
   // 在命中的情况下，计算三种伤害结果的概率
-  const zeroDamageProb = halfArmor / 100
-  const halfDamageProb = (clampedArmor - halfArmor) / 100
-  const fullDamageProb = (100 - clampedArmor) / 100
+  const zeroDamageProb = cappedHalfArmor / 100
+  const halfDamageProb = Math.max(0, cappedArmor - cappedHalfArmor) / 100
+  const fullDamageProb = (100 - cappedArmor) / 100
 
   // 计算对应的DPS值
   const zeroDPS = 0
@@ -275,7 +283,7 @@ export function calculateDPSDistribution(
   const fullDPS = validMaxDPS
 
   // 计算期望DPS（考虑命中率）
-  const expectedDPS = validMaxDPS * validHitChance * calculateDamageMultiplier(clampedArmor)
+  const expectedDPS = validMaxDPS * validHitChance * calculateDamageMultiplier(effectiveArmor)
 
   return {
     zeroDamageProb: zeroDamageProb * validHitChance,
