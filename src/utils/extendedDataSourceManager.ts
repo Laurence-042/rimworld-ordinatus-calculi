@@ -44,6 +44,9 @@ export interface ExtendedDataSourceState {
 /** localStorage 存储键 */
 const STORAGE_KEY = 'rimworld-calculator-extended-sources'
 
+/** 网络请求超时时间（毫秒） */
+const FETCH_TIMEOUT_MS = 6000
+
 /** 默认数据源 URL */
 const DEFAULT_SOURCE: ExtendedDataSource = {
   id: 'default-extra',
@@ -52,6 +55,27 @@ const DEFAULT_SOURCE: ExtendedDataSource = {
     'https://raw.githubusercontent.com/Laurence-042/rimworld-ordinatus-calculi-extra-data/refs/heads/main/manifest.json',
   enabled: true,
   status: 'idle',
+}
+
+/**
+ * 带超时控制的 fetch
+ */
+async function fetchWithTimeout(url: string, timeoutMs = FETCH_TIMEOUT_MS): Promise<Response> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => {
+    controller.abort()
+  }, timeoutMs)
+
+  try {
+    return await fetch(url, { signal: controller.signal })
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new Error(`Request timeout after ${timeoutMs}ms`)
+    }
+    throw error
+  } finally {
+    clearTimeout(timer)
+  }
 }
 
 /**
@@ -258,7 +282,7 @@ class ExtendedDataSourceManager {
     source.errorMessage = undefined
 
     try {
-      const response = await fetch(source.manifestUrl)
+      const response = await fetchWithTimeout(source.manifestUrl)
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
@@ -286,7 +310,8 @@ class ExtendedDataSourceManager {
     this.state.isLoading = true
 
     try {
-      await Promise.all(enabledSources.map((source) => this.loadManifest(source)))
+      // 使用 allSettled，确保单个数据源异常不会阻塞整体加载流程
+      await Promise.allSettled(enabledSources.map((source) => this.loadManifest(source)))
     } finally {
       this.state.isLoading = false
     }
@@ -337,7 +362,7 @@ class ExtendedDataSourceManager {
     const url = getExtendedCSVUrl(baseUrl, type, modName, locale)
 
     try {
-      const response = await fetch(url)
+      const response = await fetchWithTimeout(url)
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
